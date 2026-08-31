@@ -91,19 +91,26 @@ def require_auth(f):
 # ─── Auth routes ──────────────────────────────────────────────────────────────
 @app.route("/api/login", methods=["POST"])
 def login():
-    data = request.get_json() or {}
-    key = (data.get("license_key") or "").strip().upper()
-    if not key:
-        return jsonify({"ok": False, "error": "Clé manquante"}), 400
+    try:
+        data = request.get_json() or {}
+        key = (data.get("license_key") or "").strip().upper()
+        if not key:
+            return jsonify({"ok": False, "error": "Clé manquante"}), 400
 
-    lic = supabase.table("licenses").select("*").eq("license_key", key).execute()
-    if not lic.data:
-        return jsonify({"ok": False, "error": "Clé de licence invalide"}), 403
+        if not supabase:
+            return jsonify({"ok": False, "error": "Supabase non configuré (SUPABASE_URL manquant)"}), 500
 
-    record = lic.data[0]
-    valide, message, expiry = check_license_validity(record)
-    if not valide:
-        return jsonify({"ok": False, "error": message}), 403
+        lic = supabase.table("licenses").select("*").eq("license_key", key).execute()
+        if not lic.data:
+            return jsonify({"ok": False, "error": f"Clé '{key}' introuvable dans la base de données"}), 403
+
+        record = lic.data[0]
+        valide, message, expiry = check_license_validity(record)
+        if not valide:
+            return jsonify({"ok": False, "error": message}), 403
+    except Exception as e:
+        import traceback
+        return jsonify({"ok": False, "error": f"Erreur serveur: {str(e)}", "trace": traceback.format_exc()}), 500
 
     session["license_key"] = key
     try:
