@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FichePro Manager — Application</title>
+<title>FichePro Manager \u2014 Application</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -20,7 +20,7 @@
 html,body{height:100%;overflow:hidden}
 body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display:flex}
 
-/* ── SIDEBAR ── */
+/* \u2500\u2500 SIDEBAR \u2500\u2500 */
 .sidebar{
   width:var(--sb);flex-shrink:0;
   background:var(--vf);
@@ -49,8 +49,8 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .sb-logo-t2{font-size:9px;color:rgba(201,168,76,.5);letter-spacing:.08em;text-transform:uppercase}
 
 .sb-nav{flex:1;padding:12px 0;overflow-y:auto}
-.sb-nav::-webkit-scrollbar{width:8px}
-.sb-nav::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.25);border-radius:4px}
+.sb-nav::-webkit-scrollbar{width:3px}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:2px}
 
 .sb-section{padding:8px 12px 4px;font-size:9px;font-weight:600;color:rgba(201,168,76,.4);text-transform:uppercase;letter-spacing:.1em}
 .sb-item{
@@ -84,10 +84,10 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .sb-user-name{font-size:12px;font-weight:500;color:rgba(255,255,255,.8)}
 .sb-user-role{font-size:10px;color:rgba(255,255,255,.4)}
 
-/* ── MAIN ── */
+/* \u2500\u2500 MAIN \u2500\u2500 */
 .main{flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
-.main::-webkit-scrollbar{width:8px}
-.main::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.25);border-radius:4px}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:var(--s2);border-radius:2px}
 
 .topbar{
   background:#fff;border-bottom:1px solid var(--s2);
@@ -112,11 +112,11 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 
 .content{flex:1;padding:24px 28px}
 
-/* ── PAGES ── */
+/* \u2500\u2500 PAGES \u2500\u2500 */
 .page{display:none}
 .page.active{display:block}
 
-/* ── DASHBOARD ── */
+/* \u2500\u2500 DASHBOARD \u2500\u2500 */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
 .kpi{
   background:#fff;border:1px solid var(--s2);border-radius:var(--r);
@@ -166,7 +166,7 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .log-msg{flex:1;font-size:11px;color:var(--td);line-height:1.5}
 .log-time{font-size:10px;color:var(--tg);flex-shrink:0}
 
-/* ── GENERATION FICHE ── */
+/* \u2500\u2500 GENERATION FICHE \u2500\u2500 */
 .gen-grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
 .form-card{background:#fff;border:1px solid var(--s2);border-radius:var(--r)}
 .form-section{padding:20px;border-bottom:1px solid var(--s1)}
@@ -216,7 +216,7 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
   font-size:11px;color:var(--tg);font-weight:500;
 }
 
-/* Bouton générer */
+/* Bouton g\u00e9n\u00e9rer */
 .btn-gen{
   width:100%;height:48px;background:linear-gradient(135deg,var(--vm),var(--vf));
   color:var(--or);border:none;border-radius:10px;
@@ -229,7 +229,7 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .btn-gen:disabled{opacity:.5;cursor:not-allowed}
 .btn-gen.loading{background:linear-gradient(135deg,var(--tg),#4B5563)}
 
-/* Panneau résultat */
+/* Panneau r\u00e9sultat */
 .result-panel{background:#fff;border:1px solid var(--s2);border-radius:var(--r);overflow:hidden}
 .result-empty{padding:40px 20px;text-align:center;color:var(--tg)}
 .result-empty .re-ico{font-size:40px;margin-bottom:12px;opacity:.3}
@@ -247,8 +247,8 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .rs-val{font-size:20px;font-weight:700;color:var(--vf)}
 .rs-lbl{font-size:10px;color:var(--tg);margin-top:2px;text-transform:uppercase}
 .result-lignes{max-height:300px;overflow-y:auto}
-.result-lignes::-webkit-scrollbar{width:8px}
-.result-lignes::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.25);border-radius:4px}
+.result-lignes::-webkit-scrollbar{width:3px}
+.result-lignes::-webkit-scrollbar-thumb{background:var(--s2)}
 .rl-row{display:flex;align-items:center;gap:8px;padding:9px 16px;border-bottom:1px solid var(--s0)}
 .rl-row:last-child{border-bottom:none}
 .rl-code{font-size:10px;color:var(--tg);width:90px;flex-shrink:0}
@@ -261,12 +261,12 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .btn-excel{flex:1;height:36px;background:linear-gradient(135deg,var(--vm),var(--vf));color:var(--or);border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
 .btn-excel:hover{transform:translateY(-1px)}
 
-/* Journal temps réel */
+/* Journal temps r\u00e9el */
 .journal-log{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;padding:12px 16px}
-.journal-log::-webkit-scrollbar{width:8px}
-.journal-log::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.25);border-radius:4px}
+.journal-log::-webkit-scrollbar{width:3px}
+.journal-log::-webkit-scrollbar-thumb{background:var(--s2)}
 
-/* ── IMPORT RA ── */
+/* \u2500\u2500 IMPORT RA \u2500\u2500 */
 .import-zone{
   border:2px dashed var(--s2);border-radius:var(--r);
   padding:40px 20px;text-align:center;cursor:pointer;
@@ -294,7 +294,7 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .ir-sv{font-size:22px;font-weight:700;color:var(--vf)}
 .ir-sl{font-size:10px;color:var(--tg);margin-top:2px}
 
-/* ── PRODUCTEURS ── */
+/* \u2500\u2500 PRODUCTEURS \u2500\u2500 */
 .prod-search{
   width:100%;height:38px;border:1.5px solid var(--s2);border-radius:9px;
   padding:0 12px 0 36px;font-size:13px;font-family:'Inter',sans-serif;
@@ -309,7 +309,7 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 }
 .pf-btn.on{background:rgba(45,106,79,.1);border-color:var(--vm);color:var(--vm)}
 
-/* ── MODAL AUTORISATION ── */
+/* \u2500\u2500 MODAL AUTORISATION \u2500\u2500 */
 .modal-overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);
   z-index:100;display:flex;align-items:center;justify-content:center;
@@ -332,7 +332,7 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .modal-btn-ok{flex:1;height:40px;background:linear-gradient(135deg,var(--vm),var(--vf));color:var(--or);border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
 .modal-btn-cancel{flex:1;height:40px;background:var(--s1);color:var(--tg);border:1px solid var(--s2);border-radius:9px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif}
 
-/* ── TOAST ── */
+/* \u2500\u2500 TOAST \u2500\u2500 */
 .toast{
   position:fixed;bottom:20px;right:20px;
   background:var(--vf);color:var(--or);
@@ -343,614 +343,13 @@ body{font-family:'Inter',sans-serif;background:var(--s0);color:var(--td);display
 .toast.show{opacity:1;transform:translateY(0)}
 .toast.err{background:#991B1B;color:#fff;border-color:rgba(239,68,68,.3)}
 
-/* ── RESPONSIVE ── */
+/* \u2500\u2500 RESPONSIVE \u2500\u2500 */
 @media(max-width:1100px){
   .gen-grid{grid-template-columns:1fr}
   .kpi-grid{grid-template-columns:1fr 1fr}
   .dash-grid{grid-template-columns:1fr}
 }
 </style>
-
-<script>
-// ============================================================
-// ÉTAT GLOBAL
-// ============================================================
-let G = {
-  sections: [],
-  sectionsSelectionnees: new Set(),
-  volTotal: 0,
-  volSect: 0,
-  derniereReponse: null,
-  etatPartiel: null,
-  periode: '',
-  produits: [],
-  filtreStatut: 'tous',
-  licInfo: {}
-};
-
-// ============================================================
-// NAVIGATION
-// ============================================================
-const pageMeta = {
-  'dashboard'   : ['Tableau de bord',   'Vue d\'ensemble de la campagne'],
-  'generer'     : ['Générer une fiche', 'Remplissez les paramètres et lancez la génération'],
-  'producteurs' : ['Producteurs',       'Liste et suivi des producteurs'],
-  'import'      : ['Import Registre RA','Importez votre fichier Rainforest Alliance'],
-  'fiches'      : ['Fiches générées',   'Historique et téléchargement des fiches'],
-  'journal'     : ['Journal',           'Historique des opérations'],
-  'config'      : ['Configuration',     'Paramètres du fichier et de la licence']
-};
-
-function goPage(id, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  if(btn) btn.classList.add('active');
-  if(pageMeta[id]) {
-    document.getElementById('tb-title').textContent = pageMeta[id][0];
-    document.getElementById('tb-sub').textContent   = pageMeta[id][1];
-  }
-  if(id === 'producteurs') chargerProducteurs();
-  if(id === 'journal') chargerJournal();
-  if(id === 'fiches') chargerFiches();
-  if(id === 'config') chargerConfig();
-}
-
-// ============================================================
-// TOAST
-// ============================================================
-function toast(msg, err=false, ms=3200) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (err?' err':'') + ' show';
-  setTimeout(() => t.className = 'toast', ms);
-}
-
-// ============================================================
-// DASHBOARD
-// ============================================================
-async function chargerDashboard() {
-  try {
-    const r = await fetch('/api/dashboard');
-    const d = await r.json();
-    if(d.erreur) return;
-    G.volTotal = d.vol_total || 0;
-    G.periode  = d.periode  || '';
-    document.getElementById('kpi-stock').textContent  = fmt(d.vol_total);
-    document.getElementById('kpi-prod').textContent   = d.nb_prod || '—';
-    document.getElementById('kpi-util').textContent   = (d.nb_utilises||0) + ' utilisés';
-    document.getElementById('kpi-fiches').textContent = d.nb_fiches || '0';
-    document.getElementById('kpi-cal').textContent    = d.calendrier === 'NOUVEAU' ? 'Nouveau' : d.calendrier === 'ANCIEN' ? 'Ancien' : '—';
-    document.getElementById('kpi-cal-sub').textContent= d.periode || '—';
-    document.getElementById('kpi-periode').textContent= d.periode  || '—';
-    document.getElementById('nb-prod').textContent    = d.nb_prod  || '—';
-    // Sections dashboard
-    const sc = d.sections || {};
-    const sdEl = document.getElementById('sections-dash');
-    const sKeys = Object.keys(sc).sort((a,b) => sc[b].vol - sc[a].vol);
-    sdEl.innerHTML = sKeys.slice(0,6).map(s =>
-      `<div class="sect-item">
-        <div><div class="sect-name">${s}</div><div class="sect-vol">${fmt(sc[s].vol)} kg</div></div>
-        <span class="sect-nb">${sc[s].nb} prod.</span>
-      </div>`
-    ).join('') || '<div style="padding:16px;font-size:12px;color:var(--tg)">Aucune section</div>';
-  } catch(e) { console.error(e) }
-}
-
-async function chargerTopProd() {
-  try {
-    const r = await fetch('/api/producteurs');
-    const d = await r.json();
-    G.produits = d;
-    const tbody = document.getElementById('top-prod-tbody');
-    const top = d.slice(0,8);
-    if(!top.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--tg)">Aucun producteur</td></tr>'; return; }
-    tbody.innerHTML = top.map(p => {
-      const pct = p.pct || 0;
-      const col = pct >= 80 ? 'danger' : pct >= 50 ? 'warn' : '';
-      return `<tr>
-        <td><span style="font-size:10px;background:var(--s1);padding:2px 6px;border-radius:4px">${p.code}</span></td>
-        <td>${p.nom}</td>
-        <td>${p.sect}</td>
-        <td>${fmt(p.stk)} kg</td>
-        <td>
-          <div style="display:flex;align-items:center;gap:6px">
-            <div class="pct-bar"><div class="pct-fill ${col}" style="width:${Math.min(100,pct)}%"></div></div>
-            <span class="pct-text" style="color:${pct>=80?'#EF4444':pct>=50?'var(--or)':'var(--vc)'}">${pct}%</span>
-          </div>
-        </td>
-      </tr>`;
-    }).join('');
-  } catch(e) {}
-}
-
-async function chargerLogDash() {
-  try {
-    const r = await fetch('/api/log');
-    const logs = await r.json();
-    const el = document.getElementById('log-dash');
-    if(!logs.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Aucune activité</div>'; return; }
-    el.innerHTML = '<div class="card-body" style="padding:0 12px">' +
-      logs.slice(-5).reverse().map(l =>
-        `<div class="log-item">
-          <div class="log-ic ${l.level==='error'?'err':l.level==='warn'?'warn':'ok'}">${l.level==='error'?'✕':l.level==='warn'?'!':'✓'}</div>
-          <div class="log-msg">${l.msg}</div>
-          <div class="log-time">${l.time}</div>
-        </div>`
-      ).join('') + '</div>';
-  } catch(e) {}
-}
-
-// ============================================================
-// SECTIONS
-// ============================================================
-async function chargerSections() {
-  try {
-    const r = await fetch('/api/sections');
-    G.sections = await r.json();
-    renderChips();
-  } catch(e) {}
-}
-
-function renderChips() {
-  const wrap = document.getElementById('sections-chips');
-  if(!G.sections.length) {
-    wrap.innerHTML = '<span style="font-size:12px;color:var(--tg)">Importez d\'abord votre registre RA pour voir les sections.</span>';
-    return;
-  }
-  wrap.innerHTML = G.sections.map(s =>
-    `<button class="chip ${G.sectionsSelectionnees.has(s.nom)?'sel':''}" onclick="toggleSection('${s.nom}')">${s.nom} <span style="font-size:10px;opacity:.7">${fmt(s.vol)} kg</span></button>`
-  ).join('');
-  majVolBar();
-}
-
-function toggleSection(nom) {
-  if(G.sectionsSelectionnees.has(nom)) G.sectionsSelectionnees.delete(nom);
-  else G.sectionsSelectionnees.add(nom);
-  renderChips();
-}
-
-function majVolBar() {
-  const wrap = document.getElementById('vol-bar-wrap');
-  const alert = document.getElementById('vol-alert');
-  if(!G.sections.length) { wrap.style.display='none'; return; }
-  wrap.style.display = 'block';
-  G.volSect = G.sections.filter(s => G.sectionsSelectionnees.has(s.nom)).reduce((a,s)=>a+s.vol,0);
-  const pct = G.volTotal > 0 ? Math.round(G.volSect / G.volTotal * 100) : 0;
-  document.getElementById('vol-label').textContent = `Volume sélectionné (${pct}% du total)`;
-  document.getElementById('vol-val').textContent   = `${fmt(G.volSect)} kg`;
-  document.getElementById('vol-fill').style.width  = `${Math.min(100,pct)}%`;
-  alert.className = 'vol-alert' + (pct > 0 && pct <= 20 ? ' show' : '');
-}
-
-// ============================================================
-// GENERATION
-// ============================================================
-function addLog(msg, level='info') {
-  const el = document.getElementById('journal-log-gen');
-  const ic = level==='error'?'✕':level==='warn'?'!':'✓';
-  const cls = level==='error'?'err':level==='warn'?'warn':'ok';
-  const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  el.innerHTML += `<div class="log-item"><div class="log-ic ${cls}">${ic}</div><div class="log-msg">${msg}</div><div class="log-time">${now}</div></div>`;
-  el.scrollTop = el.scrollHeight;
-}
-
-async function lancerGeneration() {
-  const poids = parseInt(document.getElementById('f-poids').value);
-  const prix  = parseFloat(document.getElementById('f-prix').value);
-  const debut = document.getElementById('f-debut').value;
-  const fin   = document.getElementById('f-fin').value;
-  const cal   = document.querySelector('input[name="calendrier"]:checked').value;
-  const sects = [...G.sectionsSelectionnees];
-
-  if(!poids || poids < 25)  { toast('Entrez un poids valide (min 25 kg)', true); return; }
-  if(!prix  || prix  < 1)   { toast('Entrez un prix au kg valide', true); return; }
-  if(!debut)                { toast('Entrez la date de début', true); return; }
-  if(!fin)                  { toast('Entrez la date limite', true); return; }
-  if(!sects.length)         { toast("Sélectionnez au moins une section", true); return; }
-  if(debut > fin)           { toast('La date de début doit être avant la date limite', true); return; }
-
-  const btn = document.getElementById('btn-gen');
-  btn.disabled = true; btn.classList.add('loading');
-  btn.innerHTML = '<span>⟳</span> Génération en cours...';
-  document.getElementById('journal-gen').style.display = 'block';
-  document.getElementById('journal-log-gen').innerHTML = '';
-  addLog('Démarrage de la génération...');
-  addLog(`Sections : ${sects.join(', ')}`);
-  addLog(`Volume : ${fmt(poids)} kg · Prix : ${fmt(prix)} FCFA/kg`);
-
-  try {
-    const r = await fetch('/api/fiche/generer', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({poids_total:poids,d_debut:debut,d_ref:fin,
-                            sections:sects,prix_kg:prix,calendrier:cal})
-    });
-    const d = await r.json();
-
-    if(d.erreur) {
-      addLog(d.erreur, 'error');
-      toast(d.erreur, true, 5000);
-    } else if(d.autorisation_requise === 'limite_fiche') {
-      addLog(`Limite ${Math.round(d.limite_actuelle*100)}% atteinte — autorisation requise`, 'warn');
-      G.etatPartiel = d;
-      showModalAuth(d);
-    } else if(d.succes) {
-      addLog(`Fiche ${d.fiche_id} générée avec succès !`);
-      addLog(`${d.nb_producteurs} producteurs · ${fmt(d.poids_total)} kg · ${fmt(d.montant)} FCFA`);
-      if(d.warnings) d.warnings.forEach(w => addLog(w, 'warn'));
-      afficherResultat(d);
-      G.derniereReponse = d;
-      chargerDashboard(); chargerTopProd(); chargerLogDash();
-      toast('✓ Fiche générée avec succès !');
-    }
-  } catch(e) {
-    addLog('Erreur de connexion : ' + e.message, 'error');
-    toast("Erreur de connexion", true);
-  } finally {
-    btn.disabled = false; btn.classList.remove('loading');
-    btn.innerHTML = '<span>▶</span> Générer la fiche';
-  }
-}
-
-function afficherResultat(d) {
-  document.getElementById('result-empty').style.display = 'none';
-  const rc = document.getElementById('result-content');
-  rc.classList.add('show');
-  document.getElementById('r-id').textContent      = d.fiche_id;
-  document.getElementById('r-titre').textContent   = d.periode;
-  document.getElementById('r-prod').textContent    = d.nb_producteurs;
-  document.getElementById('r-poids').textContent   = fmt(d.poids_total);
-  document.getElementById('r-sacs').textContent    = d.nb_sacs;
-  document.getElementById('r-montant').textContent = fmt(d.montant);
-  const rl = document.getElementById('result-lignes');
-  rl.innerHTML = (d.lignes_fiche||[]).slice(0,30).map(l =>
-    `<div class="rl-row">
-      <span class="rl-code">${l.code}</span>
-      <span class="rl-nom">${l.nom}</span>
-      <span class="rl-poids">${fmt(l.poids)} kg</span>
-      <span class="rl-date">${l.date}</span>
-    </div>`
-  ).join('') + (d.lignes_fiche.length > 30 ?
-    `<div style="text-align:center;padding:10px;font-size:11px;color:var(--tg)">... et ${d.lignes_fiche.length-30} autres lignes dans le PDF</div>` : '');
-}
-
-// ============================================================
-// MODAL AUTORISATION
-// ============================================================
-function showModalAuth(d) {
-  document.getElementById('m-restant').textContent  = fmt(d.poids_restant) + ' kg';
-  document.getElementById('m-palier').textContent   = Math.round(d.palier_min*100) + '%';
-  document.getElementById('m-actuel').textContent   = Math.round(d.limite_actuelle*100) + '%';
-  document.getElementById('m-palier-btn').textContent = Math.round(d.palier_min*100) + '%';
-  document.getElementById('modal-auth').classList.add('on');
-}
-
-async function accepterPalier() {
-  document.getElementById('modal-auth').classList.remove('on');
-  if(!G.etatPartiel) return;
-  const e = G.etatPartiel;
-  addLog(`Autorisation accordée — passage à ${Math.round(e.palier_min*100)}%`, 'warn');
-  try {
-    const r = await fetch('/api/fiche/continuer', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        palier    : e.palier_min,
-        etat      : e.etat_partiel,
-        periode   : e.etat_partiel?.periode || G.periode,
-        d_debut   : document.getElementById('f-debut').value,
-        d_ref     : document.getElementById('f-fin').value,
-        prix_kg   : parseFloat(document.getElementById('f-prix').value),
-        poids_total: parseInt(document.getElementById('f-poids').value)
-      })
-    });
-    const d = await r.json();
-    if(d.succes) { afficherResultat(d); G.derniereReponse = d; toast('✓ Fiche complétée avec palier élargi'); }
-    else toast(d.erreur || 'Erreur lors de la continuation', true);
-  } catch(e2) { toast("Erreur", true) }
-  G.etatPartiel = null;
-}
-
-function refuserPalier() {
-  document.getElementById('modal-auth').classList.remove('on');
-  G.etatPartiel = null;
-  addLog('Génération annulée par l\'utilisateur', 'warn');
-  toast('Génération annulée', true);
-}
-
-// ============================================================
-// IMPORT RA
-// ============================================================
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('import-zone').classList.remove('drag');
-  const f = e.dataTransfer.files[0];
-  if(f) importRA(f);
-}
-
-async function importRA(file) {
-  if(!file) return;
-  const fd = new FormData(); fd.append('file', file);
-  toast('Import en cours...');
-  try {
-    const r = await fetch('/api/import/ra', {method:'POST', body:fd});
-    const d = await r.json();
-    if(d.erreur) { toast(d.erreur, true, 5000); return; }
-    document.getElementById('ir-ajoutes').textContent = d.ajoutes || 0;
-    document.getElementById('ir-maj').textContent     = d.mis_a_jour || 0;
-    document.getElementById('ir-total').textContent   = d.total || 0;
-    document.getElementById('import-result').classList.add('show');
-    toast(`✓ Import réussi : ${d.ajoutes} ajoutés, ${d.mis_a_jour} mis à jour`);
-    await chargerSections();
-    await chargerDashboard();
-    await chargerTopProd();
-    // Aller sur Générer une fiche pour voir les sections
-    setTimeout(() => goPage('generer', document.querySelectorAll('.sb-item')[1]), 500);
-  } catch(e) { toast("Erreur lors de l'import", true) }
-}
-
-// ============================================================
-// PRODUCTEURS
-// ============================================================
-async function chargerProducteurs() {
-  try {
-    const r = await fetch('/api/producteurs');
-    G.produits = await r.json();
-    rendreTableauProd();
-  } catch(e) {}
-}
-
-function rendreTableauProd() {
-  const recherche = (document.getElementById('prod-search').value||'').toLowerCase();
-  let data = G.produits;
-  if(recherche) data = data.filter(p =>
-    p.nom.toLowerCase().includes(recherche) ||
-    p.code.toLowerCase().includes(recherche) ||
-    p.sect.toLowerCase().includes(recherche)
-  );
-  if(G.filtreStatut === 'faible')  data = data.filter(p => p.pct < 30);
-  if(G.filtreStatut === 'moyen')   data = data.filter(p => p.pct >= 30 && p.pct < 70);
-  if(G.filtreStatut === 'eleve')   data = data.filter(p => p.pct >= 70);
-  const tbody = document.getElementById('prod-tbody');
-  if(!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--tg)">Aucun producteur trouvé</td></tr>'; return; }
-  tbody.innerHTML = data.slice(0,100).map(p => {
-    const pct = p.pct || 0;
-    const col = pct >= 80 ? 'danger' : pct >= 50 ? 'warn' : '';
-    return `<tr>
-      <td><span style="font-size:10px;background:var(--s1);padding:2px 6px;border-radius:4px">${p.code}</span></td>
-      <td style="font-weight:500">${p.nom}</td>
-      <td>${p.sect}</td>
-      <td>${fmt(p.estim)} kg</td>
-      <td>${fmt(p.stk)} kg</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div class="pct-bar"><div class="pct-fill ${col}" style="width:${Math.min(100,pct)}%"></div></div>
-          <span class="pct-text" style="color:${pct>=80?'#EF4444':pct>=50?'var(--or)':'var(--vc)'}">${pct}%</span>
-        </div>
-      </td>
-      <td><span style="font-size:11px;color:var(--tg)">${p.score||'—'}</span></td>
-    </tr>`;
-  }).join('');
-}
-
-function filtrerProd() { rendreTableauProd(); }
-function filtrerStatut(s, btn) {
-  G.filtreStatut = s;
-  document.querySelectorAll('.pf-btn').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  rendreTableauProd();
-}
-
-// ============================================================
-// JOURNAL
-// ============================================================
-async function chargerJournal() {
-  try {
-    const r = await fetch('/api/log');
-    const logs = await r.json();
-    const el = document.getElementById('journal-full');
-    if(!logs.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--tg);font-size:12px">Aucune entrée</div>'; return; }
-    el.innerHTML = logs.slice().reverse().map(l =>
-      `<div class="log-item" style="padding:10px 16px">
-        <div class="log-ic ${l.level==='error'?'err':l.level==='warn'?'warn':'ok'}">${l.level==='error'?'✕':l.level==='warn'?'!':'✓'}</div>
-        <div class="log-msg">${l.msg}</div>
-        <div class="log-time">${l.time}</div>
-      </div>`
-    ).join('');
-  } catch(e) {}
-}
-
-async function viderLog() {
-  await fetch('/api/log/clear', {method:'POST'});
-  chargerJournal(); chargerLogDash();
-  toast("Journal vidé");
-}
-
-// ============================================================
-// CONFIG
-// ============================================================
-async function chargerConfig() {
-  try {
-    // Statut base de données
-    const rs = await fetch('/api/config/status');
-    const ds = await rs.json();
-    const dbEl = document.getElementById('db-status');
-    if(dbEl) {
-      if(ds.stats && ds.stats.nb_prod > 0) {
-        dbEl.textContent = ds.stats.nb_prod + ' producteurs chargés — Base active';
-        dbEl.style.color = 'var(--vm)';
-      } else {
-        dbEl.textContent = 'Aucun producteur — Importez le registre RA';
-        dbEl.style.color = 'var(--tg)';
-      }
-    }
-    const r = await fetch('/api/licence/status');
-    const d = await r.json();
-    G.licInfo = d.info || {};
-    const el = document.getElementById('lic-info-block');
-    if(d.licensed && d.info.expire) {
-      el.innerHTML = `
-        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--s1)"><span style="color:var(--tg)">Statut</span><span style="color:var(--vc);font-weight:600">✓ Active</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--s1)"><span style="color:var(--tg)">Expire le</span><span style="font-weight:600">${d.info.expire}</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0"><span style="color:var(--tg)">Clé</span><span style="font-size:11px;color:var(--tg)">${d.info.key||'—'}</span></div>`;
-      document.getElementById('sb-expire').textContent = d.info.expire || '—';
-    } else {
-      el.innerHTML = '<div style="color:#EF4444;font-size:13px">Licence non active</div>';
-    }
-  } catch(e) {}
-}
-
-async function importXlsm(file) {
-  if(!file) return;
-  const fd = new FormData(); fd.append('file', file);
-  toast('Chargement du fichier...');
-  try {
-    const r = await fetch('/api/config/fichier', {method:'POST', body:fd});
-    const d = await r.json();
-    if(d.erreur) { toast(d.erreur, true); return; }
-    document.getElementById('xlsm-status').textContent = '✓ Fichier chargé : ' + d.fichier;
-    if(d.besoin_import_ra) {
-      toast("✓ Fichier chargé — Importez maintenant le registre RA pour charger les producteurs");
-      // Naviguer automatiquement vers la page import
-      setTimeout(() => goPage('import', document.querySelectorAll('.sb-item')[3]), 1500);
-    } else {
-      toast("✓ Fichier chargé — " + d.nb_producteurs + " producteurs trouvés");
-    }
-    chargerDashboard(); chargerTopProd(); chargerSections();
-  } catch(e) { toast('Erreur de chargement', true) }
-}
-
-async function setCalendrier(cal) {
-  try {
-    await fetch('/api/calendrier/set', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({calendrier:cal})});
-    document.getElementById('cal-nouveau').classList.toggle('on', cal==='NOUVEAU');
-    document.getElementById('cal-ancien').classList.toggle('on',  cal==='ANCIEN');
-    document.getElementById('cal-status').textContent = 'Calendrier : ' + (cal==='NOUVEAU'?'Nouveau (sept→fév / mars→août)':'Ancien (oct→avr / mai→sept)');
-    toast("✓ Calendrier mis à jour");
-  } catch(e) {}
-}
-
-async function actualiserStocks() {
-  toast("Actualisation des stocks...");
-  try {
-    await fetch('/api/dashboard');
-    chargerDashboard(); chargerTopProd(); chargerSections();
-    toast("✓ Stocks actualisés");
-  } catch(e) { toast("Erreur", true) }
-}
-
-// ============================================================
-// EXPORTS
-// ============================================================
-function exportPDF() {
-  if(!G.derniereReponse) { toast("Aucune fiche à exporter", true); return; }
-  toast("Export PDF en développement — utilisez l'export Excel", true, 4000);
-}
-async function exportExcel() {
-  if(!G.derniereReponse) { toast("Aucune fiche à exporter", true); return; }
-  toast("Génération du fichier Excel...");
-  try {
-    const r = await fetch('/api/export/excel', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({fiche: G.derniereReponse})
-    });
-    if(!r.ok) {
-      const d = await r.json();
-      toast(d.erreur || 'Erreur export', true);
-      return;
-    }
-    // Télécharger le fichier
-    const blob = await r.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    const cd   = r.headers.get('Content-Disposition') || '';
-    const match = cd.match(/filename="?([^"]+)"?/);
-    a.download = match ? match[1] : 'fiche_export.xlsx';
-    a.href = url;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast("✓ Fichier Excel téléchargé");
-  } catch(e) { toast("Erreur export Excel", true) }
-}
-
-// ============================================================
-// UTILITAIRES
-// ============================================================
-function fmt(n) { return (n||0).toLocaleString('fr-FR'); }
-
-function setDatesDefaut() {
-  const today = new Date();
-  const fin   = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-  document.getElementById('f-debut').value = today.toISOString().split('T')[0];
-  document.getElementById('f-fin').value   = fin.toISOString().split('T')[0];
-}
-
-// ============================================================
-// FICHES GENEREES
-// ============================================================
-async function chargerFiches() {
-  try {
-    const r = await fetch('/api/fiches');
-    const fiches = await r.json();
-    const tbody = document.getElementById('fiches-body');
-    if(!fiches || fiches.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--tg)">Aucune fiche générée</td></tr>';
-      return;
-    }
-    tbody.innerHTML = fiches.map((f, i) => `
-      <tr style="background:${i%2===0?'#fff':'#f9f9f9'};font-size:12px">
-        <td style="padding:10px;font-weight:600;color:var(--vf)">${f.fiche_id||''}</td>
-        <td style="padding:10px">${f.periode||''}</td>
-        <td style="padding:10px;text-align:right">${(f.poids_total||0).toLocaleString()}</td>
-        <td style="padding:10px;text-align:right">${f.nb_producteurs||0}</td>
-        <td style="padding:10px;text-align:right">${(f.montant||0).toLocaleString()}</td>
-        <td style="padding:10px;text-align:center">${f.date_generation||''}</td>
-        <td style="padding:10px;text-align:center">
-          <button onclick="telechargerFiche('${f.fiche_id}')" style="background:var(--vf);color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer">⬇ Excel</button>
-        </td>
-      </tr>
-    `).join('');
-  } catch(e) { console.error('Erreur fiches:', e); }
-}
-
-async function telechargerFiche(ficheId) {
-  try {
-    const r = await fetch(`/api/fiches/${ficheId}/excel`);
-    if(!r.ok) { toast("Erreur téléchargement", true); return; }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const cd = r.headers.get('Content-Disposition') || '';
-    const match = cd.match(/filename="?([^"]+)"?/);
-    a.download = match ? match[1] : `${ficheId}.xlsx`;
-    a.href = url; a.click();
-    URL.revokeObjectURL(url);
-  } catch(e) { toast("Erreur téléchargement", true); }
-}
-
-// ============================================================
-// DECONNEXION
-// ============================================================
-async function seDeconnecter() {
-  if(!confirm('Se déconnecter ? Vos données restent enregistrées.')) return;
-  try {
-    await fetch('/api/logout', {method:'POST'});
-  } catch(e) {}
-  window.location.href = '/';
-}
-
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener('DOMContentLoaded', async () => {
-  setDatesDefaut();
-  await chargerDashboard();
-  await chargerTopProd();
-  await chargerLogDash();
-  await chargerSections();
-  await chargerConfig();
-});
-</script>
 </head>
 <body>
 
@@ -967,31 +366,27 @@ window.addEventListener('DOMContentLoaded', async () => {
   <nav class="sb-nav">
     <div class="sb-section">Principal</div>
     <button class="sb-item active" onclick="goPage('dashboard',this)">
-      <span class="ico">📊</span><span class="lbl">Tableau de bord</span>
+      <span class="ico">\ud83d\udcca</span><span class="lbl">Tableau de bord</span>
     </button>
     <button class="sb-item" onclick="goPage('generer',this)">
-      <span class="ico">📋</span><span class="lbl">Générer une fiche</span>
+      <span class="ico">\ud83d\udccb</span><span class="lbl">G\u00e9n\u00e9rer une fiche</span>
     </button>
     <button class="sb-item" onclick="goPage('producteurs',this)">
-      <span class="ico">👥</span><span class="lbl">Producteurs</span>
-      <span class="badge" id="nb-prod">—</span>
+      <span class="ico">\ud83d\udc65</span><span class="lbl">Producteurs</span>
+      <span class="badge" id="nb-prod">\u2014</span>
     </button>
 
-    <div class="sb-section">Données</div>
+    <div class="sb-section">Donn\u00e9es</div>
     <button class="sb-item" onclick="goPage('import',this)">
-      <span class="ico">📥</span><span class="lbl">Import Registre RA</span>
-      <span class="badge" id="nb-import">1×</span>
-    </button>
-    <button class="sb-item" onclick="goPage('fiches',this)">
-      <span class="ico">📂</span><span class="lbl">Fiches générées</span>
+      <span class="ico">\ud83d\udce5</span><span class="lbl">Import Registre RA</span>
     </button>
     <button class="sb-item" onclick="goPage('journal',this)">
-      <span class="ico">📝</span><span class="lbl">Journal</span>
+      <span class="ico">\ud83d\udcdd</span><span class="lbl">Journal</span>
     </button>
 
-    <div class="sb-section">Paramètres</div>
+    <div class="sb-section">Param\u00e8tres</div>
     <button class="sb-item" onclick="goPage('config',this)">
-      <span class="ico">⚙️</span><span class="lbl">Configuration</span>
+      <span class="ico">\u2699\ufe0f</span><span class="lbl">Configuration</span>
     </button>
   </nav>
 
@@ -1002,19 +397,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     </div>
     <div class="sb-user">
       <img class="sb-user-img" src="/static/wilfried.jpg" alt="W" onerror="this.style.display='none'">
-      <div style="flex:1">
+      <div>
         <div class="sb-user-name">Wilfried VABOU</div>
-        <div class="sb-user-role">Responsable Durabilité</div>
+        <div class="sb-user-role">Responsable Durabilit\u00e9</div>
       </div>
     </div>
-    <button onclick="seDeconnecter()" style="
-      width:100%;margin-top:8px;height:34px;
-      background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);
-      border-radius:8px;color:rgba(239,68,68,.8);font-size:12px;font-weight:500;
-      cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;
-      display:flex;align-items:center;justify-content:center;gap:6px;
-    " onmouseover="this.style.background='rgba(239,68,68,.2)'" 
-       onmouseout="this.style.background='rgba(239,68,68,.12)'">
+    <button onclick="seDeconnecter()" style="width:100%;margin-top:8px;height:32px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);border-radius:8px;color:rgba(239,68,68,.8);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif">
       ⏏ Se déconnecter
     </button>
   </div>
@@ -1030,8 +418,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       <div class="topbar-sub" id="tb-sub">Vue d'ensemble de la campagne</div>
     </div>
     <div class="topbar-right">
-      <div class="tb-badge"><span class="tb-dot"></span>Système actif</div>
-      <button class="tb-btn" onclick="actualiserStocks()">↻ Actualiser</button>
+      <div class="tb-badge"><span class="tb-dot"></span>Syst\u00e8me actif</div>
+      <button class="tb-btn" onclick="actualiserStocks()">\u21bb Actualiser</button>
     </div>
   </div>
 
@@ -1041,24 +429,24 @@ window.addEventListener('DOMContentLoaded', async () => {
     <div class="page active" id="page-dashboard">
       <div class="kpi-grid">
         <div class="kpi accent">
-          <div class="kpi-val" id="kpi-stock">—</div>
+          <div class="kpi-val" id="kpi-stock">\u2014</div>
           <div class="kpi-lbl">Stock disponible (kg)</div>
           <div class="kpi-sub" id="kpi-periode">Chargement...</div>
         </div>
         <div class="kpi">
-          <div class="kpi-val" id="kpi-prod">—</div>
+          <div class="kpi-val" id="kpi-prod">\u2014</div>
           <div class="kpi-lbl">Producteurs</div>
-          <div class="kpi-sub" id="kpi-util">— utilisés</div>
+          <div class="kpi-sub" id="kpi-util">\u2014 utilis\u00e9s</div>
         </div>
         <div class="kpi">
-          <div class="kpi-val" id="kpi-fiches">—</div>
-          <div class="kpi-lbl">Fiches générées</div>
+          <div class="kpi-val" id="kpi-fiches">\u2014</div>
+          <div class="kpi-lbl">Fiches g\u00e9n\u00e9r\u00e9es</div>
           <div class="kpi-sub">Cette campagne</div>
         </div>
         <div class="kpi">
-          <div class="kpi-val" id="kpi-cal">—</div>
+          <div class="kpi-val" id="kpi-cal">\u2014</div>
           <div class="kpi-lbl">Calendrier</div>
-          <div class="kpi-sub" id="kpi-cal-sub">—</div>
+          <div class="kpi-sub" id="kpi-cal-sub">\u2014</div>
         </div>
       </div>
 
@@ -1067,7 +455,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         <div class="card">
           <div class="card-head">
             <div class="card-title">Top producteurs prioritaires</div>
-            <button onclick="goPage('producteurs',document.querySelector('.sb-item:nth-child(3)'))" style="font-size:11px;color:var(--vm);background:none;border:none;cursor:pointer">Voir tous →</button>
+            <button onclick="goPage('producteurs',document.querySelector('.sb-item:nth-child(3)'))" style="font-size:11px;color:var(--vm);background:none;border:none;cursor:pointer">Voir tous \u2192</button>
           </div>
           <div class="card-body" style="padding:0">
             <table class="prod-table">
@@ -1093,9 +481,9 @@ window.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
           <div class="card">
-            <div class="card-head"><div class="card-title">Journal récent</div></div>
+            <div class="card-head"><div class="card-title">Journal r\u00e9cent</div></div>
             <div class="card-body" style="padding:0" id="log-dash">
-              <div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Aucune activité</div>
+              <div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Aucune activit\u00e9</div>
             </div>
           </div>
         </div>
@@ -1111,7 +499,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             <div class="form-section-title">Volume & dates</div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Poids total demandé (kg)</label>
+                <label class="form-label">Poids total demand\u00e9 (kg)</label>
                 <input class="form-input large" type="number" id="f-poids" placeholder="Ex: 10000" min="25">
               </div>
               <div class="form-group">
@@ -1124,11 +512,11 @@ window.addEventListener('DOMContentLoaded', async () => {
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Date de début des livraisons</label>
+                <label class="form-label">Date de d\u00e9but des livraisons</label>
                 <input class="form-input" type="date" id="f-debut">
               </div>
               <div class="form-group">
-                <label class="form-label">Date limite (référence)</label>
+                <label class="form-label">Date limite (r\u00e9f\u00e9rence)</label>
                 <input class="form-input" type="date" id="f-fin">
               </div>
             </div>
@@ -1139,66 +527,66 @@ window.addEventListener('DOMContentLoaded', async () => {
             <div style="display:flex;gap:10px">
               <label style="flex:1;cursor:pointer">
                 <input type="radio" name="calendrier" value="NOUVEAU" checked style="margin-right:6px">
-                <span style="font-size:13px">Nouveau <span style="font-size:11px;color:var(--tg)">(sept→fév / mars→août)</span></span>
+                <span style="font-size:13px">Nouveau <span style="font-size:11px;color:var(--tg)">(sept\u2192f\u00e9v / mars\u2192ao\u00fbt)</span></span>
               </label>
               <label style="flex:1;cursor:pointer">
                 <input type="radio" name="calendrier" value="ANCIEN" style="margin-right:6px">
-                <span style="font-size:13px">Ancien <span style="font-size:11px;color:var(--tg)">(oct→avr / mai→sept)</span></span>
+                <span style="font-size:13px">Ancien <span style="font-size:11px;color:var(--tg)">(oct\u2192avr / mai\u2192sept)</span></span>
               </label>
             </div>
           </div>
 
           <div class="form-section">
-            <div class="form-section-title">Sections à mobiliser</div>
+            <div class="form-section-title">Sections \u00e0 mobiliser</div>
             <div class="chips-wrap" id="sections-chips">
               <span style="font-size:12px;color:var(--tg)">Chargement des sections...</span>
             </div>
             <div class="vol-bar-wrap" id="vol-bar-wrap" style="display:none">
               <div class="vol-bar-head">
-                <span id="vol-label">Volume sélectionné</span>
+                <span id="vol-label">Volume s\u00e9lectionn\u00e9</span>
                 <span id="vol-val">0 kg</span>
               </div>
               <div class="vol-bar-bg"><div class="vol-bar-fill" id="vol-fill" style="width:0%"></div></div>
               <div class="vol-alert" id="vol-alert">
-                ⚠️ Les sections sélectionnées représentent moins de 20% du volume total. Ajoutez des sections pour réduire le nombre de producteurs par fiche.
+                \u26a0\ufe0f Les sections s\u00e9lectionn\u00e9es repr\u00e9sentent moins de 20% du volume total. Ajoutez des sections pour r\u00e9duire le nombre de producteurs par fiche.
               </div>
             </div>
           </div>
 
           <div class="form-section">
             <button class="btn-gen" id="btn-gen" onclick="lancerGeneration()">
-              <span>▶</span> Générer la fiche
+              <span>\u25b6</span> G\u00e9n\u00e9rer la fiche
             </button>
           </div>
 
-          <!-- Journal temps réel -->
+          <!-- Journal temps r\u00e9el -->
           <div class="form-section" id="journal-gen" style="display:none">
-            <div class="form-section-title">Journal en temps réel</div>
+            <div class="form-section-title">Journal en temps r\u00e9el</div>
             <div class="journal-log" id="journal-log-gen"></div>
           </div>
         </div>
 
-        <!-- Résultat -->
+        <!-- R\u00e9sultat -->
         <div class="result-panel">
           <div class="result-empty" id="result-empty">
-            <div class="re-ico">📋</div>
-            <p>La fiche générée apparaîtra ici.<br>Remplissez le formulaire et cliquez sur "Générer".</p>
+            <div class="re-ico">\ud83d\udccb</div>
+            <p>La fiche g\u00e9n\u00e9r\u00e9e appara\u00eetra ici.<br>Remplissez le formulaire et cliquez sur "G\u00e9n\u00e9rer".</p>
           </div>
           <div class="result-content" id="result-content">
             <div class="result-head">
-              <div class="result-id" id="r-id">—</div>
-              <div class="result-titre" id="r-titre">—</div>
+              <div class="result-id" id="r-id">\u2014</div>
+              <div class="result-titre" id="r-titre">\u2014</div>
             </div>
             <div class="result-stats">
-              <div class="rs"><div class="rs-val" id="r-prod">—</div><div class="rs-lbl">Producteurs</div></div>
-              <div class="rs"><div class="rs-val" id="r-poids">—</div><div class="rs-lbl">kg total</div></div>
-              <div class="rs"><div class="rs-val" id="r-sacs">—</div><div class="rs-lbl">Sacs</div></div>
-              <div class="rs"><div class="rs-val" id="r-montant">—</div><div class="rs-lbl">FCFA</div></div>
+              <div class="rs"><div class="rs-val" id="r-prod">\u2014</div><div class="rs-lbl">Producteurs</div></div>
+              <div class="rs"><div class="rs-val" id="r-poids">\u2014</div><div class="rs-lbl">kg total</div></div>
+              <div class="rs"><div class="rs-val" id="r-sacs">\u2014</div><div class="rs-lbl">Sacs</div></div>
+              <div class="rs"><div class="rs-val" id="r-montant">\u2014</div><div class="rs-lbl">FCFA</div></div>
             </div>
             <div class="result-lignes" id="result-lignes"></div>
             <div class="result-actions">
-              <button class="btn-pdf" onclick="exportPDF()">⬇ Export PDF</button>
-              <button class="btn-excel" onclick="exportExcel()">⬇ Export Excel</button>
+              <button class="btn-pdf" onclick="exportPDF()">\u2b07 Export PDF</button>
+              <button class="btn-excel" onclick="exportExcel()">\u2b07 Export Excel</button>
             </div>
           </div>
         </div>
@@ -1209,26 +597,26 @@ window.addEventListener('DOMContentLoaded', async () => {
     <div class="page" id="page-import">
       <div style="max-width:640px;margin:0 auto">
         <div class="card" style="margin-bottom:20px">
-          <div class="card-head"><div class="card-title">Importer le registre RA — Chargement unique</div></div>
+          <div class="card-head"><div class="card-title">Importer le registre Rainforest Alliance</div></div>
           <div class="card-body">
             <div class="import-zone" id="import-zone" onclick="document.getElementById('ra-file').click()"
                  ondragover="e=>{e.preventDefault();this.classList.add('drag')}"
                  ondragleave="this.classList.remove('drag')"
                  ondrop="handleDrop(event)">
-              <div class="iz-ico">📊</div>
+              <div class="iz-ico">\ud83d\udcca</div>
               <div class="iz-title">Glissez votre registre RA ici</div>
-              <div class="iz-sub">Fichier Excel (.xlsx) — Registre Rainforest Alliance<br>Chargement automatique des producteurs + calcul GT (80%) et PT (20%)</div>
+              <div class="iz-sub">Fichier Excel (.xlsx) \u2014 Annexe S13 Rainforest Alliance<br>Structure : Exploitation \u00b7 Produit certifi\u00e9 \u00b7 Unit\u00e9 agricole</div>
               <label class="iz-btn">Choisir le fichier</label>
               <input type="file" id="ra-file" accept=".xlsx,.xls" style="display:none" onchange="importRA(this.files[0])">
             </div>
 
             <div class="import-result" id="import-result">
-              <div class="ir-ico">✅</div>
-              <div class="ir-title">Import réussi — Base Parcelles mise à jour</div>
+              <div class="ir-ico">\u2705</div>
+              <div class="ir-title">Import r\u00e9ussi \u2014 Base Parcelles mise \u00e0 jour</div>
               <div class="ir-stats">
-                <div class="ir-stat"><div class="ir-sv" id="ir-ajoutes">—</div><div class="ir-sl">Ajoutés</div></div>
-                <div class="ir-stat"><div class="ir-sv" id="ir-maj">—</div><div class="ir-sl">Mis à jour</div></div>
-                <div class="ir-stat"><div class="ir-sv" id="ir-total">—</div><div class="ir-sl">Total RA</div></div>
+                <div class="ir-stat"><div class="ir-sv" id="ir-ajoutes">\u2014</div><div class="ir-sl">Ajout\u00e9s</div></div>
+                <div class="ir-stat"><div class="ir-sv" id="ir-maj">\u2014</div><div class="ir-sl">Mis \u00e0 jour</div></div>
+                <div class="ir-stat"><div class="ir-sv" id="ir-total">\u2014</div><div class="ir-sl">Total RA</div></div>
               </div>
             </div>
           </div>
@@ -1240,15 +628,15 @@ window.addEventListener('DOMContentLoaded', async () => {
             <div style="display:flex;flex-direction:column;gap:10px">
               <div style="display:flex;gap:12px;align-items:flex-start">
                 <div style="width:24px;height:24px;border-radius:50%;background:var(--vf);color:var(--or);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">1</div>
-                <div><div style="font-size:13px;font-weight:500;color:var(--td)">Onglet "L'exploitation agricole"</div><div style="font-size:12px;color:var(--tg);margin-top:2px">Extrait : ID producteur, Nom, Section (Région inspection), Village</div></div>
+                <div><div style="font-size:13px;font-weight:500;color:var(--td)">Onglet "L'exploitation agricole"</div><div style="font-size:12px;color:var(--tg);margin-top:2px">Extrait : ID producteur, Nom, Section (R\u00e9gion inspection), Village</div></div>
               </div>
               <div style="display:flex;gap:12px;align-items:flex-start">
                 <div style="width:24px;height:24px;border-radius:50%;background:var(--vf);color:var(--or);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">2</div>
-                <div><div style="font-size:13px;font-weight:500;color:var(--td)">Onglet "Produit agricole certifié"</div><div style="font-size:12px;color:var(--tg);margin-top:2px">Extrait : Estimation récolte année courante (kg)</div></div>
+                <div><div style="font-size:13px;font-weight:500;color:var(--td)">Onglet "Produit agricole certifi\u00e9"</div><div style="font-size:12px;color:var(--tg);margin-top:2px">Extrait : Estimation r\u00e9colte ann\u00e9e courante (kg)</div></div>
               </div>
               <div style="display:flex;gap:12px;align-items:flex-start">
                 <div style="width:24px;height:24px;border-radius:50%;background:var(--vf);color:var(--or);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">3</div>
-                <div><div style="font-size:13px;font-weight:500;color:var(--td)">Onglet "Unité agricole"</div><div style="font-size:12px;color:var(--tg);margin-top:2px">Extrait : ID parcelle, Latitude, Longitude (coordonnées GPS)</div></div>
+                <div><div style="font-size:13px;font-weight:500;color:var(--td)">Onglet "Unit\u00e9 agricole"</div><div style="font-size:12px;color:var(--tg);margin-top:2px">Extrait : ID parcelle, Latitude, Longitude (coordonn\u00e9es GPS)</div></div>
               </div>
             </div>
           </div>
@@ -1268,9 +656,9 @@ window.addEventListener('DOMContentLoaded', async () => {
         <div style="padding:12px 20px">
           <div class="prod-filters">
             <button class="pf-btn on" onclick="filtrerStatut('tous',this)">Tous</button>
-            <button class="pf-btn" onclick="filtrerStatut('faible',this)">Peu utilisés</button>
-            <button class="pf-btn" onclick="filtrerStatut('moyen',this)">Modérés</button>
-            <button class="pf-btn" onclick="filtrerStatut('eleve',this)">Très utilisés</button>
+            <button class="pf-btn" onclick="filtrerStatut('faible',this)">Peu utilis\u00e9s</button>
+            <button class="pf-btn" onclick="filtrerStatut('moyen',this)">Mod\u00e9r\u00e9s</button>
+            <button class="pf-btn" onclick="filtrerStatut('eleve',this)">Tr\u00e8s utilis\u00e9s</button>
           </div>
         </div>
         <div style="padding:0">
@@ -1323,11 +711,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     <div class="page" id="page-journal">
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Journal des opérations</div>
+          <div class="card-title">Journal des op\u00e9rations</div>
           <button onclick="viderLog()" style="font-size:11px;color:#EF4444;background:none;border:none;cursor:pointer">Vider</button>
         </div>
         <div id="journal-full" style="padding:0 16px;max-height:600px;overflow-y:auto">
-          <div style="text-align:center;padding:24px;color:var(--tg);font-size:12px">Aucune entrée dans le journal</div>
+          <div style="text-align:center;padding:24px;color:var(--tg);font-size:12px">Aucune entr\u00e9e dans le journal</div>
         </div>
       </div>
     </div>
@@ -1336,15 +724,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     <div class="page" id="page-config">
       <div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
         <div class="card">
-          <div class="card-head"><div class="card-title">Base de données</div></div>
+          <div class="card-head"><div class="card-title">Fichier FichePro Manager (.xlsm)</div></div>
           <div class="card-body">
-            <div style="display:flex;align-items:center;gap:10px;padding:10px 0">
-              <div style="width:10px;height:10px;border-radius:50%;background:var(--vc)"></div>
-              <div style="font-size:13px;color:var(--td)" id="db-status">Vérification en cours...</div>
-            </div>
-            <div style="font-size:12px;color:var(--tg);margin-top:4px">
-              Pour charger vos producteurs, utilisez <strong style="color:var(--vf)">Import Registre RA</strong> dans le menu de gauche.
-            </div>
+            <div style="font-size:12px;color:var(--tg);margin-bottom:12px">Importez votre fichier Excel FichePro Manager. Toutes les donn\u00e9es seront lues et mises \u00e0 jour depuis ce fichier.</div>
+            <input type="file" id="xlsm-file" accept=".xlsm,.xlsx" style="display:none" onchange="importXlsm(this.files[0])">
+            <button onclick="document.getElementById('xlsm-file').click()" style="height:38px;background:var(--vf);color:var(--or);border:none;border-radius:8px;padding:0 20px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Choisir le fichier .xlsm</button>
+            <div style="font-size:11px;color:var(--tg);margin-top:8px" id="xlsm-status">Aucun fichier charg\u00e9</div>
           </div>
         </div>
 
@@ -1360,12 +745,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         <div class="card">
           <div class="card-head"><div class="card-title">Calendrier de campagne</div></div>
           <div class="card-body">
-            <div style="font-size:12px;color:var(--tg);margin-bottom:12px">Le calendrier choisi s'applique à toutes les générations de fiches de la session.</div>
+            <div style="font-size:12px;color:var(--tg);margin-bottom:12px">Le calendrier choisi s'applique \u00e0 toutes les g\u00e9n\u00e9rations de fiches de la session.</div>
             <div style="display:flex;gap:16px">
               <button onclick="setCalendrier('NOUVEAU')" class="pf-btn" id="cal-nouveau">Nouveau (depuis 2026)</button>
-              <button onclick="setCalendrier('ANCIEN')" class="pf-btn" id="cal-ancien">Ancien (≤ 2025-2026)</button>
+              <button onclick="setCalendrier('ANCIEN')" class="pf-btn" id="cal-ancien">Ancien (\u2264 2025-2026)</button>
             </div>
-            <div style="font-size:11px;color:var(--tg);margin-top:10px" id="cal-status">—</div>
+            <div style="font-size:11px;color:var(--tg);margin-top:10px" id="cal-status">\u2014</div>
           </div>
         </div>
       </div>
@@ -1378,15 +763,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 <div class="modal-overlay" id="modal-auth">
   <div class="modal">
     <div class="modal-title">Autorisation requise</div>
-    <div class="modal-sub">La limite de 30% par producteur est atteinte. Pour distribuer le volume restant, une augmentation progressive du palier est nécessaire.</div>
+    <div class="modal-sub">La limite de 30% par producteur est atteinte. Pour distribuer le volume restant, une augmentation progressive du palier est n\u00e9cessaire.</div>
     <div class="modal-info">
-      <div class="modal-info-row"><span class="modal-info-label">Volume restant</span><span class="modal-info-val" id="m-restant">—</span></div>
-      <div class="modal-info-row"><span class="modal-info-label">Palier nécessaire</span><span class="modal-info-val" id="m-palier">—</span></div>
-      <div class="modal-info-row"><span class="modal-info-label">Limite actuelle</span><span class="modal-info-val" id="m-actuel">—</span></div>
+      <div class="modal-info-row"><span class="modal-info-label">Volume restant</span><span class="modal-info-val" id="m-restant">\u2014</span></div>
+      <div class="modal-info-row"><span class="modal-info-label">Palier n\u00e9cessaire</span><span class="modal-info-val" id="m-palier">\u2014</span></div>
+      <div class="modal-info-row"><span class="modal-info-label">Limite actuelle</span><span class="modal-info-val" id="m-actuel">\u2014</span></div>
     </div>
     <div class="modal-btns">
       <button class="modal-btn-cancel" onclick="refuserPalier()">Annuler la fiche</button>
-      <button class="modal-btn-ok" onclick="accepterPalier()">Autoriser → <span id="m-palier-btn">—</span></button>
+      <button class="modal-btn-ok" onclick="accepterPalier()">Autoriser \u2192 <span id="m-palier-btn">\u2014</span></button>
     </div>
   </div>
 </div>
@@ -1394,6 +779,568 @@ window.addEventListener('DOMContentLoaded', async () => {
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<script>
+// ============================================================
+// \u00c9TAT GLOBAL
+// ============================================================
+let G = {
+  sections: [],
+  sectionsSelectionnees: new Set(),
+  volTotal: 0,
+  volSect: 0,
+  derniereReponse: null,
+  etatPartiel: null,
+  periode: '',
+  produits: [],
+  filtreStatut: 'tous',
+  licInfo: {}
+};
 
+// ============================================================
+// NAVIGATION
+// ============================================================
+const pageMeta = {
+  'dashboard'   : ['Tableau de bord',   'Vue d\'ensemble de la campagne'],
+  'generer'     : ['G\u00e9n\u00e9rer une fiche', 'Remplissez les param\u00e8tres et lancez la g\u00e9n\u00e9ration'],
+  'producteurs' : ['Producteurs',       'Liste et suivi des producteurs'],
+  'import'      : ['Import Registre RA','Importez votre fichier Rainforest Alliance'],
+  'journal'     : ['Journal',           'Historique des op\u00e9rations'],
+  'config'      : ['Configuration',     'Param\u00e8tres du fichier et de la licence']
+};
+
+function goPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(pageMeta[id]) {
+    document.getElementById('tb-title').textContent = pageMeta[id][0];
+    document.getElementById('tb-sub').textContent   = pageMeta[id][1];
+  }
+  if(id === 'producteurs') chargerProducteurs();
+  if(id === 'journal') chargerJournal();
+  if(id === 'fiches') chargerFiches();
+  if(id === 'config') chargerConfig();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg, err=false, ms=3200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (err?' err':'') + ' show';
+  setTimeout(() => t.className = 'toast', ms);
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function chargerDashboard() {
+  try {
+    const r = await fetch('/api/dashboard');
+    const d = await r.json();
+    if(d.erreur) return;
+    G.volTotal = d.vol_total || 0;
+    G.periode  = d.periode  || '';
+    document.getElementById('kpi-stock').textContent  = fmt(d.vol_total);
+    document.getElementById('kpi-prod').textContent   = d.nb_prod || '\u2014';
+    document.getElementById('kpi-util').textContent   = (d.nb_utilises||0) + ' utilis\u00e9s';
+    document.getElementById('kpi-fiches').textContent = d.nb_fiches || '0';
+    document.getElementById('kpi-cal').textContent    = d.calendrier === 'NOUVEAU' ? 'Nouveau' : d.calendrier === 'ANCIEN' ? 'Ancien' : '\u2014';
+    document.getElementById('kpi-cal-sub').textContent= d.periode || '\u2014';
+    document.getElementById('kpi-periode').textContent= d.periode  || '\u2014';
+    document.getElementById('nb-prod').textContent    = d.nb_prod  || '\u2014';
+    // Sections dashboard
+    const sc = d.sections || {};
+    const sdEl = document.getElementById('sections-dash');
+    const sKeys = Object.keys(sc).sort((a,b) => sc[b].vol - sc[a].vol);
+    sdEl.innerHTML = sKeys.slice(0,6).map(s =>
+      `<div class="sect-item">
+        <div><div class="sect-name">${s}</div><div class="sect-vol">${fmt(sc[s].vol)} kg</div></div>
+        <span class="sect-nb">${sc[s].nb} prod.</span>
+      </div>`
+    ).join('') || '<div style="padding:16px;font-size:12px;color:var(--tg)">Aucune section</div>';
+  } catch(e) { console.error(e) }
+}
+
+async function chargerTopProd() {
+  try {
+    const r = await fetch('/api/producteurs');
+    const d = await r.json();
+    G.produits = d;
+    const tbody = document.getElementById('top-prod-tbody');
+    const top = d.slice(0,8);
+    if(!top.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--tg)">Aucun producteur</td></tr>'; return; }
+    tbody.innerHTML = top.map(p => {
+      const pct = p.pct || 0;
+      const col = pct >= 80 ? 'danger' : pct >= 50 ? 'warn' : '';
+      return `<tr>
+        <td><span style="font-size:10px;background:var(--s1);padding:2px 6px;border-radius:4px">${p.code}</span></td>
+        <td>${p.nom}</td>
+        <td>${p.sect}</td>
+        <td>${fmt(p.stk)} kg</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="pct-bar"><div class="pct-fill ${col}" style="width:${Math.min(100,pct)}%"></div></div>
+            <span class="pct-text" style="color:${pct>=80?'#EF4444':pct>=50?'var(--or)':'var(--vc)'}">${pct}%</span>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {}
+}
+
+async function chargerLogDash() {
+  try {
+    const r = await fetch('/api/log');
+    const logs = await r.json();
+    const el = document.getElementById('log-dash');
+    if(!logs.length) { el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Aucune activit\u00e9</div>'; return; }
+    el.innerHTML = '<div class="card-body" style="padding:0 12px">' +
+      logs.slice(-5).reverse().map(l =>
+        `<div class="log-item">
+          <div class="log-ic ${l.level==='error'?'err':l.level==='warn'?'warn':'ok'}">${l.level==='error'?'\u2715':l.level==='warn'?'!':'\u2713'}</div>
+          <div class="log-msg">${l.msg}</div>
+          <div class="log-time">${l.time}</div>
+        </div>`
+      ).join('') + '</div>';
+  } catch(e) {}
+}
+
+// ============================================================
+// SECTIONS
+// ============================================================
+async function chargerSections() {
+  try {
+    const r = await fetch('/api/sections');
+    G.sections = await r.json();
+    renderChips();
+  } catch(e) {}
+}
+
+function renderChips() {
+  const wrap = document.getElementById('sections-chips');
+  if(!G.sections.length) {
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--tg)">Importez d\'abord votre registre RA pour voir les sections.</span>';
+    return;
+  }
+  wrap.innerHTML = G.sections.map(s =>
+    `<button class="chip ${G.sectionsSelectionnees.has(s.nom)?'sel':''}" onclick="toggleSection('${s.nom}')">${s.nom} <span style="font-size:10px;opacity:.7">${fmt(s.vol)} kg</span></button>`
+  ).join('');
+  majVolBar();
+}
+
+function toggleSection(nom) {
+  if(G.sectionsSelectionnees.has(nom)) G.sectionsSelectionnees.delete(nom);
+  else G.sectionsSelectionnees.add(nom);
+  renderChips();
+}
+
+function majVolBar() {
+  const wrap = document.getElementById('vol-bar-wrap');
+  const alert = document.getElementById('vol-alert');
+  if(!G.sections.length) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  G.volSect = G.sections.filter(s => G.sectionsSelectionnees.has(s.nom)).reduce((a,s)=>a+s.vol,0);
+  const pct = G.volTotal > 0 ? Math.round(G.volSect / G.volTotal * 100) : 0;
+  document.getElementById('vol-label').textContent = `Volume s\u00e9lectionn\u00e9 (${pct}% du total)`;
+  document.getElementById('vol-val').textContent   = `${fmt(G.volSect)} kg`;
+  document.getElementById('vol-fill').style.width  = `${Math.min(100,pct)}%`;
+  alert.className = 'vol-alert' + (pct > 0 && pct <= 20 ? ' show' : '');
+}
+
+// ============================================================
+// GENERATION
+// ============================================================
+function addLog(msg, level='info') {
+  const el = document.getElementById('journal-log-gen');
+  const ic = level==='error'?'\u2715':level==='warn'?'!':'\u2713';
+  const cls = level==='error'?'err':level==='warn'?'warn':'ok';
+  const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  el.innerHTML += `<div class="log-item"><div class="log-ic ${cls}">${ic}</div><div class="log-msg">${msg}</div><div class="log-time">${now}</div></div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function lancerGeneration() {
+  const poids = parseInt(document.getElementById('f-poids').value);
+  const prix  = parseFloat(document.getElementById('f-prix').value);
+  const debut = document.getElementById('f-debut').value;
+  const fin   = document.getElementById('f-fin').value;
+  const cal   = document.querySelector('input[name="calendrier"]:checked').value;
+  const sects = [...G.sectionsSelectionnees];
+
+  if(!poids || poids < 25)  { toast('Entrez un poids valide (min 25 kg)', true); return; }
+  if(!prix  || prix  < 1)   { toast('Entrez un prix au kg valide', true); return; }
+  if(!debut)                { toast('Entrez la date de d\u00e9but', true); return; }
+  if(!fin)                  { toast('Entrez la date limite', true); return; }
+  if(!sects.length)         { toast('S\u00e9lectionnez au moins une section', true); return; }
+  if(debut > fin)           { toast('La date de d\u00e9but doit \u00eatre avant la date limite', true); return; }
+
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true; btn.classList.add('loading');
+  btn.innerHTML = '<span>\u27f3</span> G\u00e9n\u00e9ration en cours...';
+  document.getElementById('journal-gen').style.display = 'block';
+  document.getElementById('journal-log-gen').innerHTML = '';
+  addLog('D\u00e9marrage de la g\u00e9n\u00e9ration...');
+  addLog(`Sections : ${sects.join(', ')}`);
+  addLog(`Volume : ${fmt(poids)} kg \u00b7 Prix : ${fmt(prix)} FCFA/kg`);
+
+  try {
+    const r = await fetch('/api/fiche/generer', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({poids_total:poids,d_debut:debut,d_ref:fin,
+                            sections:sects,prix_kg:prix,calendrier:cal})
+    });
+    const d = await r.json();
+
+    if(d.erreur) {
+      addLog(d.erreur, 'error');
+      toast(d.erreur, true, 5000);
+    } else if(d.autorisation_requise === 'limite_fiche') {
+      addLog(`Limite ${Math.round(d.limite_actuelle*100)}% atteinte \u2014 autorisation requise`, 'warn');
+      G.etatPartiel = d;
+      showModalAuth(d);
+    } else if(d.succes) {
+      addLog(`Fiche ${d.fiche_id} g\u00e9n\u00e9r\u00e9e avec succ\u00e8s !`);
+      addLog(`${d.nb_producteurs} producteurs \u00b7 ${fmt(d.poids_total)} kg \u00b7 ${fmt(d.montant)} FCFA`);
+      if(d.warnings) d.warnings.forEach(w => addLog(w, 'warn'));
+      afficherResultat(d);
+      G.derniereReponse = d;
+      chargerDashboard(); chargerTopProd(); chargerLogDash();
+      toast('\u2713 Fiche g\u00e9n\u00e9r\u00e9e avec succ\u00e8s !');
+    }
+  } catch(e) {
+    addLog('Erreur de connexion : ' + e.message, 'error');
+    toast('Erreur de connexion', true);
+  } finally {
+    btn.disabled = false; btn.classList.remove('loading');
+    btn.innerHTML = '<span>\u25b6</span> G\u00e9n\u00e9rer la fiche';
+  }
+}
+
+function afficherResultat(d) {
+  document.getElementById('result-empty').style.display = 'none';
+  const rc = document.getElementById('result-content');
+  rc.classList.add('show');
+  document.getElementById('r-id').textContent      = d.fiche_id;
+  document.getElementById('r-titre').textContent   = d.periode;
+  document.getElementById('r-prod').textContent    = d.nb_producteurs;
+  document.getElementById('r-poids').textContent   = fmt(d.poids_total);
+  document.getElementById('r-sacs').textContent    = d.nb_sacs;
+  document.getElementById('r-montant').textContent = fmt(d.montant);
+  const rl = document.getElementById('result-lignes');
+  rl.innerHTML = (d.lignes_fiche||[]).slice(0,30).map(l =>
+    `<div class="rl-row">
+      <span class="rl-code">${l.code}</span>
+      <span class="rl-nom">${l.nom}</span>
+      <span class="rl-poids">${fmt(l.poids)} kg</span>
+      <span class="rl-date">${l.date}</span>
+    </div>`
+  ).join('') + (d.lignes_fiche.length > 30 ?
+    `<div style="text-align:center;padding:10px;font-size:11px;color:var(--tg)">... et ${d.lignes_fiche.length-30} autres lignes dans le PDF</div>` : '');
+}
+
+// ============================================================
+// MODAL AUTORISATION
+// ============================================================
+function showModalAuth(d) {
+  document.getElementById('m-restant').textContent  = fmt(d.poids_restant) + ' kg';
+  document.getElementById('m-palier').textContent   = Math.round(d.palier_min*100) + '%';
+  document.getElementById('m-actuel').textContent   = Math.round(d.limite_actuelle*100) + '%';
+  document.getElementById('m-palier-btn').textContent = Math.round(d.palier_min*100) + '%';
+  document.getElementById('modal-auth').classList.add('on');
+}
+
+async function accepterPalier() {
+  document.getElementById('modal-auth').classList.remove('on');
+  if(!G.etatPartiel) return;
+  const e = G.etatPartiel;
+  addLog(`Autorisation accord\u00e9e \u2014 passage \u00e0 ${Math.round(e.palier_min*100)}%`, 'warn');
+  try {
+    const r = await fetch('/api/fiche/continuer', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        palier    : e.palier_min,
+        etat      : e.etat_partiel,
+        periode   : e.etat_partiel?.periode || G.periode,
+        d_debut   : document.getElementById('f-debut').value,
+        d_ref     : document.getElementById('f-fin').value,
+        prix_kg   : parseFloat(document.getElementById('f-prix').value),
+        poids_total: parseInt(document.getElementById('f-poids').value)
+      })
+    });
+    const d = await r.json();
+    if(d.succes) { afficherResultat(d); G.derniereReponse = d; toast('\u2713 Fiche compl\u00e9t\u00e9e avec palier \u00e9largi'); }
+    else toast(d.erreur || 'Erreur lors de la continuation', true);
+  } catch(e2) { toast('Erreur', true) }
+  G.etatPartiel = null;
+}
+
+function refuserPalier() {
+  document.getElementById('modal-auth').classList.remove('on');
+  G.etatPartiel = null;
+  addLog('G\u00e9n\u00e9ration annul\u00e9e par l\'utilisateur', 'warn');
+  toast('G\u00e9n\u00e9ration annul\u00e9e', true);
+}
+
+// ============================================================
+// IMPORT RA
+// ============================================================
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('import-zone').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f) importRA(f);
+}
+
+async function importRA(file) {
+  if(!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  toast('Import en cours...');
+  try {
+    const r = await fetch('/api/import/ra', {method:'POST', body:fd});
+    const d = await r.json();
+    if(d.erreur) { toast(d.erreur, true, 5000); return; }
+    document.getElementById('ir-ajoutes').textContent = d.ajoutes || 0;
+    document.getElementById('ir-maj').textContent     = d.mis_a_jour || 0;
+    document.getElementById('ir-total').textContent   = d.total || 0;
+    document.getElementById('import-result').classList.add('show');
+    toast(`\u2713 Import r\u00e9ussi : ${d.ajoutes} ajout\u00e9s, ${d.mis_a_jour} mis \u00e0 jour`);
+    chargerSections(); chargerDashboard(); chargerTopProd();
+  } catch(e) { toast('Erreur lors de l\'import', true) }
+}
+
+// ============================================================
+// PRODUCTEURS
+// ============================================================
+async function chargerProducteurs() {
+  try {
+    const r = await fetch('/api/producteurs');
+    G.produits = await r.json();
+    rendreTableauProd();
+  } catch(e) {}
+}
+
+function rendreTableauProd() {
+  const recherche = (document.getElementById('prod-search').value||'').toLowerCase();
+  let data = G.produits;
+  if(recherche) data = data.filter(p =>
+    p.nom.toLowerCase().includes(recherche) ||
+    p.code.toLowerCase().includes(recherche) ||
+    p.sect.toLowerCase().includes(recherche)
+  );
+  if(G.filtreStatut === 'faible')  data = data.filter(p => p.pct < 30);
+  if(G.filtreStatut === 'moyen')   data = data.filter(p => p.pct >= 30 && p.pct < 70);
+  if(G.filtreStatut === 'eleve')   data = data.filter(p => p.pct >= 70);
+  const tbody = document.getElementById('prod-tbody');
+  if(!data.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--tg)">Aucun producteur trouv\u00e9</td></tr>'; return; }
+  tbody.innerHTML = data.slice(0,100).map(p => {
+    const pct = p.pct || 0;
+    const col = pct >= 80 ? 'danger' : pct >= 50 ? 'warn' : '';
+    return `<tr>
+      <td><span style="font-size:10px;background:var(--s1);padding:2px 6px;border-radius:4px">${p.code}</span></td>
+      <td style="font-weight:500">${p.nom}</td>
+      <td>${p.sect}</td>
+      <td>${fmt(p.estim)} kg</td>
+      <td>${fmt(p.stk)} kg</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="pct-bar"><div class="pct-fill ${col}" style="width:${Math.min(100,pct)}%"></div></div>
+          <span class="pct-text" style="color:${pct>=80?'#EF4444':pct>=50?'var(--or)':'var(--vc)'}">${pct}%</span>
+        </div>
+      </td>
+      <td><span style="font-size:11px;color:var(--tg)">${p.score||'\u2014'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filtrerProd() { rendreTableauProd(); }
+function filtrerStatut(s, btn) {
+  G.filtreStatut = s;
+  document.querySelectorAll('.pf-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  rendreTableauProd();
+}
+
+// ============================================================
+// JOURNAL
+// ============================================================
+async function chargerJournal() {
+  try {
+    const r = await fetch('/api/log');
+    const logs = await r.json();
+    const el = document.getElementById('journal-full');
+    if(!logs.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--tg);font-size:12px">Aucune entr\u00e9e</div>'; return; }
+    el.innerHTML = logs.slice().reverse().map(l =>
+      `<div class="log-item" style="padding:10px 16px">
+        <div class="log-ic ${l.level==='error'?'err':l.level==='warn'?'warn':'ok'}">${l.level==='error'?'\u2715':l.level==='warn'?'!':'\u2713'}</div>
+        <div class="log-msg">${l.msg}</div>
+        <div class="log-time">${l.time}</div>
+      </div>`
+    ).join('');
+  } catch(e) {}
+}
+
+async function viderLog() {
+  await fetch('/api/log/clear', {method:'POST'});
+  chargerJournal(); chargerLogDash();
+  toast('Journal vid\u00e9');
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+async function chargerConfig() {
+  try {
+    const r = await fetch('/api/licence/status');
+    const d = await r.json();
+    G.licInfo = d.info || {};
+    const el = document.getElementById('lic-info-block');
+    if(d.licensed && d.info.expire) {
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--s1)"><span style="color:var(--tg)">Statut</span><span style="color:var(--vc);font-weight:600">\u2713 Active</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--s1)"><span style="color:var(--tg)">Expire le</span><span style="font-weight:600">${d.info.expire}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 0"><span style="color:var(--tg)">Cl\u00e9</span><span style="font-size:11px;color:var(--tg)">${d.info.key||'\u2014'}</span></div>`;
+      document.getElementById('sb-expire').textContent = d.info.expire || '\u2014';
+    } else {
+      el.innerHTML = '<div style="color:#EF4444;font-size:13px">Licence non active</div>';
+    }
+  } catch(e) {}
+}
+
+async function importXlsm(file) {
+  if(!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  toast('Chargement du fichier...');
+  try {
+    const r = await fetch('/api/config/fichier', {method:'POST', body:fd});
+    const d = await r.json();
+    if(d.erreur) { toast(d.erreur, true); return; }
+    document.getElementById('xlsm-status').textContent = '\u2713 Fichier charg\u00e9 : ' + d.fichier;
+    toast('\u2713 Fichier charg\u00e9 avec succ\u00e8s');
+    chargerDashboard(); chargerTopProd(); chargerSections();
+  } catch(e) { toast('Erreur de chargement', true) }
+}
+
+async function setCalendrier(cal) {
+  try {
+    await fetch('/api/calendrier/set', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({calendrier:cal})});
+    document.getElementById('cal-nouveau').classList.toggle('on', cal==='NOUVEAU');
+    document.getElementById('cal-ancien').classList.toggle('on',  cal==='ANCIEN');
+    document.getElementById('cal-status').textContent = 'Calendrier : ' + (cal==='NOUVEAU'?'Nouveau (sept\u2192f\u00e9v / mars\u2192ao\u00fbt)':'Ancien (oct\u2192avr / mai\u2192sept)');
+    toast('\u2713 Calendrier mis \u00e0 jour');
+  } catch(e) {}
+}
+
+async function actualiserStocks() {
+  toast('Actualisation des stocks...');
+  try {
+    await fetch('/api/dashboard');
+    chargerDashboard(); chargerTopProd(); chargerSections();
+    toast('\u2713 Stocks actualis\u00e9s');
+  } catch(e) { toast('Erreur', true) }
+}
+
+// ============================================================
+// EXPORTS
+// ============================================================
+function exportPDF() {
+  if(!G.derniereReponse) { toast('Aucune fiche \u00e0 exporter', true); return; }
+  toast('G\u00e9n\u00e9ration du PDF... (bient\u00f4t disponible)');
+}
+async function exportExcel() {
+  if(!G.derniereReponse) { toast("Aucune fiche a exporter", true); return; }
+  try {
+    const r = await fetch('/api/export/excel', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({fiche: G.derniereReponse})
+    });
+    if(!r.ok) { const d = await r.json(); toast(d.erreur||"Erreur", true); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const cd = r.headers.get('Content-Disposition')||'';
+    const m = cd.match(/filename="?([^"]+)"?/);
+    a.download = m ? m[1] : 'fiche.xlsx';
+    a.href = url; a.click();
+    URL.revokeObjectURL(url);
+    toast("Fichier Excel telecharge");
+  } catch(e) { toast("Erreur export Excel", true); }
+}
+
+// ============================================================
+// FICHES GENEREES
+// ============================================================
+async function chargerFiches() {
+  try {
+    const r = await fetch('/api/fiches');
+    const fiches = await r.json();
+    const tbody = document.getElementById('fiches-body');
+    if(!fiches || fiches.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:var(--tg)">Aucune fiche générée</td></tr>';
+      return;
+    }
+    tbody.innerHTML = fiches.map((f, i) => `
+      <tr style="background:${i%2===0?'#fff':'#f9f9f9'};font-size:12px">
+        <td style="padding:10px;font-weight:600;color:var(--vf)">${f.fiche_id||''}</td>
+        <td style="padding:10px">${f.periode||''}</td>
+        <td style="padding:10px;text-align:right">${(f.poids_total||0).toLocaleString()}</td>
+        <td style="padding:10px;text-align:right">${f.nb_producteurs||0}</td>
+        <td style="padding:10px;text-align:right">${(f.montant||0).toLocaleString()}</td>
+        <td style="padding:10px;text-align:center">${f.date_generation||''}</td>
+        <td style="padding:10px;text-align:center">
+          <button onclick="telechargerFiche('${f.fiche_id}')" style="background:var(--vf);color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer">⬇ Excel</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function telechargerFiche(ficheId) {
+  try {
+    const r = await fetch(`/api/fiches/${ficheId}/excel`);
+    if(!r.ok) { toast("Erreur téléchargement", true); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const cd = r.headers.get('Content-Disposition') || '';
+    const match = cd.match(/filename="?([^"]+)"?/);
+    a.download = match ? match[1] : `${ficheId}.xlsx`;
+    a.href = url; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { toast("Erreur téléchargement", true); }
+}
+
+async function seDeconnecter() {
+  if(!confirm('Se déconnecter ? Vos données restent enregistrées.')) return;
+  try { await fetch('/api/logout', {method:'POST'}); } catch(e) {}
+  window.location.href = '/';
+}
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+function fmt(n) { return (n||0).toLocaleString('fr-FR'); }
+
+function setDatesDefaut() {
+  const today = new Date();
+  const fin   = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+  document.getElementById('f-debut').value = today.toISOString().split('T')[0];
+  document.getElementById('f-fin').value   = fin.toISOString().split('T')[0];
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', async () => {
+  setDatesDefaut();
+  await chargerDashboard();
+  await chargerTopProd();
+  await chargerLogDash();
+  await chargerSections();
+  await chargerConfig();
+});
+</script>
 </body>
 </html>
