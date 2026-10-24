@@ -24,33 +24,36 @@
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: var(--texte); font-size: 14px; }
 
 /* LOGIN */
-#loginPage { display:flex; align-items:stretch; min-height:100vh; position:relative; overflow:hidden; }
-/* Carousel d'images côté gauche */
+#loginPage { display:flex; align-items:stretch; min-height:100vh; }
+
+/* Côté gauche : carousel photos */
 .login-bg { flex:1; position:relative; overflow:hidden; min-width:0; }
 .login-slides { display:flex; width:100%; height:100%; transition:transform 0.8s ease-in-out; }
 .login-slide { min-width:100%; height:100%; background-size:cover; background-position:center; flex-shrink:0; }
-.login-overlay { position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,0.35) 0%, rgba(26,92,42,0.5) 100%); }
-.login-caption { position:absolute; bottom:40px; left:40px; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.5); }
-.login-caption h2 { font-size:28px; font-weight:800; letter-spacing:-0.5px; }
-.login-caption p { font-size:14px; opacity:0.85; margin-top:4px; }
+.login-overlay { position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(26,92,42,0.45) 100%); }
+.login-caption { position:absolute; bottom:40px; left:40px; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.6); }
+.login-caption h2 { font-size:30px; font-weight:800; letter-spacing:-0.5px; }
+.login-caption p { font-size:14px; opacity:0.88; margin-top:6px; }
 .slide-dots { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:8px; }
-.slide-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.5); cursor:pointer; transition:background 0.3s; }
+.slide-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.5); cursor:pointer; transition:background 0.3s; border:none; }
 .slide-dot.active { background:#fff; }
-/* Panneau de login côté droit */
-.login-panel { width:420px; flex-shrink:0; background:var(--blanc); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 48px; }
-.login-logo { font-size:56px; margin-bottom:10px; }
-.login-panel h1 { font-size:26px; font-weight:800; color:var(--vert); margin-bottom:4px; }
-.login-panel .subtitle { color:var(--texte2); font-size:13px; margin-bottom:32px; text-align:center; }
-.login-panel .form-group { width:100%; }
-/* Sur mobile : carte centrée */
+
+/* Côté droit : formulaire + logos */
+.login-panel { width:420px; flex-shrink:0; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 44px; }
+.login-card { width:100%; text-align:center; }
+.login-logos { display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:24px; }
+.login-logos img { height:72px; width:auto; object-fit:contain; border-radius:8px; }
+.login-logos .sep { width:1px; height:56px; background:#e0e0e0; flex-shrink:0; }
+.login-logo { display:none; }
+.login-card h1 { font-size:24px; font-weight:800; color:var(--vert); margin-bottom:4px; letter-spacing:-0.5px; }
+.login-card .subtitle { color:var(--texte2); font-size:13px; margin-bottom:28px; }
+.login-card .form-group { text-align:left; }
+/* Mobile */
 @media(max-width:700px) {
   #loginPage { flex-direction:column; }
-  .login-bg { height:220px; flex:none; }
+  .login-bg { height:240px; flex:none; }
   .login-panel { width:100%; padding:32px 24px; }
-  .login-caption h2 { font-size:20px; }
 }
-/* Ancienne classe login-card maintenue pour compat */
-.login-card { width:100%; text-align:center; }
 .form-group { margin-bottom: 16px; text-align: left; }
 .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--texte2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 .form-group input { width: 100%; padding: 10px 14px; border: 2px solid var(--gris2); border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
@@ -210,13 +213,14 @@ tr:hover td { background: #e8f5e9; }
 
 <!-- ===== LOGIN ===== -->
 <div id="loginPage">
-  <!-- Carousel photos cacao -->
+
+  <!-- Carousel photos cacao (gauche) -->
   <div class="login-bg">
     <div class="login-slides" id="loginSlides">
       <div class="login-slide" style="background-image:url('/static/plantation.jpg')"></div>
       <div class="login-slide" style="background-image:url('/static/champ_cacao.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/cacao_cabosses.jpg')"></div>
       <div class="login-slide" style="background-image:url('/static/cacaoyer.jpg')"></div>
+      <div class="login-slide" style="background-image:url('/static/cacao_cabosses.jpg')"></div>
       <div class="login-slide" style="background-image:url('/static/cacao_rouge.jpg')"></div>
       <div class="login-slide" style="background-image:url('/static/cacao_jaune.jpg')"></div>
       <div class="login-slide" style="background-image:url('/static/cacao_grains.jpg')"></div>
@@ -231,12 +235,16 @@ tr:hover td { background: #e8f5e9; }
     <div class="slide-dots" id="slideDots"></div>
   </div>
 
-  <!-- Panneau connexion -->
+  <!-- Panneau connexion (droite) avec logos officiels -->
   <div class="login-panel">
     <div class="login-card">
-      <div class="login-logo">🍫</div>
+      <div class="login-logos">
+        <img src="/static/logo_ra.jpg" alt="Rainforest Alliance">
+        <div class="sep"></div>
+        <img src="/static/logo_fairtrade.jpg" alt="Fairtrade">
+      </div>
       <h1>FichePro v4</h1>
-      <p class="subtitle">Gestion répartition cacao certifié</p>
+      <p class="subtitle">CAPRESSA — Gestion répartition cacao certifié</p>
       <div class="form-group" style="margin-top:24px;">
         <label>Votre nom</label>
         <input type="text" id="loginNom" placeholder="Ex: Jean KONAN" autocomplete="name">
@@ -249,6 +257,7 @@ tr:hover td { background: #e8f5e9; }
       <div class="login-error" id="loginError"></div>
     </div>
   </div>
+
 </div>
 
 <!-- ===== APP ===== -->
@@ -605,10 +614,7 @@ tr:hover td { background: #e8f5e9; }
 // CAROUSEL LOGIN
 // ============================================================
 (function initCarousel() {
-  const IMAGES = [
-    'plantation.jpg','champ_cacao.jpg','cacao_cabosses.jpg','cacaoyer.jpg',
-    'cacao_rouge.jpg','cacao_jaune.jpg','cacao_grains.jpg','cacao_chocolat.jpg','cafe_cacao.png'
-  ];
+  const NB = 9;
   let cur = 0;
   function updateSlide() {
     const slides = document.getElementById('loginSlides');
@@ -619,14 +625,14 @@ tr:hover td { background: #e8f5e9; }
   document.addEventListener('DOMContentLoaded', function() {
     const dots = document.getElementById('slideDots');
     if (dots) {
-      IMAGES.forEach((_,i) => {
+      for (let i=0; i<NB; i++) {
         const d = document.createElement('div');
         d.className = 'slide-dot' + (i===0?' active':'');
         d.onclick = () => { cur=i; updateSlide(); };
         dots.appendChild(d);
-      });
+      }
     }
-    setInterval(() => { cur = (cur+1) % IMAGES.length; updateSlide(); }, 4000);
+    setInterval(() => { cur = (cur+1) % NB; updateSlide(); }, 4500);
   });
 })();
 
