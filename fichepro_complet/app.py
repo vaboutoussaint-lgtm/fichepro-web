@@ -190,52 +190,86 @@ def import_registre():
     filename = f.filename.lower()
 
     try:
-        import pandas as pd
-        if filename.endswith('.csv'):
-            df = pd.read_csv(f, encoding='utf-8-sig', sep=None, engine='python')
-        elif filename.endswith(('.xls', '.xlsx')):
-            df = pd.read_excel(f)
-        else:
+        import csv
+        import io
+        from openpyxl import load_workbook
+
+        def parse_file(f, filename):
+            """Retourne une liste de dicts avec clés normalisées (MAJUSCULES_UNDERSCORE)."""
+            if filename.endswith('.csv'):
+                content = f.read().decode('utf-8-sig')
+                # Détecter le séparateur
+                sep = ';' if content.count(';') > content.count(',') else ','
+                reader = csv.DictReader(io.StringIO(content), delimiter=sep)
+                rows = list(reader)
+                # Normaliser les clés
+                return [{k.strip().upper().replace(' ', '_'): v for k, v in r.items()} for r in rows]
+            elif filename.endswith(('.xls', '.xlsx')):
+                wb = load_workbook(io.BytesIO(f.read()), read_only=True, data_only=True)
+                ws = wb.active
+                rows_iter = ws.iter_rows(values_only=True)
+                headers = [str(c).strip().upper().replace(' ', '_') if c else '' for c in next(rows_iter)]
+                result = []
+                for row in rows_iter:
+                    result.append({headers[i]: row[i] for i in range(len(headers))})
+                wb.close()
+                return result
+            else:
+                return None
+
+        rows = parse_file(f, filename)
+        if rows is None:
             return jsonify({'error': 'Format non supporté (CSV ou Excel requis)'}), 400
 
-        # Normaliser colonnes
-        df.columns = [c.strip().upper().replace(' ', '_') for c in df.columns]
+        if not rows:
+            return jsonify({'error': 'Fichier vide'}), 400
+
+        # Colonnes disponibles
+        all_cols = list(rows[0].keys())
 
         # Colonnes obligatoires
         required = ['CODE_PARCELLE', 'CODE_PRODUCTEUR', 'NOM_PRENOMS', 'ESTIMATION_KG']
-        missing = [c for c in required if c not in df.columns]
+        missing = [c for c in required if c not in all_cols]
         if missing:
             return jsonify({'error': f'Colonnes manquantes: {", ".join(missing)}'}), 400
 
         # Colonnes RA/FT — chercher variantes
-        ra_col = next((c for c in df.columns if 'RAINFOREST' in c or c == 'RA'), None)
-        ft_col = next((c for c in df.columns if 'FAIRTRADE' in c or c == 'FT'), None)
+        ra_col = next((c for c in all_cols if 'RAINFOREST' in c or c == 'RA'), None)
+        ft_col = next((c for c in all_cols if 'FAIRTRADE' in c or c == 'FT'), None)
 
         def to_bool(val):
             if val is None:
                 return False
             return str(val).strip().upper() in ('OUI', 'YES', 'TRUE', '1', 'O')
 
+        def to_float(val, default=0):
+            try:
+                return float(val) if val not in (None, '', 'None') else default
+            except (ValueError, TypeError):
+                return default
+
         nb_insere = 0
         nb_maj = 0
         errors = []
 
-        for _, row in df.iterrows():
+        for row in rows:
             try:
-                code_parcelle = str(row.get('CODE_PARCELLE', '')).strip()
-                if not code_parcelle:
+                code_parcelle = str(row.get('CODE_PARCELLE') or '').strip()
+                if not code_parcelle or code_parcelle.lower() in ('none', 'nan', ''):
                     continue
 
+                lat = row.get('LATITUDE')
+                lon = row.get('LONGITUDE')
                 parcelle = {
                     'code_parcelle': code_parcelle,
-                    'code_producteur': str(row.get('CODE_PRODUCTEUR', '')).strip(),
-                    'nom_producteur': str(row.get('NOM_PRENOMS', '')).strip(),
-                    'section': str(row.get('SECTION', '')).strip() if 'SECTION' in row else None,
-                    'village': str(row.get('VILLAGE', '')).strip() if 'VILLAGE' in row else None,
-                    'superficie_ha': float(row.get('SUPERFICIE_HA', 0) or 0),
-                    'estimation_kg': float(row.get('ESTIMATION_KG', 0) or 0),
-                    'latitude': float(row['LATITUDE']) if 'LATITUDE' in row and row['LATITUDE'] else None,
-                    'longitude': float(row['LONGITUDE']) if 'LONGITUDE' in row and row['LONGITUDE'] else None,
+                    'code_producteur': str(row.get('CODE_PRODUCTEUR') or '').strip(),
+                    'nom_producteur': str(row.get('NOM_PRENOMS') or '').strip(),
+                    'section': str(row.get('SECTION') or '').strip() or None,
+                    'village': str(row.get('VILLAGE') or '').strip() or None,
+                    'superficie_ha': to_float(row.get('SUPERFICIE_HA'), 0),
+                    'estimation_kg': to_float(row.get('ESTIMATION_KG'), 0),
+                    'latitude': to_float(lat) if lat not in (None, '', 'None') else None,
+                    'longitude': to_float(lon) if lon not in (None, '', 'None') else None,
                     'rainforest_alliance': to_bool(row.get(ra_col)) if ra_col else False,
                     'fairtrade': to_bool(row.get(ft_col)) if ft_col else False,
                     'actif': True,
