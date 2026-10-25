@@ -3,1344 +3,1473 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FichePro v4 — CAPRESSA</title>
+<title>FichePro Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
 <style>
+/* ── TOKENS ── */
 :root {
-  --vert: #1a5c2a;
-  --vert2: #2e7d32;
-  --vert-clair: #e8f5e9;
-  --or: #f9a825;
-  --rouge: #c62828;
-  --bleu: #1565c0;
-  --gris: #f5f5f5;
-  --gris2: #e0e0e0;
-  --texte: #212121;
-  --texte2: #616161;
-  --blanc: #ffffff;
-  --shadow: 0 2px 8px rgba(0,0,0,0.12);
-  --radius: 8px;
+  --vf: #1B4332; --vm: #2D6A4F; --vc: #52B788;
+  --or: #C9A84C; --oc: #E8C96A; --op: #FEFAE0;
+  --br: #6B3A2A; --cr: #FDF6E3;
+  --w:  #fff;    --tg: #6B7280; --td: #111827;
+  --s0: #F8FAF9; --s1: #F1F4F2; --s2: #DDE5E0;
+  --r:  13px;    --sh: 0 4px 24px rgba(27,67,50,.09);
+  --sb: 230px;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans:  'DM Sans', system-ui, sans-serif;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; color: var(--texte); font-size: 14px; }
-
-/* LOGIN */
-#loginPage { display:flex; align-items:stretch; min-height:100vh; }
-
-/* Côté gauche : carousel photos */
-.login-bg { flex:1; position:relative; overflow:hidden; min-width:0; }
-.login-slides { display:flex; width:100%; height:100%; transition:transform 0.8s ease-in-out; }
-.login-slide { min-width:100%; height:100%; background-size:cover; background-position:center; flex-shrink:0; }
-.login-overlay { position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,0.3) 0%, rgba(26,92,42,0.45) 100%); }
-.login-caption { position:absolute; bottom:40px; left:40px; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.6); }
-.login-caption h2 { font-size:30px; font-weight:800; letter-spacing:-0.5px; }
-.login-caption p { font-size:14px; opacity:0.88; margin-top:6px; }
-.slide-dots { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:8px; }
-.slide-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.5); cursor:pointer; transition:background 0.3s; border:none; }
-.slide-dot.active { background:#fff; }
-
-/* Côté droit : formulaire + logos */
-.login-panel { width:420px; flex-shrink:0; background:linear-gradient(160deg,#1a5c2a 0%,#0d3318 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 44px; }
-.login-card { width:100%; text-align:center; }
-.login-logos { display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:24px; }
-.login-logos img { height:72px; width:auto; object-fit:contain; border-radius:8px; background:#fff; padding:4px; }
-.login-logos .sep { width:1px; height:56px; background:rgba(255,255,255,0.25); flex-shrink:0; }
-.login-logo { display:none; }
-.login-card h1 { font-size:26px; font-weight:800; color:#fff; margin-bottom:4px; letter-spacing:-0.5px; }
-.login-card .subtitle { color:rgba(255,255,255,0.72); font-size:13px; margin-bottom:28px; }
-.login-card .form-group { text-align:left; }
-/* Mobile */
-@media(max-width:700px) {
-  #loginPage { flex-direction:column; }
-  .login-bg { height:240px; flex:none; }
-  .login-panel { width:100%; padding:32px 24px; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--sans);
+  background: var(--s0); color: var(--td);
+  display: flex;
+  -webkit-font-smoothing: antialiased;
 }
-.form-group { margin-bottom: 16px; text-align: left; }
-.login-card .form-group label { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.65); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
-.login-card .form-group input { width: 100%; padding: 11px 14px; border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; font-size: 14px; transition: border-color 0.2s; background:rgba(255,255,255,0.1); color:#fff; }
-.login-card .form-group input::placeholder { color:rgba(255,255,255,0.4); }
-.login-card .form-group input:focus { outline: none; border-color: rgba(255,255,255,0.6); background:rgba(255,255,255,0.15); }
-.btn-login { width: 100%; padding: 13px; background: var(--or); color: #1a3a00; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s; letter-spacing:0.3px; }
-.btn-login:hover { background: #f57f17; color:#fff; }
-.login-error { color: #ffcdd2; font-size: 13px; margin-top: 12px; display: none; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: var(--s2); border-radius: 3px; }
 
-/* LAYOUT */
-#app { display: none; }
-.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 230px; background: var(--vert); color: var(--blanc); display: flex; flex-direction: column; z-index: 100; }
-.sidebar-header { padding: 20px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); }
-.sidebar-header h1 { font-size: 20px; font-weight: 700; }
-.sidebar-header .campagne { font-size: 11px; opacity: 0.75; margin-top: 2px; }
-.sidebar-header .saison-badge { display: inline-block; background: var(--or); color: #000; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px; margin-top: 6px; }
-.sidebar-user { padding: 12px 16px; background: rgba(0,0,0,0.15); font-size: 12px; }
-.sidebar-user .nom { font-weight: 600; }
-.sidebar-user .profil { opacity: 0.75; font-size: 11px; }
-.sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
-.nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; padding: 12px 8px 4px; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s; font-size: 13px; font-weight: 500; }
-.nav-item:hover { background: rgba(255,255,255,0.12); }
-.nav-item.active { background: rgba(255,255,255,0.2); }
-.nav-item .icon { font-size: 18px; min-width: 22px; }
-.sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.15); }
-.btn-logout { width: 100%; padding: 8px; background: rgba(255,255,255,0.1); color: var(--blanc); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; font-size: 13px; cursor: pointer; }
-.btn-logout:hover { background: rgba(255,255,255,0.2); }
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sb); flex-shrink: 0;
+  background: var(--vf);
+  display: flex; flex-direction: column;
+  height: 100vh; overflow: hidden;
+  box-shadow: 4px 0 20px rgba(0,0,0,.14);
+}
+.sb-logo {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid rgba(201,168,76,.14);
+  display: flex; align-items: center; gap: 11px;
+}
+.sb-logo-img {
+  width: 40px; height: 40px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  border: 1.5px solid rgba(201,168,76,.35);
+  object-fit: cover; object-position: center top;
+}
+.sb-logo-f {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(201,168,76,.14);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-size: 18px; font-weight: 700;
+  color: var(--or); flex-shrink: 0;
+}
+.sb-logo-t1 {
+  font-family: var(--serif); font-size: 14px; font-weight: 700;
+  color: var(--or); line-height: 1.2;
+}
+.sb-logo-t2 {
+  font-size: 9px; color: rgba(201,168,76,.45);
+  letter-spacing: .09em; text-transform: uppercase;
+}
 
-/* HEADER BANNER avec carousel */
-.app-header { position:relative; height:180px; overflow:hidden; margin-left:230px; }
-.app-header-slides { display:flex; height:100%; transition:transform 1s ease-in-out; }
-.app-header-slide { min-width:100%; height:100%; background-size:cover; background-position:center; flex-shrink:0; }
-.app-header-overlay { position:absolute; inset:0; background:linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(26,92,42,0.7) 100%); }
-.app-header-content { position:absolute; bottom:0; left:0; right:0; padding:16px 28px 18px; display:flex; align-items:flex-end; justify-content:space-between; }
-.app-header-title { color:#fff; font-size:22px; font-weight:800; text-shadow:0 2px 8px rgba(0,0,0,0.4); letter-spacing:-0.3px; }
-.app-header-logos { display:flex; align-items:center; gap:10px; }
-.app-header-logos img { height:38px; width:auto; border-radius:6px; background:#fff; padding:3px; opacity:0.92; }
-@media(max-width:900px){ .app-header { margin-left:60px; } }
+/* ── NAV ── */
+.sb-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+.sb-nav::-webkit-scrollbar { width: 4px; }
+.sb-nav::-webkit-scrollbar-thumb { background: rgba(201,168,76,.2); border-radius: 3px; }
+.sb-section {
+  padding: 10px 14px 4px;
+  font-size: 9px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: rgba(201,168,76,.35);
+}
+.sb-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; margin: 2px 8px;
+  border-radius: 10px; cursor: pointer; transition: all .18s;
+  color: rgba(255,255,255,.6); font-size: 13px; font-weight: 400;
+  border: none; background: none;
+  width: calc(100% - 16px); text-align: left;
+  font-family: var(--sans);
+}
+.sb-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+.sb-item.active { background: rgba(201,168,76,.16); color: var(--or); font-weight: 500; }
+.sb-item .ico { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; opacity: .8; }
+.sb-item .lbl { flex: 1; }
+.sb-item .badge {
+  background: rgba(201,168,76,.22); color: var(--or);
+  border-radius: 12px; padding: 2px 7px;
+  font-size: 10px; font-weight: 600;
+}
 
-.main { margin-left: 230px; padding: 24px; min-height: 100vh; }
+/* ── SIDEBAR BOTTOM ── */
+.sb-bottom {
+  padding: 12px;
+  border-top: 1px solid rgba(201,168,76,.12);
+}
+.sb-licence {
+  background: rgba(201,168,76,.09);
+  border: 1px solid rgba(201,168,76,.18);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 9px;
+}
+.sb-lic-label { font-size: 9.5px; color: rgba(201,168,76,.55); margin-bottom: 2px; }
+.sb-lic-val { font-size: 12px; font-weight: 600; color: var(--or); }
+.sb-user { display: flex; align-items: center; gap: 9px; padding: 6px 2px; }
+.sb-user-img {
+  width: 34px; height: 34px; border-radius: 50%;
+  object-fit: cover; object-position: center top;
+  border: 1.5px solid rgba(201,168,76,.3);
+}
+.sb-user-name { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.82); }
+.sb-user-role { font-size: 10px; color: rgba(255,255,255,.38); }
+.btn-deconnect {
+  width: 100%; margin-top: 9px; height: 32px;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.22);
+  border-radius: 9px; color: rgba(239,68,68,.75);
+  font-size: 11px; cursor: pointer; font-family: var(--sans);
+  transition: all .18s;
+}
+.btn-deconnect:hover { background: rgba(239,68,68,.18); color: #EF4444; }
+
+/* ── MAIN ── */
+.main { flex: 1; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+.main::-webkit-scrollbar { width: 5px; }
+.main::-webkit-scrollbar-thumb { background: var(--s2); border-radius: 3px; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid var(--s2);
+  padding: 14px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10; flex-shrink: 0;
+  box-shadow: 0 1px 8px rgba(27,67,50,.05);
+}
+.topbar-title { font-size: 16px; font-weight: 600; color: var(--td); }
+.topbar-sub { font-size: 12px; color: var(--tg); margin-top: 2px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.tb-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(82,183,136,.09);
+  border: 1px solid rgba(82,183,136,.22);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 11px; font-weight: 500; color: var(--vm);
+}
+.tb-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--vc);
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { box-shadow: 0 0 0 0 rgba(82,183,136,.4); }
+  50%      { box-shadow: 0 0 0 4px rgba(82,183,136,.0); }
+}
+.tb-btn {
+  background: linear-gradient(135deg, var(--vm), var(--vf));
+  color: var(--or); border: none; border-radius: 9px;
+  padding: 8px 18px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: var(--sans); transition: all .2s;
+}
+.tb-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(27,67,50,.2); }
+
+/* ── CONTENT ── */
+.content { flex: 1; padding: 24px 28px; }
 .page { display: none; }
 .page.active { display: block; }
-.page-title { font-size: 20px; font-weight: 700; color: var(--texte); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-.page-title .badge-label { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
-.badge-ra { background: #e8f5e9; color: #1b5e20; }
-.badge-ft { background: #fff3e0; color: #e65100; }
 
-/* CARDS */
-.card { background: var(--blanc); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
-.card-title { font-size: 15px; font-weight: 700; color: var(--texte); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 20px; }
-.stat-card { background: var(--blanc); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); text-align: center; border-top: 4px solid var(--vert); }
-.stat-card .stat-val { font-size: 26px; font-weight: 700; color: var(--vert); }
-.stat-card .stat-lbl { font-size: 12px; color: var(--texte2); margin-top: 4px; }
-.stat-card.gold { border-top-color: var(--or); }
-.stat-card.gold .stat-val { color: #f9a825; }
-.stat-card.blue { border-top-color: var(--bleu); }
-.stat-card.blue .stat-val { color: var(--bleu); }
-.stat-card.red { border-top-color: var(--rouge); }
-.stat-card.red .stat-val { color: var(--rouge); }
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 16px; margin-bottom: 24px;
+}
+.kpi {
+  background: #fff;
+  border: 1px solid var(--s2);
+  border-radius: var(--r); padding: 22px 20px;
+  transition: all .22s;
+}
+.kpi:hover { box-shadow: var(--sh); transform: translateY(-2px); }
+.kpi-val {
+  font-family: var(--serif);
+  font-size: 30px; font-weight: 700;
+  color: var(--vf); line-height: 1;
+}
+.kpi-lbl {
+  font-size: 10px; color: var(--tg); margin-top: 5px;
+  text-transform: uppercase; letter-spacing: .06em;
+}
+.kpi-sub { font-size: 11px; color: var(--vc); margin-top: 7px; }
+.kpi.accent {
+  background: linear-gradient(148deg, var(--vf) 0%, var(--vm) 100%);
+  border-color: transparent;
+  box-shadow: 0 8px 24px rgba(27,67,50,.22);
+}
+.kpi.accent .kpi-val, .kpi.accent .kpi-lbl { color: #fff; }
+.kpi.accent .kpi-lbl { color: rgba(255,255,255,.65); }
+.kpi.accent .kpi-sub { color: var(--or); }
 
-/* FORMS */
-.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
-.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--texte2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
-.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 2px solid var(--gris2); border-radius: 6px; font-size: 14px; transition: border-color 0.2s; background: var(--blanc); }
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--vert2); }
-.form-group textarea { min-height: 80px; resize: vertical; }
+/* ── DASH GRID ── */
+.dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.card {
+  background: #fff; border: 1px solid var(--s2);
+  border-radius: var(--r); overflow: hidden;
+}
+.card-head {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--s1);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 13px; font-weight: 600; color: var(--td); }
+.card-body { padding: 16px 20px; }
 
-/* BUTTONS */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; }
-.btn-primary { background: var(--vert); color: var(--blanc); }
-.btn-primary:hover { background: var(--vert2); }
-.btn-secondary { background: var(--gris); color: var(--texte); border: 2px solid var(--gris2); }
-.btn-secondary:hover { background: var(--gris2); }
-.btn-danger { background: var(--rouge); color: var(--blanc); }
-.btn-danger:hover { background: #b71c1c; }
-.btn-gold { background: var(--or); color: #000; }
-.btn-gold:hover { background: #f57f17; }
-.btn-sm { padding: 5px 12px; font-size: 12px; }
-.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+/* ── PROD TABLE ── */
+.prod-table { width: 100%; border-collapse: collapse; }
+.prod-table th {
+  font-size: 10px; font-weight: 600; color: var(--tg);
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: 9px 12px; text-align: left;
+  border-bottom: 1px solid var(--s1);
+  background: var(--s0);
+}
+.prod-table td {
+  font-size: 12px; color: var(--td);
+  padding: 10px 12px; border-bottom: 1px solid var(--s0);
+}
+.prod-table tr:last-child td { border-bottom: none; }
+.prod-table tr:hover td { background: var(--s0); }
+.pct-bar {
+  height: 5px; border-radius: 3px;
+  background: var(--s1); overflow: hidden; min-width: 80px;
+}
+.pct-fill { height: 100%; border-radius: 3px; background: var(--vc); }
+.pct-fill.warn { background: var(--or); }
+.pct-fill.danger { background: #EF4444; }
+.pct-text { font-size: 11px; font-weight: 600; margin-left: 8px; }
 
-/* TABLES */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { background: var(--vert); color: var(--blanc); padding: 10px 12px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
-td { padding: 9px 12px; border-bottom: 1px solid var(--gris2); font-size: 13px; }
-tr:nth-child(even) td { background: #fafafa; }
-tr:hover td { background: #e8f5e9; }
-.tfoot td { background: var(--vert-clair); font-weight: 700; border-top: 2px solid var(--vert); }
-
-/* ALERTS */
-.alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
-.alert-warning { background: #fff8e1; border-left: 4px solid var(--or); }
-.alert-danger { background: #ffebee; border-left: 4px solid var(--rouge); }
-.alert-success { background: #e8f5e9; border-left: 4px solid var(--vert); }
-.alert-info { background: #e3f2fd; border-left: 4px solid var(--bleu); }
-
-/* CHIPS */
-.chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-.chip-ra { background: #e8f5e9; color: #1b5e20; }
-.chip-ft { background: #fff3e0; color: #e65100; }
-.chip-gt { background: #e3f2fd; color: #0d47a1; }
-.chip-pt { background: #fce4ec; color: #880e4f; }
-.chip-ok { background: #e8f5e9; color: #1b5e20; }
-
-/* LABEL SELECTOR */
-.label-selector { display: flex; gap: 12px; margin-bottom: 20px; }
-.label-card { flex: 1; padding: 20px; border: 3px solid var(--gris2); border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
-.label-card:hover { border-color: var(--vert); }
-.label-card.selected-ra { border-color: #2e7d32; background: #e8f5e9; }
-.label-card.selected-ft { border-color: #e65100; background: #fff3e0; }
-.label-card .icon { font-size: 36px; margin-bottom: 8px; }
-.label-card .name { font-size: 16px; font-weight: 700; }
-.label-card .desc { font-size: 12px; color: var(--texte2); margin-top: 4px; }
-
-/* SCORE BAR */
-.score-bar { display: flex; align-items: center; gap: 8px; }
-.score-bar-inner { flex: 1; height: 6px; background: var(--gris2); border-radius: 3px; overflow: hidden; }
-.score-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--or), var(--vert)); }
-.score-val { font-size: 12px; font-weight: 700; min-width: 48px; text-align: right; }
-
-/* ALERTE CRITIQUE */
-.alerte-critique { background: #fff3e0; border: 2px solid var(--rouge); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--rouge); font-weight: 600; }
-
-/* MODAL */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
-.modal-overlay.open { display: flex; }
-.modal { background: var(--blanc); border-radius: 12px; padding: 28px; max-width: 520px; width: 90%; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
-.modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
-.modal-footer { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
-
-/* TABS */
-.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--gris2); margin-bottom: 20px; }
-.tab { padding: 10px 18px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 6px 6px 0 0; color: var(--texte2); transition: all 0.2s; }
-.tab.active { color: var(--vert); border-bottom: 3px solid var(--vert); background: var(--vert-clair); margin-bottom: -2px; }
-.tab:hover:not(.active) { background: var(--gris); }
-
-/* UPLOAD ZONE */
-.upload-zone { border: 2px dashed var(--gris2); border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.2s; }
-.upload-zone:hover, .upload-zone.drag-over { border-color: var(--vert); background: var(--vert-clair); }
-.upload-zone .icon { font-size: 40px; margin-bottom: 8px; }
-.upload-zone p { color: var(--texte2); font-size: 13px; }
-
-/* DEROGATION PANEL */
-.deroga-panel { background: #fff3e0; border: 2px solid var(--or); border-radius: 8px; padding: 16px; margin-top: 12px; display: none; }
-.deroga-panel.visible { display: block; }
-
-/* SPINNER */
-.spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-  .sidebar { width: 60px; }
-  .sidebar-header h1, .sidebar-header .campagne, .sidebar-header .saison-badge, .sidebar-user .nom, .sidebar-user .profil, .nav-item span, .nav-section { display: none; }
-  .nav-item { justify-content: center; padding: 12px 8px; }
-  .main { margin-left: 60px; padding: 16px; }
+/* ── SECTION ITEMS ── */
+.sect-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--s0);
+}
+.sect-item:last-child { border-bottom: none; }
+.sect-name { font-size: 13px; font-weight: 500; color: var(--td); }
+.sect-vol { font-size: 11px; color: var(--tg); }
+.sect-nb {
+  font-size: 11px; background: var(--s1);
+  border-radius: 12px; padding: 2px 8px; color: var(--tg);
 }
 
-/* IMPRESSION RAPIDE */
-@media print {
-  .sidebar, .btn, .btn-row { display: none !important; }
-  .main { margin-left: 0; padding: 0; }
+/* ── LOG ITEMS ── */
+.log-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--s0);
+}
+.log-item:last-child { border-bottom: none; }
+.log-ic {
+  width: 22px; height: 22px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0; margin-top: 1px;
+}
+.log-ic.ok  { background: rgba(82,183,136,.14); color: var(--vc); }
+.log-ic.warn{ background: rgba(201,168,76,.14); color: var(--or); }
+.log-ic.err { background: rgba(239,68,68,.1);  color: #EF4444; }
+.log-msg { flex: 1; font-size: 11px; color: var(--td); line-height: 1.5; }
+.log-time { font-size: 10px; color: var(--tg); flex-shrink: 0; }
+
+/* ── GENERER ── */
+.gen-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+.form-card { background: #fff; border: 1px solid var(--s2); border-radius: var(--r); }
+.form-section { padding: 20px; border-bottom: 1px solid var(--s1); }
+.form-section:last-child { border-bottom: none; }
+.form-section-title {
+  font-size: 11px; font-weight: 600; color: var(--vf);
+  text-transform: uppercase; letter-spacing: .07em;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 9px;
+}
+.form-section-title::before {
+  content: ''; width: 3px; height: 14px;
+  background: var(--or); border-radius: 2px; flex-shrink: 0;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 11px; font-weight: 500; color: var(--tg); }
+.form-input {
+  height: 38px; border: 1.5px solid var(--s2); border-radius: 9px;
+  padding: 0 12px; font-size: 13px; font-family: var(--sans);
+  color: var(--td); background: #fff; transition: border .2s; outline: none;
+}
+.form-input:focus { border-color: var(--vm); }
+.form-input.large { height: 44px; font-size: 15px; font-weight: 600; }
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
+.chip {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: all .18s; border: 1.5px solid var(--s2);
+  color: var(--tg); background: #fff;
+  font-family: var(--sans);
+}
+.chip:hover { border-color: var(--vm); color: var(--vm); }
+.chip.sel {
+  background: rgba(45,106,79,.09);
+  border-color: var(--vm); color: var(--vm);
+}
+.vol-bar-wrap { margin-top: 12px; }
+.vol-bar-head {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--tg); margin-bottom: 6px;
+}
+.vol-bar-bg { height: 8px; background: var(--s1); border-radius: 4px; overflow: hidden; }
+.vol-bar-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--vm), var(--vc));
+  transition: width .4s;
+}
+.vol-alert {
+  background: rgba(201,168,76,.08);
+  border: 1px solid rgba(201,168,76,.25);
+  border-radius: 8px; padding: 10px 12px;
+  margin-top: 10px; font-size: 11px; color: var(--br); display: none;
+}
+.vol-alert.show { display: block; }
+.prix-input-wrap { position: relative; }
+.prix-input-wrap .currency {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 11px; color: var(--tg); font-weight: 500;
+}
+.btn-gen {
+  width: 100%; height: 50px;
+  background: linear-gradient(135deg, var(--vm), var(--vf));
+  color: var(--or); border: none; border-radius: 11px;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: var(--sans); transition: all .25s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-top: 4px;
+  letter-spacing: .01em;
+}
+.btn-gen:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(27,67,50,.28);
+}
+.btn-gen:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── RESULT PANEL ── */
+.result-panel {
+  background: #fff; border: 1px solid var(--s2);
+  border-radius: var(--r); overflow: hidden;
+}
+.result-empty { padding: 48px 20px; text-align: center; color: var(--tg); }
+.result-empty .re-ico { font-size: 40px; margin-bottom: 12px; opacity: .3; }
+.result-content { display: none; }
+.result-content.show { display: block; }
+.result-head {
+  background: linear-gradient(135deg, var(--vf), var(--vm));
+  padding: 18px 20px;
+}
+.result-id { font-size: 10px; color: rgba(201,168,76,.7); margin-bottom: 4px; letter-spacing: .06em; }
+.result-titre {
+  font-family: var(--serif); font-size: 17px; font-weight: 700; color: #fff;
+}
+.result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--s1); }
+.rs { background: #fff; padding: 15px 16px; text-align: center; }
+.rs-val { font-size: 20px; font-weight: 700; color: var(--vf); }
+.rs-lbl { font-size: 10px; color: var(--tg); margin-top: 2px; text-transform: uppercase; }
+.result-lignes { max-height: 300px; overflow-y: auto; }
+.rl-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-bottom: 1px solid var(--s0);
+}
+.rl-code { font-size: 10px; color: var(--tg); width: 90px; flex-shrink: 0; }
+.rl-nom { flex: 1; font-size: 12px; color: var(--td); font-weight: 500; }
+.rl-poids { font-size: 12px; font-weight: 600; color: var(--vf); text-align: right; }
+.rl-date { font-size: 10px; color: var(--tg); text-align: right; width: 70px; flex-shrink: 0; }
+.result-actions {
+  padding: 14px 16px; display: flex; gap: 8px;
+  border-top: 1px solid var(--s1);
+}
+.btn-pdf {
+  flex: 1; height: 38px;
+  background: linear-gradient(135deg, #C0392B, #922B21);
+  color: #fff; border: none; border-radius: 9px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: var(--sans);
+}
+.journal-log {
+  display: flex; flex-direction: column; gap: 5px;
+  max-height: 200px; overflow-y: auto; padding: 12px 16px;
+}
+
+/* ── IMPORT ── */
+.import-zone {
+  border: 2px dashed var(--s2); border-radius: var(--r);
+  padding: 44px 20px; text-align: center; cursor: pointer;
+  transition: all .2s; background: var(--s0);
+}
+.import-zone:hover { border-color: var(--vm); background: rgba(45,106,79,.04); }
+.iz-ico { font-size: 36px; margin-bottom: 12px; }
+.iz-title { font-size: 14px; font-weight: 600; color: var(--td); margin-bottom: 6px; }
+.iz-sub { font-size: 12px; color: var(--tg); line-height: 1.7; }
+.iz-btn {
+  display: inline-block; margin-top: 16px;
+  background: linear-gradient(135deg, var(--vm), var(--vf));
+  color: var(--or); border: none; border-radius: 9px;
+  padding: 10px 26px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: var(--sans);
+}
+.import-result {
+  background: rgba(82,183,136,.07);
+  border: 1px solid rgba(82,183,136,.22);
+  border-radius: var(--r); padding: 22px; display: none;
+}
+.import-result.show { display: block; }
+.ir-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 14px; }
+.ir-stat {
+  background: #fff; border: 1px solid var(--s2);
+  border-radius: 10px; padding: 13px; text-align: center;
+}
+.ir-sv { font-size: 22px; font-weight: 700; color: var(--vf); }
+.ir-sl { font-size: 10px; color: var(--tg); margin-top: 2px; }
+
+/* ── PRODUCTEURS PAGE ── */
+.prod-search {
+  width: 100%; height: 38px;
+  border: 1.5px solid var(--s2); border-radius: 9px;
+  padding: 0 12px; font-size: 13px; font-family: var(--sans);
+  outline: none; transition: border .2s;
+}
+.prod-search:focus { border-color: var(--vm); }
+.prod-filters { display: flex; gap: 8px; margin: 12px 0; }
+.pf-btn {
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; cursor: pointer;
+  transition: all .18s; border: 1.5px solid var(--s2);
+  color: var(--tg); background: #fff; font-family: var(--sans);
+}
+.pf-btn.on {
+  background: rgba(45,106,79,.09);
+  border-color: var(--vm); color: var(--vm);
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  z-index: 100; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .28s;
+}
+.modal-overlay.on { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff; border-radius: 18px; padding: 34px;
+  max-width: 420px; width: 92%;
+  transform: scale(.94) translateY(20px);
+  transition: all .3s;
+  box-shadow: 0 32px 80px rgba(0,0,0,.28);
+}
+.modal-overlay.on .modal { transform: scale(1) translateY(0); }
+.modal-title {
+  font-family: var(--serif); font-size: 21px; font-weight: 700;
+  color: var(--vf); margin-bottom: 6px;
+}
+.modal-sub { font-size: 13px; color: var(--tg); margin-bottom: 20px; line-height: 1.65; }
+.modal-info {
+  background: var(--op); border: 1px solid rgba(201,168,76,.28);
+  border-radius: 10px; padding: 15px 16px; margin-bottom: 20px;
+}
+.modal-info-row {
+  display: flex; justify-content: space-between;
+  font-size: 12px; margin-bottom: 7px;
+}
+.modal-info-row:last-child { margin-bottom: 0; }
+.modal-info-label { color: var(--tg); }
+.modal-info-val { font-weight: 600; color: var(--vf); }
+.modal-btns { display: flex; gap: 10px; }
+.modal-btn-ok {
+  flex: 1; height: 42px;
+  background: linear-gradient(135deg, var(--vm), var(--vf));
+  color: var(--or); border: none; border-radius: 10px;
+  font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--sans);
+}
+.modal-btn-cancel {
+  flex: 1; height: 42px;
+  background: var(--s1); color: var(--tg);
+  border: 1px solid var(--s2); border-radius: 10px;
+  font-size: 13px; cursor: pointer; font-family: var(--sans);
+}
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 22px; right: 22px;
+  background: var(--vf); color: var(--or);
+  padding: 13px 22px; border-radius: 12px;
+  font-size: 13px; font-weight: 500;
+  z-index: 200; border: 1px solid rgba(201,168,76,.28);
+  opacity: 0; transform: translateY(32px); transition: all .3s;
+  font-family: var(--sans);
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.err { background: #991B1B; color: #fff; border-color: transparent; }
+
+/* ── FICHES TABLE ── */
+.fiches-th {
+  background: linear-gradient(135deg, var(--vf), var(--vm));
+  color: rgba(255,255,255,.85); font-size: 11px;
+  padding: 11px; text-align: left; font-weight: 500;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .gen-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .dash-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  :root { --sb: 0px; }
+  .sidebar { position: fixed; z-index: 50; transform: translateX(-100%); transition: transform .3s; }
+  .sidebar.open { transform: translateX(0); }
 }
 </style>
 </head>
 <body>
 
-<!-- ===== LOGIN ===== -->
-<div id="loginPage">
-
-  <!-- Carousel photos cacao (gauche) -->
-  <div class="login-bg">
-    <div class="login-slides" id="loginSlides">
-      <div class="login-slide" style="background-image:url('/static/static/plantation.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/champ_cacao.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/cacaoyer.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/cacao_cabosses.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/cacao_rouge.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/cacao_jaune.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/cacao_grains.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/cacao_chocolat.jpg')"></div>
-      <div class="login-slide" style="background-image:url('/static/static/cafe_cacao.png')"></div>
-    </div>
-    <div class="login-overlay"></div>
-    <div class="slide-dots" id="slideDots"></div>
-  </div>
-
-  <!-- Panneau connexion (droite) avec logos officiels -->
-  <div class="login-panel">
-    <div class="login-card">
-      <div class="login-logos">
-        <img src="/static/static/logo_ra.jpg" alt="Rainforest Alliance">
-        <div class="sep"></div>
-        <img src="/static/static/logo_fairtrade.jpg" alt="Fairtrade">
-      </div>
-      <h1>FichePro v4</h1>
-      <p class="subtitle">CAPRESSA — Gestion répartition cacao certifié</p>
-      <div class="form-group" style="margin-top:24px;">
-        <label>Votre nom</label>
-        <input type="text" id="loginNom" placeholder="Ex: Jean KONAN" autocomplete="name">
-      </div>
-      <div class="form-group">
-        <label>Code d'accès</label>
-        <input type="password" id="loginCode" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <button class="btn-login" onclick="doLogin()">🔐 Se connecter</button>
-      <div class="login-error" id="loginError"></div>
+<!-- ════════════════════════════
+     SIDEBAR
+════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-f">F</div>
+    <div>
+      <div class="sb-logo-t1">FichePro Manager</div>
+      <div class="sb-logo-t2">Gestion Cacao</div>
     </div>
   </div>
 
-</div>
+  <nav class="sb-nav">
+    <div class="sb-section">Principal</div>
+    <button class="sb-item active" onclick="goPage('dashboard',this)">
+      <span class="ico">📊</span><span class="lbl">Tableau de bord</span>
+    </button>
+    <button class="sb-item" id="nav-generer" onclick="goPage('generer',this)">
+      <span class="ico">⚡</span><span class="lbl">Générer une fiche</span>
+    </button>
+    <button class="sb-item" onclick="goPage('producteurs',this)">
+      <span class="ico">👥</span><span class="lbl">Producteurs</span>
+      <span class="badge" id="nb-prod">-</span>
+    </button>
+    <div class="sb-section">Données</div>
+    <button class="sb-item" onclick="goPage('import',this)">
+      <span class="ico">📥</span><span class="lbl">Import Registre RA</span>
+    </button>
+    <button class="sb-item" onclick="goPage('fiches',this)">
+      <span class="ico">📋</span><span class="lbl">Fiches générées</span>
+    </button>
+    <div class="sb-section">Paramètres</div>
+    <button class="sb-item" onclick="goPage('config',this)">
+      <span class="ico">⚙️</span><span class="lbl">Configuration</span>
+    </button>
+  </nav>
 
-<!-- ===== APP ===== -->
-<div id="app">
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <h1>🌿 FichePro</h1>
-      <div class="campagne" id="sidebarCampagne">Campagne —</div>
-      <div class="saison-badge" id="sidebarSaison">GT</div>
+  <div class="sb-bottom">
+    <div class="sb-licence">
+      <div class="sb-lic-label">Saison en cours</div>
+      <div class="sb-lic-val" id="sb-expire">...</div>
     </div>
-    <div class="sidebar-user">
-      <div class="nom" id="sidebarNom">—</div>
-      <div class="profil" id="sidebarProfil">—</div>
-    </div>
-    <nav class="sidebar-nav" id="sidebarNav">
-      <!-- Rempli dynamiquement selon profil -->
-    </nav>
-    <div class="sidebar-footer">
-      <button class="btn-logout" onclick="doLogout()">↪ Déconnexion</button>
-    </div>
-  </div>
-
-  <!-- Header banner carousel -->
-  <div class="app-header" id="appHeader">
-    <div class="app-header-slides" id="appHeaderSlides">
-      <div class="app-header-slide" style="background-image:url('/static/static/plantation.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/champ_cacao.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/cacaoyer.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/cacao_cabosses.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/cacao_rouge.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/cacao_jaune.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/cacao_grains.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/cacao_chocolat.jpg')"></div>
-      <div class="app-header-slide" style="background-image:url('/static/static/cafe_cacao.png')"></div>
-    </div>
-    <div class="app-header-overlay"></div>
-    <div class="app-header-content">
-      <div class="app-header-title" id="appHeaderTitle">Tableau de bord</div>
-      <div class="app-header-logos">
-        <img src="/static/static/logo_ra.jpg" alt="RA">
-        <img src="/static/static/logo_fairtrade.jpg" alt="FT">
+    <div class="sb-user">
+      <img class="sb-user-img" src="/static/wilfried.jpg" alt="W"
+           onerror="this.style.display='none'">
+      <div>
+        <div class="sb-user-name" id="sb-nom">-</div>
+        <div class="sb-user-role" id="sb-profil">-</div>
       </div>
     </div>
+    <button class="btn-deconnect" onclick="seDeconnecter()">Se déconnecter</button>
+  </div>
+</aside>
+
+<!-- ════════════════════════════
+     MAIN
+════════════════════════════ -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="tb-title">Tableau de bord</div>
+      <div class="topbar-sub" id="tb-sub">Vue d'ensemble de la campagne</div>
+    </div>
+    <div class="topbar-right">
+      <div class="tb-badge"><span class="tb-dot"></span>Système actif</div>
+      <button class="tb-btn" onclick="actualiserStocks()">Actualiser</button>
+    </div>
   </div>
 
-  <!-- Main -->
-  <div class="main">
+  <div class="content">
 
-    <!-- PAGE: TABLEAU DE BORD -->
-    <div class="page" id="pageDashboard">
-      <div class="page-title">📊 Tableau de bord</div>
-      <div class="stats-grid" id="statsGrid"></div>
-      <div id="alertesCritiques"></div>
-      <div class="card">
-        <div class="card-title">📋 Dernières fiches générées</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>N° Fiche</th><th>Date</th><th>Label</th><th>Saison</th><th>Volume</th><th>Sacs</th><th>Agent</th><th>Actions</th></tr></thead>
-            <tbody id="tableauFiches"></tbody>
-          </table>
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi accent">
+          <div class="kpi-val" id="kpi-stock">-</div>
+          <div class="kpi-lbl">Stock estimé total (kg)</div>
+          <div class="kpi-sub" id="kpi-periode">Chargement...</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" id="kpi-prod">-</div>
+          <div class="kpi-lbl">Producteurs</div>
+          <div class="kpi-sub" id="kpi-util">- parcelles actives</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" id="kpi-fiches">0</div>
+          <div class="kpi-lbl">Fiches générées</div>
+          <div class="kpi-sub">Cette campagne</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-val" id="kpi-alertes">-</div>
+          <div class="kpi-lbl">Alertes stock</div>
+          <div class="kpi-sub" id="kpi-alertes-sub">Parcelles critiques</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Top producteurs (estimation la plus élevée)</div>
+            <button onclick="goPage('producteurs',document.querySelectorAll('.sb-item')[2])"
+              style="font-size:11px;color:var(--vm);background:none;border:none;cursor:pointer;font-weight:500">
+              Voir tous →
+            </button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="prod-table">
+              <thead>
+                <tr>
+                  <th>Code</th><th>Producteur</th><th>Section</th>
+                  <th>Estimation (kg)</th><th>Livré GT</th>
+                </tr>
+              </thead>
+              <tbody id="top-prod-tbody">
+                <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--tg)">Chargement...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Volumes par section</div></div>
+            <div class="card-body" style="padding:0 16px" id="sections-dash">
+              <div style="text-align:center;padding:24px;color:var(--tg);font-size:12px">Chargement...</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Alertes stock critique</div></div>
+            <div class="card-body" style="padding:0" id="alertes-dash">
+              <div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Chargement...</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- PAGE: GENERER FICHE -->
-    <div class="page" id="pageGenerer">
-      <div class="page-title">📄 Générer fiche de répartition</div>
-
-      <!-- Étape 1: Choix label -->
-      <div id="etape1">
-        <div class="card">
-          <div class="card-title">Étape 1 — Choisir le label</div>
-          <div class="label-selector">
-            <div class="label-card" id="cardRA" onclick="selectLabel('RA')">
-              <div class="icon">🌿</div>
-              <div class="name">Rainforest Alliance</div>
-              <div class="desc" id="descRA">Chargement...</div>
+    <!-- ── GENERER ── -->
+    <div class="page" id="page-generer">
+      <div class="gen-grid">
+        <div class="form-card">
+          <div class="form-section">
+            <div class="form-section-title">Volume &amp; Paramètres</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Label *</label>
+                <select class="form-input" id="f-label">
+                  <option value="RA">Rainforest Alliance (RA)</option>
+                  <option value="FT">Fairtrade (FT)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Poids total demandé (kg) *</label>
+                <input class="form-input large" type="number" id="f-poids" placeholder="Ex: 10000" min="25">
+              </div>
             </div>
-            <div class="label-card" id="cardFT" onclick="selectLabel('FT')">
-              <div class="icon">☀️</div>
-              <div class="name">Fairtrade</div>
-              <div class="desc" id="descFT">Chargement...</div>
-            </div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="allerEtape2()" id="btnEtape2" disabled>Continuer →</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Étape 2: Paramètres -->
-      <div id="etape2" style="display:none;">
-        <div class="card">
-          <div class="card-title">Étape 2 — Paramètres de répartition <span id="badgeLabel2" class="badge-label"></span></div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Volume à répartir (kg) *</label>
-              <input type="number" id="volumeTotal" min="75" step="75" placeholder="Ex: 15000">
-            </div>
-            <div class="form-group">
-              <label>Date de livraison</label>
-              <input type="date" id="dateLivraison">
-            </div>
-            <div class="form-group">
-              <label>Type de répartition</label>
-              <select id="typeRepartition">
-                <option value="INTERNE">Interne coopérative</option>
-                <option value="COOP">Inter-coopérative</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Filtrer par section(s) (optionnel)</label>
-              <input type="text" id="sections" placeholder="Ex: Section A, Section B">
-            </div>
-          </div>
-
-          <!-- Dérogations -->
-          <div style="border-top: 1px solid var(--gris2); padding-top: 16px; margin-top: 8px;">
-            <div style="font-size: 12px; font-weight: 700; color: var(--texte2); text-transform: uppercase; margin-bottom: 12px;">⚠️ Dérogations (nécessitent justification)</div>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" id="cbSauterIntervalle" onchange="toggleDerogPanel()">
-                Sauter la contrainte 14 jours
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" id="cbHausserPlafond" onchange="toggleDerogPanel()">
-                Hausser le plafond 30%
-              </label>
-            </div>
-            <div class="deroga-panel" id="derogPanel">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Nouveau plafond (%)</label>
-                  <input type="number" id="plafondOverride" min="30" max="100" step="1" value="30" placeholder="30">
-                </div>
-                <div class="form-group">
-                  <label>Motif de dérogation *</label>
-                  <input type="text" id="motifDerogation" placeholder="Justification obligatoire...">
-                </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Date de référence</label>
+                <input class="form-input" type="date" id="f-date-ref">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date de livraison</label>
+                <input class="form-input" type="date" id="f-date-liv">
               </div>
             </div>
           </div>
 
-          <div class="btn-row" style="margin-top:16px;">
-            <button class="btn btn-secondary" onclick="retourEtape1()">← Retour</button>
-            <button class="btn btn-primary" onclick="simuler()">🔍 Simuler la répartition</button>
+          <div class="form-section">
+            <div class="form-section-title">Sections à mobiliser</div>
+            <div class="chips-wrap" id="sections-chips">
+              <span style="font-size:12px;color:var(--tg)">Chargement des sections...</span>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-group" style="margin-bottom:12px">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input type="checkbox" id="f-sauter-intervalle" style="width:16px;height:16px">
+                Sauter la contrainte 14 jours (dérogation)
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Motif dérogation (si applicable)</label>
+              <input class="form-input" type="text" id="f-motif" placeholder="Raison de la dérogation...">
+            </div>
+          </div>
+
+          <div class="form-section">
+            <button class="btn-gen" id="btn-simuler" onclick="lancerSimulation()">
+              🔍 Simuler la répartition
+            </button>
+          </div>
+
+          <div class="form-section" id="section-confirmer" style="display:none">
+            <button class="btn-gen" id="btn-gen" onclick="confirmerGeneration()"
+              style="background:linear-gradient(135deg,#C9A84C,#8B6914)">
+              ✅ Confirmer et générer la fiche
+            </button>
+          </div>
+        </div>
+
+        <div class="result-panel">
+          <div class="result-empty" id="result-empty">
+            <div class="re-ico">📋</div>
+            <p style="line-height:1.7">La simulation apparaîtra ici.<br>Remplissez le formulaire et cliquez sur Simuler.</p>
+          </div>
+          <div class="result-content" id="result-content">
+            <div class="result-head">
+              <div class="result-id" id="r-id">SIMULATION</div>
+              <div class="result-titre" id="r-titre">-</div>
+            </div>
+            <div class="result-stats">
+              <div class="rs"><div class="rs-val" id="r-prod">-</div><div class="rs-lbl">Producteurs</div></div>
+              <div class="rs"><div class="rs-val" id="r-poids">-</div><div class="rs-lbl">kg affecté</div></div>
+              <div class="rs"><div class="rs-val" id="r-sacs">-</div><div class="rs-lbl">Sacs</div></div>
+              <div class="rs"><div class="rs-val" id="r-restant">-</div><div class="rs-lbl">kg restant</div></div>
+            </div>
+            <div class="result-lignes" id="result-lignes"></div>
+            <div class="result-actions" id="result-actions-genere" style="display:none">
+              <button class="btn-pdf" onclick="exportPDF()">⬇ Export PDF</button>
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Étape 3: Résultat simulation -->
-      <div id="etape3" style="display:none;">
+    <!-- ── IMPORT ── -->
+    <div class="page" id="page-import">
+      <div style="max-width:640px;margin:0 auto">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-head">
+            <div class="card-title">Importer le registre Rainforest Alliance</div>
+          </div>
+          <div class="card-body">
+            <div class="import-zone" id="import-zone"
+              onclick="document.getElementById('ra-file').click()"
+              ondragover="event.preventDefault();this.style.borderColor='var(--vm)'"
+              ondragleave="this.style.borderColor=''"
+              ondrop="handleDrop(event)">
+              <div class="iz-ico">📊</div>
+              <div class="iz-title">Glissez votre registre RA ici</div>
+              <div class="iz-sub">
+                Fichier Excel (.xlsx) ou CSV — Registre Rainforest Alliance<br>
+                Colonnes requises: CODE_PARCELLE, CODE_PRODUCTEUR, NOM_PRENOMS, ESTIMATION_KG
+              </div>
+              <label class="iz-btn">Choisir le fichier</label>
+              <input type="file" id="ra-file" accept=".xlsx,.xls,.csv" style="display:none"
+                     onchange="importRA(this.files[0])">
+            </div>
+            <div class="import-result" id="import-result">
+              <div style="font-size:28px;margin-bottom:8px">✅</div>
+              <div style="font-size:14px;font-weight:600;color:var(--vf);margin-bottom:12px">
+                Import réussi — Base Parcelles mise à jour
+              </div>
+              <div class="ir-stats">
+                <div class="ir-stat"><div class="ir-sv" id="ir-ajoutes">-</div><div class="ir-sl">Importés</div></div>
+                <div class="ir-stat"><div class="ir-sv" id="ir-maj">-</div><div class="ir-sl">Mis à jour</div></div>
+                <div class="ir-stat"><div class="ir-sv" id="ir-erreurs">-</div><div class="ir-sl">Erreurs</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FICHES ── -->
+    <div class="page" id="page-fiches">
+      <div style="max-width:960px;margin:0 auto">
         <div class="card">
-          <div class="card-title">Étape 3 — Résultat de la simulation <span id="badgeLabel3" class="badge-label"></span></div>
-          <div id="simResultInfo"></div>
-          <div id="simExclus"></div>
-          <div class="table-wrap" style="margin-top:16px;">
-            <table>
-              <thead><tr><th>#</th><th>Code Parcelle</th><th>Producteur</th><th>Section</th><th>Score</th><th>Vol. (kg)</th><th>Sacs</th><th>Montant (FCFA)</th></tr></thead>
-              <tbody id="simTableBody"></tbody>
-              <tfoot><tr class="tfoot"><td colspan="5"><b>TOTAL</b></td><td id="simTotalVol"></td><td id="simTotalSacs"></td><td id="simTotalMontant"></td></tr></tfoot>
+          <div class="card-head">
+            <div class="card-title">Fiches générées</div>
+            <button onclick="chargerFiches()"
+              style="background:var(--vf);color:var(--or);border:none;border-radius:8px;padding:7px 16px;font-size:12px;cursor:pointer;font-weight:600;font-family:var(--sans)">
+              Actualiser
+            </button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table style="width:100%;border-collapse:collapse">
+              <thead>
+                <tr>
+                  <th class="fiches-th">N° Fiche</th>
+                  <th class="fiches-th">Label</th>
+                  <th class="fiches-th">Saison</th>
+                  <th class="fiches-th" style="text-align:right">Volume (kg)</th>
+                  <th class="fiches-th" style="text-align:right">Sacs</th>
+                  <th class="fiches-th" style="text-align:center">Date</th>
+                  <th class="fiches-th" style="text-align:center">Agent</th>
+                  <th class="fiches-th" style="text-align:center">PDF</th>
+                </tr>
+              </thead>
+              <tbody id="fiches-body">
+                <tr><td colspan="8" style="padding:24px;text-align:center;color:var(--tg)">Chargement...</td></tr>
+              </tbody>
             </table>
           </div>
-          <div class="btn-row" style="margin-top:16px;">
-            <button class="btn btn-secondary" onclick="showEtape(2)">← Modifier</button>
-            <button class="btn btn-primary" onclick="confirmerGeneration()">✅ Confirmer et générer la fiche</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCTEURS ── -->
+    <div class="page" id="page-producteurs">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Liste des producteurs / parcelles</div>
+          <input class="prod-search" id="prod-search" placeholder="Rechercher nom ou code..."
+                 oninput="filtrerProd()" style="width:200px">
+        </div>
+        <div style="padding:10px 20px">
+          <div class="prod-filters">
+            <button class="pf-btn on" onclick="filtrerLabel('tous',this)">Tous</button>
+            <button class="pf-btn" onclick="filtrerLabel('RA',this)">RA uniquement</button>
+            <button class="pf-btn" onclick="filtrerLabel('FT',this)">FT uniquement</button>
+          </div>
+        </div>
+        <table class="prod-table">
+          <thead>
+            <tr>
+              <th>Code Parcelle</th><th>Producteur</th><th>Section</th>
+              <th>Estimation (kg)</th><th>Livré GT</th><th>Livré PT</th><th>Labels</th>
+            </tr>
+          </thead>
+          <tbody id="prod-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--tg)">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CONFIG ── -->
+    <div class="page" id="page-config">
+      <div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Configuration système</div></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:8px" id="config-block">
+              <div style="font-size:12px;color:var(--tg)">Chargement...</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Base de données</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--tg)" id="db-status">Vérification...</div>
+            <div style="font-size:12px;color:var(--tg);margin-top:9px">
+              Pour charger vos producteurs, utilisez <strong>Import Registre RA</strong>.
+            </div>
           </div>
         </div>
       </div>
-
-      <!-- Étape 4: Succès + Fiche accompagnement -->
-      <div id="etape4" style="display:none;">
-        <div class="card" style="text-align:center; padding: 40px;">
-          <div style="font-size: 56px; margin-bottom: 16px;">✅</div>
-          <h2 style="font-size: 22px; color: var(--vert); margin-bottom: 8px;">Fiche générée avec succès</h2>
-          <p style="font-size: 28px; font-weight: 700; color: var(--texte); margin: 16px 0;" id="numFicheGeneree">—</p>
-          <div class="btn-row" style="justify-content:center; margin-top: 24px;">
-            <button class="btn btn-secondary" onclick="dlFicheRep()">📄 Télécharger fiche de répartition (PDF)</button>
-            <button class="btn btn-gold" onclick="passerFA()">📦 Créer fiche d'accompagnement →</button>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- PAGE: FICHE ACCOMPAGNEMENT -->
-    <div class="page" id="pageFA">
-      <div class="page-title">📦 Fiche d'accompagnement</div>
-      <div class="card">
-        <div class="card-title" id="faTitre">—</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>N° LOT (fiche répartition)</label>
-            <input type="text" id="faNumLot" readonly style="background:#f5f5f5;">
-          </div>
-          <div class="form-group">
-            <label>Connaissement CCC N°</label>
-            <input type="text" id="faConnaissement" placeholder="Numéro connaissement">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Tracteur</label>
-            <input type="text" id="faTracteur" placeholder="Ex: 2044 FF01">
-          </div>
-          <div class="form-group">
-            <label>Remorque</label>
-            <input type="text" id="faRemorque" placeholder="Numéro remorque">
-          </div>
-          <div class="form-group">
-            <label>Chauffeur</label>
-            <input type="text" id="faChauffeur" placeholder="Nom complet chauffeur">
-          </div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="genererFA()">💾 Enregistrer et générer PDF</button>
-        </div>
-      </div>
-      <div id="faSuccess" style="display:none;">
-        <div class="alert alert-success">✅ Fiche d'accompagnement créée. <button class="btn btn-sm btn-primary" onclick="dlFA()" style="margin-left:10px;">📥 Télécharger PDF</button></div>
-      </div>
-    </div>
+  </div><!-- /content -->
+</main>
 
-    <!-- PAGE: LISTE FICHES -->
-    <div class="page" id="pageFiches">
-      <div class="page-title">📋 Historique des fiches</div>
-      <div class="card">
-        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
-          <select id="filtreLabel" onchange="chargerFiches()" style="padding:8px 12px; border:2px solid var(--gris2); border-radius:6px;">
-            <option value="">Tous les labels</option>
-            <option value="RA">🌿 Rainforest Alliance</option>
-            <option value="FT">☀️ Fairtrade</option>
-          </select>
-          <select id="filtreSaison" onchange="chargerFiches()" style="padding:8px 12px; border:2px solid var(--gris2); border-radius:6px;">
-            <option value="">Toutes saisons</option>
-            <option value="GT">Grande Traite</option>
-            <option value="PT">Petite Traite</option>
-          </select>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>N° Fiche</th><th>Date</th><th>Label</th><th>Saison</th><th>Volume</th><th>Sacs</th><th>Plafond</th><th>Agent</th><th>Actions</th></tr></thead>
-            <tbody id="tableFichesHisto"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+<div class="toast" id="toast"></div>
 
-    <!-- PAGE: IMPORT REGISTRE -->
-    <div class="page" id="pageImport">
-      <div class="page-title">📂 Import registre producteurs</div>
-      <div class="card">
-        <div class="card-title">Fichier CSV ou Excel</div>
-        <div class="alert alert-info">
-          ℹ️ Colonnes requises: <b>CODE_PARCELLE, CODE_PRODUCTEUR, NOM_PRENOMS, ESTIMATION_KG</b><br>
-          Colonnes optionnelles: SECTION, VILLAGE, SUPERFICIE_HA, LATITUDE, LONGITUDE, RAINFOREST_ALLIANCE (Oui/Non), FAIRTRADE (Oui/Non)
-        </div>
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-          <div class="icon">📁</div>
-          <p>Cliquer pour sélectionner un fichier ou glisser-déposer ici</p>
-          <p style="margin-top:6px; font-size:12px;">CSV, XLS, XLSX</p>
-        </div>
-        <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" style="display:none" onchange="uploadFichier()">
-        <div id="importResult" style="margin-top:16px;"></div>
-      </div>
-    </div>
-
-    <!-- PAGE: DIRECTEUR - CONNEXIONS -->
-    <div class="page" id="pageConnexions">
-      <div class="page-title">👤 Connexions</div>
-      <div class="card">
-        <div class="card-title">Historique des connexions</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Date/Heure</th><th>Nom agent</th><th>Profil</th><th>Déconnexion</th><th>Durée</th></tr></thead>
-            <tbody id="tableConnexions"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAGE: DIRECTEUR - STATISTIQUES -->
-    <div class="page" id="pageStats">
-      <div class="page-title">📈 Statistiques</div>
-      <div class="stats-grid" id="statsDir"></div>
-      <div class="card">
-        <div class="card-title">📊 Distribution par section</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Section</th><th>Label</th><th>Volume (kg)</th><th>Sacs</th><th>Nb parcelles</th></tr></thead>
-            <tbody id="tableSection"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">📜 Journal d'activité (50 derniers)</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Date/Heure</th><th>Agent</th><th>Action</th><th>Détails</th><th>Référence</th></tr></thead>
-            <tbody id="tableJournal"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAGE: CLOTURE GT -->
-    <div class="page" id="pageCloture">
-      <div class="page-title">🔒 Clôture Grande Traite</div>
-      <div class="card">
-        <div class="alert alert-danger">⚠️ <b>Action irréversible.</b> La clôture de la Grande Traite reporte les résidus GT sur la Petite Traite et bascule la saison. Cette action est journalisée.</div>
-        <div id="clotureInfo" style="margin-bottom:16px;"></div>
-        <div class="form-group" style="max-width:500px;">
-          <label>Description de l'action *</label>
-          <textarea id="clotureDescription" placeholder="Ex: Clôture GT campagne 2024-2025. Tous les apports enregistrés. Report des résidus sur PT."></textarea>
-        </div>
-        <button class="btn btn-danger" onclick="ouvrirModalCloture()">🔒 Clôturer la Grande Traite</button>
-      </div>
-    </div>
-
-    <!-- PAGE: CONFIG -->
-    <div class="page" id="pageConfig">
-      <div class="page-title">⚙️ Configuration</div>
-      <div class="card">
-        <div class="card-title">Paramètres campagne</div>
-        <div id="configForm"></div>
-        <div class="btn-row" style="margin-top:16px;">
-          <button class="btn btn-primary" onclick="sauvegarderConfig()">💾 Sauvegarder</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAGE: CHARGEMENT AMI -->
-    <div class="page" id="pageChargementAmi">
-      <div class="page-title">🚛 Chargement Ami</div>
-      <div class="card">
-        <div class="alert alert-info">ℹ️ Module de chargement ami — fonctionnalité préservée du système existant.</div>
-        <div id="chargementAmiContent">Chargement...</div>
-      </div>
-    </div>
-
-  </div><!-- /main -->
-</div><!-- /app -->
-
-<!-- MODAL CLOTURE CONFIRMATION -->
-<div class="modal-overlay" id="modalCloture">
-  <div class="modal">
-    <h3>🔒 Confirmer la clôture GT</h3>
-    <p style="color:var(--rouge); font-size:13px; margin-bottom:16px;">Cette action est <b>irréversible</b>. Les résidus GT seront reportés sur PT et la saison passera en Petite Traite.</p>
-    <div class="form-group">
-      <label>Code d'accès directeur (confirmation)</label>
-      <input type="password" id="clotureCodeConfirm" placeholder="Votre code d'accès">
-    </div>
-    <div id="clotureErreur" class="alert alert-danger" style="display:none;"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="fermerModalCloture()">Annuler</button>
-      <button class="btn btn-danger" onclick="executerCloture()">🔒 Confirmer la clôture</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL CONFIRMATION GENERER -->
-<div class="modal-overlay" id="modalGenerer">
-  <div class="modal">
-    <h3>✅ Confirmer la génération</h3>
-    <p id="modalGenererTxt" style="margin-bottom:16px;"></p>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="fermerModalGenerer()">Annuler</button>
-      <button class="btn btn-primary" onclick="confirmerGenerationOK()">✅ Générer</button>
-    </div>
-  </div>
-</div>
-
+<!-- ════════════════════════════
+     SCRIPT
+════════════════════════════ -->
 <script>
-// ============================================================
-// CAROUSEL LOGIN
-// ============================================================
-(function initCarousel() {
-  const NB = 9;
-  let cur = 0;
-  function updateSlide() {
-    const slides = document.getElementById('loginSlides');
-    if (!slides) return;
-    slides.style.transform = `translateX(-${cur * 100}%)`;
-    document.querySelectorAll('.slide-dot').forEach((d,i) => d.classList.toggle('active', i===cur));
-  }
-  document.addEventListener('DOMContentLoaded', function() {
-    const dots = document.getElementById('slideDots');
-    if (dots) {
-      for (let i=0; i<NB; i++) {
-        const d = document.createElement('div');
-        d.className = 'slide-dot' + (i===0?' active':'');
-        d.onclick = () => { cur=i; updateSlide(); };
-        dots.appendChild(d);
-      }
-    }
-    setInterval(() => { cur = (cur+1) % NB; updateSlide(); }, 4500);
-  });
-})();
+'use strict';
 
-// ============================================================
-// CAROUSEL APP HEADER
-// ============================================================
-(function initAppHeader() {
-  const NB = 9;
-  let cur = 0;
-  function updateHeader() {
-    const slides = document.getElementById('appHeaderSlides');
-    if (!slides) return;
-    slides.style.transform = `translateX(-${cur * 100}%)`;
-  }
-  document.addEventListener('DOMContentLoaded', function() {
-    setInterval(() => { cur = (cur+1) % NB; updateHeader(); }, 5000);
-  });
-})();
-
-// ============================================================
-// STATE
-// ============================================================
-let state = {
-  user: null,
-  config: {},
-  labelSelectionne: null,
-  simResult: null,
-  numFicheGeneree: null,
-  faId: null,
-  currentPage: null,
+// ── État ────────────────────────────────────────────────────
+let STATE = {
+  user: null, parcelles: [], fiches: [], config: {},
+  sections: [], sectionsSelectionnees: [],
+  simulationResult: null, derniereNumFiche: null
 };
 
-// ============================================================
-// API HELPERS
-// ============================================================
-async function api(method, path, body=null) {
-  const opts = { method, credentials: 'include', headers: {'Content-Type': 'application/json'} };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(path, opts);
-  return r.json();
-}
-
-async function apiForm(path, formData) {
-  const r = await fetch(path, { method:'POST', credentials:'include', body: formData });
-  return r.json();
-}
-
-function fmt(n) { return n ? Number(n).toLocaleString('fr-FR') : '0'; }
-function fmtDate(s) { return s ? s.slice(0,10).split('-').reverse().join('/') : '—'; }
-
-// ============================================================
-// AUTH
-// ============================================================
-async function doLogin() {
-  const nom = document.getElementById('loginNom').value.trim();
-  const code = document.getElementById('loginCode').value.trim();
-  const errEl = document.getElementById('loginError');
-  errEl.style.display = 'none';
-  if (!nom || !code) { errEl.textContent = 'Nom et code requis.'; errEl.style.display='block'; return; }
-  const r = await api('POST', '/api/login', { nom_agent: nom, code_acces: code });
-  if (r.error) { errEl.textContent = r.error; errEl.style.display='block'; return; }
-  state.user = r;
-  await initApp();
-}
-
-async function doLogout() {
-  await api('POST', '/api/logout');
-  state.user = null;
-  document.getElementById('loginPage').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-}
-
-// ============================================================
-// INIT APP
-// ============================================================
-async function initApp() {
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-
-  // Charger config
-  const cfg = await api('GET', '/api/config');
-  state.config = cfg;
-
-  // Sidebar
-  document.getElementById('sidebarNom').textContent = state.user.nom_agent;
-  document.getElementById('sidebarProfil').textContent = state.user.profil === 'DIRECTEUR' ? 'Directeur' : 'Responsable traçabilité';
-  document.getElementById('sidebarCampagne').textContent = 'Campagne ' + (cfg.ANNEE_CAMPAGNE || '—');
-  document.getElementById('sidebarSaison').textContent = cfg.SAISON_EN_COURS || 'GT';
-
-  buildNav();
-  navTo('dashboard');
-}
-
-function buildNav() {
-  const nav = document.getElementById('sidebarNav');
-  const profil = state.user.profil;
-
-  let html = '';
-
-  if (profil === 'TRACABILITE') {
-    html += `<div class="nav-section">Répartition</div>
-    <div class="nav-item" onclick="navTo('generer')"><span class="icon">📄</span><span>Générer fiche</span></div>
-    <div class="nav-item" onclick="navTo('fiches')"><span class="icon">📋</span><span>Historique fiches</span></div>
-    <div class="nav-section">Données</div>
-    <div class="nav-item" onclick="navTo('import')"><span class="icon">📂</span><span>Import registre</span></div>
-    <div class="nav-section">Modules</div>
-    <div class="nav-item" onclick="navTo('chargementAmi')"><span class="icon">🚛</span><span>Chargement Ami</span></div>`;
+// ── API : ne redirige JAMAIS, ne lève JAMAIS ────────────────
+async function api(url, options) {
+  options = options || {};
+  options.credentials = 'include';
+  options.headers = options.headers || {};
+  try {
+    return await fetch(url, options);
+  } catch (e) {
+    console.warn('API network error:', url, e);
+    return { ok: false, status: 0, json: async () => ({}),
+             blob: async () => new Blob(), headers: { get: () => null } };
   }
-
-  if (profil === 'DIRECTEUR') {
-    html += `<div class="nav-section">Tableau de bord</div>
-    <div class="nav-item" onclick="navTo('dashboard')"><span class="icon">📊</span><span>Tableau de bord</span></div>
-    <div class="nav-section">Répartition</div>
-    <div class="nav-item" onclick="navTo('generer')"><span class="icon">📄</span><span>Générer fiche</span></div>
-    <div class="nav-item" onclick="navTo('fiches')"><span class="icon">📋</span><span>Historique fiches</span></div>
-    <div class="nav-section">Suivi</div>
-    <div class="nav-item" onclick="navTo('connexions')"><span class="icon">👤</span><span>Connexions</span></div>
-    <div class="nav-item" onclick="navTo('stats')"><span class="icon">📈</span><span>Statistiques</span></div>
-    <div class="nav-section">Administration</div>
-    <div class="nav-item" onclick="navTo('import')"><span class="icon">📂</span><span>Import registre</span></div>
-    <div class="nav-item" onclick="navTo('cloture')"><span class="icon">🔒</span><span>Clôture GT</span></div>
-    <div class="nav-item" onclick="navTo('config')"><span class="icon">⚙️</span><span>Configuration</span></div>
-    <div class="nav-item" onclick="navTo('chargementAmi')"><span class="icon">🚛</span><span>Chargement Ami</span></div>`;
-  }
-
-  nav.innerHTML = html;
+}
+async function safeJson(r) {
+  if (!r || !r.ok) return null;
+  try { return await r.json(); } catch (e) { return null; }
 }
 
-function navTo(page) {
+// ── Toast ───────────────────────────────────────────────────
+function toast(msg, err) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.className = 'toast', 3200);
+}
+
+// ── Helpers ─────────────────────────────────────────────────
+function setText(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+
+// ── Navigation ──────────────────────────────────────────────
+const PAGES = {
+  dashboard: 'Tableau de bord',
+  generer: 'Générer une fiche',
+  producteurs: 'Producteurs & Parcelles',
+  import: 'Import Registre',
+  fiches: 'Fiches générées',
+  config: 'Configuration'
+};
+
+function goPage(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('tb-title').textContent = PAGES[id] || id;
 
-  const pageMap = {
-    dashboard: 'pageDashboard',
-    generer: 'pageGenerer',
-    fiches: 'pageFiches',
-    import: 'pageImport',
-    connexions: 'pageConnexions',
-    stats: 'pageStats',
-    cloture: 'pageCloture',
-    config: 'pageConfig',
-    chargementAmi: 'pageChargementAmi',
-    fa: 'pageFA',
-  };
-
-  const el = document.getElementById(pageMap[page]);
-  if (el) el.classList.add('active');
-  state.currentPage = page;
-
-  // Mettre à jour le titre du header
-  const titleMap = {
-    dashboard: 'Tableau de bord',
-    generer: 'Générer une fiche',
-    fiches: 'Historique des fiches',
-    import: 'Import registre',
-    connexions: 'Connexions agents',
-    stats: 'Statistiques',
-    cloture: 'Clôture GT',
-    config: 'Configuration',
-    chargementAmi: 'Chargement Ami',
-    fa: 'Fiche d\'affectation',
-  };
-  const titleEl = document.getElementById('appHeaderTitle');
-  if (titleEl && titleMap[page]) titleEl.textContent = titleMap[page];
-
-  // Charger données selon page
-  if (page === 'dashboard') chargerDashboard();
-  else if (page === 'fiches') chargerFiches();
-  else if (page === 'connexions') chargerConnexions();
-  else if (page === 'stats') chargerStats();
-  else if (page === 'config') chargerConfigForm();
-  else if (page === 'cloture') chargerInfoCloture();
-  else if (page === 'generer') initGenerer();
+  if (id === 'dashboard') chargerDashboard();
+  if (id === 'producteurs') chargerProducteurs();
+  if (id === 'fiches') chargerFiches();
+  if (id === 'config') chargerConfig();
+  if (id === 'generer') chargerSections();
 }
 
-// ============================================================
-// DASHBOARD
-// ============================================================
-async function chargerDashboard() {
-  const fiches = await api('GET', '/api/fiches');
-  const alertes = await api('GET', '/api/alertes');
+// ── INIT — ne boucle JAMAIS ─────────────────────────────────
+async function init() {
+  try {
+    const r = await api('/api/me');
+    if (r.status === 401) { window.location.replace('/'); return; }
+    const u = await safeJson(r);
+    if (u) {
+      STATE.user = u;
+      const n = document.getElementById('sb-nom');
+      const p = document.getElementById('sb-profil');
+      if (n && u.nom_agent) n.textContent = u.nom_agent;
+      if (p && u.profil)   p.textContent = u.profil;
+      // Masquer "Générer une fiche" pour le DIRECTEUR (accès 403 au /generer)
+      if (u.profil === 'DIRECTEUR') {
+        const ng = document.getElementById('nav-generer');
+        if (ng) ng.style.display = 'none';
+      }
+    }
+    // 404 → on continue sans user (mode dégradé)
+  } catch (e) { console.warn('init user:', e); }
 
-  const totalVol = fiches.reduce((s,f) => s + (f.volume_affecte||0), 0);
-  const volRA = fiches.filter(f=>f.label==='RA').reduce((s,f)=>s+(f.volume_affecte||0),0);
-  const volFT = fiches.filter(f=>f.label==='FT').reduce((s,f)=>s+(f.volume_affecte||0),0);
-  const saison = state.config.SAISON_EN_COURS || 'GT';
+  const today = new Date().toISOString().split('T')[0];
+  const dr = document.getElementById('f-date-ref');
+  const dl = document.getElementById('f-date-liv');
+  if (dr) dr.value = today;
+  if (dl) dl.value = today;
 
-  document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card"><div class="stat-val">${fiches.length}</div><div class="stat-lbl">Fiches générées</div></div>
-    <div class="stat-card gold"><div class="stat-val">${fmt(totalVol)} kg</div><div class="stat-lbl">Volume total réparti</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#1b5e20;">${fmt(volRA)} kg</div><div class="stat-lbl">🌿 Rainforest Alliance</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#e65100;">${fmt(volFT)} kg</div><div class="stat-lbl">☀️ Fairtrade</div></div>
-    <div class="stat-card ${alertes.length>0?'red':''}"><div class="stat-val">${alertes.length}</div><div class="stat-lbl">⚠️ Alertes stock critique</div></div>
-  `;
+  await chargerDashboard();
+}
 
-  if (alertes.length > 0) {
-    document.getElementById('alertesCritiques').innerHTML = `
-      <div class="card">
-        <div class="card-title" style="color:var(--rouge);">⚠️ Parcelles en stock critique (&lt;10%)</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Code Parcelle</th><th>Producteur</th><th>Section</th><th>Estimation</th><th>Stock dispo</th><th>Taux restant</th></tr></thead>
-            <tbody>${alertes.map(a => `<tr>
-              <td>${a.code_parcelle}</td><td>${a.nom_producteur}</td><td>${a.section||''}</td>
-              <td>${fmt(a.estimation_kg)} kg</td><td>${fmt(a.stock_disponible)} kg</td>
-              <td><span class="alerte-critique">${a.taux}%</span></td>
-            </tr>`).join('')}</tbody>
-          </table>
-        </div>
-      </div>`;
-  } else {
-    document.getElementById('alertesCritiques').innerHTML = '';
+// ── DÉCONNEXION ROBUSTE ─────────────────────────────────────
+async function seDeconnecter() {
+  if (!confirm('Se déconnecter ?')) return;
+
+  const eps = ['/api/logout', '/logout', '/api/deconnexion', '/api/auth/logout'];
+  for (const ep of eps) {
+    try {
+      const r = await fetch(ep, { method: 'POST', credentials: 'include' });
+      if (r.ok) break;
+    } catch (e) {}
   }
 
-  // Dernières fiches
-  document.getElementById('tableauFiches').innerHTML = fiches.slice(0,20).map(f => `<tr>
-    <td><b>${f.num_fiche}</b></td>
-    <td>${fmtDate(f.date_creation)}</td>
-    <td><span class="chip chip-${f.label.toLowerCase()}">${f.label==='RA'?'🌿 RA':'☀️ FT'}</span></td>
-    <td><span class="chip chip-${f.saison.toLowerCase()}">${f.saison}</span></td>
-    <td>${fmt(f.volume_affecte)} kg</td>
-    <td>${f.nombre_sacs}</td>
-    <td>${f.nom_agent}</td>
-    <td>
-      <button class="btn btn-sm btn-secondary" onclick="window.open('/api/fiches/${f.num_fiche}/pdf','_blank')">📄 PDF</button>
-    </td>
-  </tr>`).join('');
+  try { localStorage.clear(); } catch (e) {}
+  try { sessionStorage.clear(); } catch (e) {}
+  try {
+    document.cookie.split(';').forEach(c => {
+      const n = c.split('=')[0].trim();
+      if (n) document.cookie = n + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    });
+  } catch (e) {}
+
+  window.location.replace('/?_t=' + Date.now());
 }
 
-// ============================================================
-// GENERER FICHE - LOGIQUE ÉTAPES
-// ============================================================
-function initGenerer() {
-  showEtape(1);
-  state.labelSelectionne = null;
-  state.simResult = null;
-  state.numFicheGeneree = null;
-  document.getElementById('cardRA').className = 'label-card';
-  document.getElementById('cardFT').className = 'label-card';
-  document.getElementById('btnEtape2').disabled = true;
-
-  // Infos parcelles par label
-  actualiseLabelDesc();
-
-  // Date par défaut
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById('dateLivraison').value = today;
+// ── Actualiser ──────────────────────────────────────────────
+function actualiserStocks() {
+  const actif = document.querySelector('.page.active');
+  if (!actif) return;
+  const id = actif.id.replace('page-', '');
+  if (id === 'dashboard') chargerDashboard();
+  else if (id === 'producteurs') chargerProducteurs();
+  else if (id === 'fiches') chargerFiches();
+  else if (id === 'config') chargerConfig();
+  toast('Données actualisées');
 }
 
-async function actualiseLabelDesc() {
-  const ra = await api('GET', '/api/parcelles?label=RA');
-  const ft = await api('GET', '/api/parcelles?label=FT');
-  document.getElementById('descRA').textContent = `${ra.length} parcelles éligibles`;
-  document.getElementById('descFT').textContent = `${ft.length} parcelles éligibles`;
+// ── DASHBOARD ───────────────────────────────────────────────
+async function chargerDashboard() {
+  try {
+    const [rP, rF, rC, rA] = await Promise.all([
+      api('/api/parcelles'), api('/api/fiches'),
+      api('/api/config'), api('/api/alertes')
+    ]);
+    STATE.parcelles = (await safeJson(rP)) || [];
+    STATE.fiches    = (await safeJson(rF)) || [];
+    STATE.config    = (await safeJson(rC)) || {};
+    const alertes   = (await safeJson(rA)) || [];
+
+    // Fallback : si /api/parcelles vide → tenter /api/producteurs
+    if (!Array.isArray(STATE.parcelles) || STATE.parcelles.length === 0) {
+      const rOld = await api('/api/producteurs');
+      const old  = await safeJson(rOld);
+      if (Array.isArray(old)) {
+        STATE.parcelles = old.map(p => ({
+          code_parcelle: p.code, nom_producteur: p.nom,
+          code_producteur: p.code, section: p.sect,
+          estimation_kg: p.estim || 0,
+          volume_livre_gt: Math.max(0, (p.estim || 0) - (p.stk || 0)),
+          volume_livre_pt: 0, rainforest_alliance: true, fairtrade: false
+        }));
+      }
+    }
+
+    const saison = STATE.config.SAISON_EN_COURS || STATE.config.saison || 'GT';
+    setText('sb-expire', 'Saison ' + saison);
+
+    const total = STATE.parcelles.reduce((s, p) => s + (p.estimation_kg || 0), 0);
+    const nbProd = new Set(STATE.parcelles.map(p => p.code_producteur)).size;
+    setText('kpi-stock', Math.round(total).toLocaleString('fr-FR'));
+    setText('kpi-periode', 'Saison ' + saison);
+    setText('kpi-prod', nbProd);
+    setText('kpi-util', STATE.parcelles.length + ' parcelles actives');
+    setText('kpi-fiches', STATE.fiches.length);
+    setText('kpi-alertes', alertes.length);
+    setText('kpi-alertes-sub', alertes.length > 0 ? 'Attention requise' : 'Tout est OK');
+    setText('nb-prod', nbProd);
+
+    // Top producteurs
+    const top = [...STATE.parcelles]
+      .sort((a, b) => (b.estimation_kg || 0) - (a.estimation_kg || 0)).slice(0, 8);
+    const tb = document.getElementById('top-prod-tbody');
+    if (tb) {
+      tb.innerHTML = top.length === 0
+        ? '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--tg)">Aucune parcelle — utilisez Import</td></tr>'
+        : top.map(p => {
+            const lv = p.volume_livre_gt || 0;
+            const pct = p.estimation_kg > 0 ? Math.round(lv / p.estimation_kg * 100) : 0;
+            const cls = pct > 70 ? 'danger' : pct > 40 ? 'warn' : '';
+            return `<tr><td style="font-size:11px;color:var(--tg)">${p.code_parcelle}</td>
+              <td style="font-weight:500">${p.nom_producteur}</td>
+              <td>${p.section || '-'}</td>
+              <td>${Math.round(p.estimation_kg || 0).toLocaleString('fr-FR')} kg</td>
+              <td><div style="display:flex;align-items:center;gap:6px">
+                <div class="pct-bar"><div class="pct-fill ${cls}" style="width:${pct}%"></div></div>
+                <span class="pct-text">${pct}%</span></div></td></tr>`;
+          }).join('');
+    }
+
+    // Sections
+    const sMap = {};
+    STATE.parcelles.forEach(p => {
+      const s = p.section || 'N/A';
+      if (!sMap[s]) sMap[s] = { estim: 0, nb: 0 };
+      sMap[s].estim += p.estimation_kg || 0; sMap[s].nb++;
+    });
+    const sd = document.getElementById('sections-dash');
+    if (sd) {
+      const ks = Object.keys(sMap).sort();
+      sd.innerHTML = ks.length === 0
+        ? '<div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Aucune section</div>'
+        : ks.map(s => `<div class="sect-item"><div><div class="sect-name">${s}</div>
+            <div class="sect-vol">${Math.round(sMap[s].estim).toLocaleString('fr-FR')} kg estimés</div></div>
+            <div class="sect-nb">${sMap[s].nb} parcelles</div></div>`).join('');
+    }
+
+    // Alertes
+    const ad = document.getElementById('alertes-dash');
+    if (ad) {
+      ad.innerHTML = alertes.length === 0
+        ? '<div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Aucune alerte</div>'
+        : alertes.slice(0, 5).map(a => `<div class="log-item">
+            <div class="log-ic err">⚠</div>
+            <div class="log-msg">${a.nom_producteur} — ${a.taux}% restant</div>
+            <div class="log-time">${a.section || ''}</div></div>`).join('');
+    }
+
+  } catch (e) { console.error('dashboard:', e); }
+
+  // Plus de "Chargement..." bloqué — laisser les valeurs neutres affichées
+  const kpiStock = document.getElementById('kpi-stock');
+  if (kpiStock && kpiStock.textContent === '-') kpiStock.textContent = '0';
+
+  // Forcer saison si jamais elle n'a pas été mise à jour
+  const sbExp = document.getElementById('sb-expire');
+  if (sbExp && (sbExp.textContent === '...' || sbExp.textContent === '')) sbExp.textContent = 'GT';
+
+  // Placeholder si parcelles vides
+  const tbt = document.getElementById('top-prod-tbody');
+  if (tbt && tbt.innerHTML.includes('Chargement')) {
+    tbt.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--tg)">Aucune donnée</td></tr>';
+  }
+  ['sections-dash','alertes-dash'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.innerHTML.includes('Chargement'))
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--tg);font-size:12px">Aucune donnée</div>';
+  });
 }
 
-function selectLabel(l) {
-  state.labelSelectionne = l;
-  document.getElementById('cardRA').className = 'label-card' + (l==='RA' ? ' selected-ra' : '');
-  document.getElementById('cardFT').className = 'label-card' + (l==='FT' ? ' selected-ft' : '');
-  document.getElementById('btnEtape2').disabled = false;
+// ── SECTIONS pour génération ─────────────────────────────────
+async function chargerSections() {
+  try {
+    const r = await api('/api/parcelles');
+    if (!r.ok) return;
+    const parcelles = await r.json();
+
+    const sects = [...new Set(parcelles.map(p => p.section).filter(Boolean))].sort();
+    STATE.sections = sects;
+    STATE.sectionsSelectionnees = [];
+
+    const wrap = document.getElementById('sections-chips');
+    if (sects.length === 0) {
+      wrap.innerHTML = '<span style="font-size:12px;color:var(--tg)">Aucune section — importez d\'abord le registre</span>';
+      return;
+    }
+    wrap.innerHTML = sects.map(s =>
+      `<button class="chip" onclick="toggleSection('${s}',this)">${s}</button>`
+    ).join('') + `<button class="chip" onclick="toutesLesections(this)" style="border-color:var(--or);color:var(--or)">Toutes</button>`;
+  } catch(e) {}
 }
 
-function allerEtape2() {
-  if (!state.labelSelectionne) return;
-  showEtape(2);
-  document.getElementById('badgeLabel2').className = 'badge-label badge-' + state.labelSelectionne.toLowerCase();
-  document.getElementById('badgeLabel2').textContent = state.labelSelectionne === 'RA' ? '🌿 Rainforest Alliance' : '☀️ Fairtrade';
+function toggleSection(s, btn) {
+  const idx = STATE.sectionsSelectionnees.indexOf(s);
+  if (idx >= 0) {
+    STATE.sectionsSelectionnees.splice(idx, 1);
+    btn.classList.remove('sel');
+  } else {
+    STATE.sectionsSelectionnees.push(s);
+    btn.classList.add('sel');
+  }
 }
 
-function retourEtape1() { showEtape(1); }
-
-function toggleDerogPanel() {
-  const cb1 = document.getElementById('cbSauterIntervalle').checked;
-  const cb2 = document.getElementById('cbHausserPlafond').checked;
-  document.getElementById('derogPanel').className = 'deroga-panel' + (cb1||cb2 ? ' visible' : '');
-  if (!cb2) document.getElementById('plafondOverride').value = '30';
+function toutesLesections(btn) {
+  const chips = document.querySelectorAll('#sections-chips .chip:not(:last-child)');
+  if (STATE.sectionsSelectionnees.length === STATE.sections.length) {
+    STATE.sectionsSelectionnees = [];
+    chips.forEach(c => c.classList.remove('sel'));
+    btn.style.background = '';
+  } else {
+    STATE.sectionsSelectionnees = [...STATE.sections];
+    chips.forEach(c => c.classList.add('sel'));
+    btn.style.background = 'rgba(201,168,76,.14)';
+  }
 }
 
-function showEtape(n) {
-  for(let i=1;i<=4;i++) document.getElementById('etape'+i).style.display = (i===n?'block':'none');
+// ── SIMULATION ───────────────────────────────────────────────
+async function lancerSimulation() {
+  const label = document.getElementById('f-label').value;
+  const poids = parseFloat(document.getElementById('f-poids').value);
+  const dateRef = document.getElementById('f-date-ref').value;
+  const sauterIntervalle = document.getElementById('f-sauter-intervalle').checked;
+
+  if (!poids || poids < 25) { toast('Entrez un poids valide (min 25 kg)', true); return; }
+
+  const btn = document.getElementById('btn-simuler');
+  btn.disabled = true;
+  btn.textContent = '⏳ Simulation en cours...';
+
+  // Cacher le bouton confirmer
+  document.getElementById('section-confirmer').style.display = 'none';
+  STATE.simulationResult = null;
+  STATE.derniereNumFiche = null;
+  document.getElementById('result-actions-genere').style.display = 'none';
+
+  try {
+    const body = {
+      label,
+      volume_total: poids,
+      date_ref: dateRef || new Date().toISOString().split('T')[0],
+      sections: STATE.sectionsSelectionnees,
+      sauter_intervalle: sauterIntervalle
+    };
+
+    const r = await api('/api/repartition/simuler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      toast(data.error || 'Erreur simulation', true);
+      afficherResultatVide();
+      return;
+    }
+
+    STATE.simulationResult = data;
+    afficherSimulation(data);
+    // Montrer bouton confirmer
+    document.getElementById('section-confirmer').style.display = 'block';
+
+  } catch(e) {
+    toast('Erreur réseau', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Simuler la répartition';
+  }
 }
 
-async function simuler() {
-  const vol = parseFloat(document.getElementById('volumeTotal').value);
-  if (!vol || vol < 75) { alert('Volume invalide (minimum 75 kg)'); return; }
+function afficherResultatVide() {
+  document.getElementById('result-empty').style.display = 'block';
+  document.getElementById('result-content').classList.remove('show');
+}
 
-  const sauterIntervalle = document.getElementById('cbSauterIntervalle').checked;
-  const hausserPlafond = document.getElementById('cbHausserPlafond').checked;
-  const plafondVal = hausserPlafond ? parseFloat(document.getElementById('plafondOverride').value)/100 : null;
-  const motif = document.getElementById('motifDerogation').value.trim();
+function afficherSimulation(data) {
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('result-content').classList.add('show');
 
-  if ((sauterIntervalle || hausserPlafond) && !motif) {
-    alert('Un motif de dérogation est obligatoire.');
+  document.getElementById('r-id').textContent = 'SIMULATION — ' + data.label + ' / Saison ' + data.saison;
+  document.getElementById('r-titre').textContent = (data.label === 'RA' ? 'Rainforest Alliance' : 'Fairtrade') + ' — ' + Math.round(data.volume_affecte).toLocaleString('fr-FR') + ' kg';
+  document.getElementById('r-prod').textContent = data.nombre_lignes;
+  document.getElementById('r-poids').textContent = Math.round(data.volume_affecte).toLocaleString('fr-FR');
+  document.getElementById('r-sacs').textContent = data.nombre_sacs;
+  document.getElementById('r-restant').textContent = Math.round(data.volume_restant).toLocaleString('fr-FR');
+
+  const lignesDiv = document.getElementById('result-lignes');
+  lignesDiv.innerHTML = (data.lignes || []).map(l => `
+    <div class="rl-row">
+      <span class="rl-code">${l.code_parcelle}</span>
+      <span class="rl-nom">${l.nom_producteur}</span>
+      <span class="rl-poids">${Math.round(l.volume_attribue).toLocaleString('fr-FR')} kg</span>
+      <span class="rl-date">${l.nombre_sacs} sacs</span>
+    </div>`).join('');
+}
+
+// ── CONFIRMER GÉNÉRATION ─────────────────────────────────────
+async function confirmerGeneration() {
+  if (!STATE.simulationResult) { toast('Lancez d\'abord une simulation', true); return; }
+
+  const motif = document.getElementById('f-motif').value;
+  const dateLiv = document.getElementById('f-date-liv').value;
+
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true;
+  btn.textContent = '⏳ Génération en cours...';
+
+  try {
+    const body = {
+      label: STATE.simulationResult.label,
+      volume_total: STATE.simulationResult.volume_total,
+      volume_affecte: STATE.simulationResult.volume_affecte,
+      nombre_sacs: STATE.simulationResult.nombre_sacs,
+      lignes: STATE.simulationResult.lignes,
+      date_livraison: dateLiv || new Date().toISOString().split('T')[0],
+      plafond_applique: STATE.simulationResult.plafond_applique,
+      intervalle_saute: STATE.simulationResult.intervalle_saute || false,
+      motif_derogation: motif,
+      sections: STATE.sectionsSelectionnees
+    };
+
+    const r = await api('/api/repartition/generer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const data = await r.json();
+
+    if (!r.ok) {
+      toast(data.error || 'Erreur génération', true);
+      return;
+    }
+
+    STATE.derniereNumFiche = data.num_fiche;
+    toast('✅ Fiche ' + data.num_fiche + ' générée avec succès !');
+
+    // Mettre à jour l'affichage
+    document.getElementById('r-id').textContent = data.num_fiche;
+    document.getElementById('result-actions-genere').style.display = 'flex';
+    document.getElementById('section-confirmer').style.display = 'none';
+    STATE.simulationResult = null;
+
+  } catch(e) {
+    toast('Erreur réseau', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Confirmer et générer la fiche';
+  }
+}
+
+// ── EXPORT PDF ───────────────────────────────────────────────
+function exportPDF() {
+  if (!STATE.derniereNumFiche) { toast('Générez d\'abord une fiche', true); return; }
+  window.open('/api/fiches/' + STATE.derniereNumFiche + '/pdf', '_blank');
+}
+
+function telechargerPDF(numFiche) {
+  window.open('/api/fiches/' + numFiche + '/pdf', '_blank');
+}
+
+// ── FICHES ───────────────────────────────────────────────────
+async function chargerFiches() {
+  const tbody = document.getElementById('fiches-body');
+  tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--tg)">Chargement...</td></tr>';
+  try {
+    const r = await api('/api/fiches');
+    if (!r.ok) return;
+    const fiches = await r.json();
+    STATE.fiches = fiches;
+
+    if (fiches.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--tg)">Aucune fiche générée</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = fiches.map(f => {
+      const date = f.date_creation ? f.date_creation.split('T')[0] : '-';
+      const labelCls = f.label === 'RA' ? 'background:rgba(82,183,136,.12);color:#1a6b45' : 'background:rgba(201,168,76,.12);color:#7a5c00';
+      return `<tr>
+        <td style="font-weight:600;color:var(--vf);font-size:12px">${f.num_fiche}</td>
+        <td><span style="padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;${labelCls}">${f.label}</span></td>
+        <td style="font-size:12px">${f.saison||'-'}</td>
+        <td style="text-align:right;font-weight:600">${Math.round(f.volume_affecte||0).toLocaleString('fr-FR')}</td>
+        <td style="text-align:right">${f.nombre_sacs||0}</td>
+        <td style="text-align:center;font-size:11px;color:var(--tg)">${date}</td>
+        <td style="text-align:center;font-size:11px">${f.nom_agent||'-'}</td>
+        <td style="text-align:center">
+          <button onclick="telechargerPDF('${f.num_fiche}')"
+            style="background:var(--vf);color:var(--or);border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;font-family:var(--sans)">
+            ⬇ PDF
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--tg)">Erreur de chargement</td></tr>';
+  }
+}
+
+// ── PRODUCTEURS ──────────────────────────────────────────────
+let PROD_ALL = [];
+let PROD_FILTRE_LABEL = 'tous';
+
+async function chargerProducteurs() {
+  const tbody = document.getElementById('prod-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--tg)">Chargement...</td></tr>';
+  try {
+    const r = await api('/api/parcelles');
+    if (!r.ok) return;
+    PROD_ALL = await r.json();
+    afficherProducteurs();
+  } catch(e) {}
+}
+
+function afficherProducteurs() {
+  const search = (document.getElementById('prod-search').value || '').toLowerCase();
+  const tbody = document.getElementById('prod-tbody');
+
+  let liste = PROD_ALL;
+  if (PROD_FILTRE_LABEL === 'RA') liste = liste.filter(p => p.rainforest_alliance);
+  if (PROD_FILTRE_LABEL === 'FT') liste = liste.filter(p => p.fairtrade);
+  if (search) liste = liste.filter(p =>
+    (p.nom_producteur||'').toLowerCase().includes(search) ||
+    (p.code_parcelle||'').toLowerCase().includes(search) ||
+    (p.code_producteur||'').toLowerCase().includes(search)
+  );
+
+  if (liste.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--tg)">Aucun résultat</td></tr>';
     return;
   }
 
-  const sections = document.getElementById('sections').value.trim();
-  const dateRef = document.getElementById('dateLivraison').value;
-
-  const body = {
-    label: state.labelSelectionne,
-    volume_total: vol,
-    date_ref: dateRef,
-    sections: sections ? sections.split(',').map(s=>s.trim()) : [],
-    sauter_intervalle: sauterIntervalle,
-    plafond_override: plafondVal,
-  };
-
-  const r = await api('POST', '/api/repartition/simuler', body);
-  if (r.error) { alert('Erreur: ' + r.error); return; }
-
-  state.simResult = r;
-  afficherSimulation(r);
-  showEtape(3);
-}
-
-function afficherSimulation(r) {
-  document.getElementById('badgeLabel3').className = 'badge-label badge-' + r.label.toLowerCase();
-  document.getElementById('badgeLabel3').textContent = r.label === 'RA' ? '🌿 Rainforest Alliance' : '☀️ Fairtrade';
-
-  document.getElementById('simResultInfo').innerHTML = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-      <div class="stat-card" style="flex:1;min-width:120px;"><div class="stat-val">${fmt(r.volume_affecte)} kg</div><div class="stat-lbl">Volume affecté</div></div>
-      <div class="stat-card gold" style="flex:1;min-width:120px;"><div class="stat-val">${r.nombre_sacs}</div><div class="stat-lbl">Sacs</div></div>
-      <div class="stat-card" style="flex:1;min-width:120px;"><div class="stat-val">${r.nombre_lignes}</div><div class="stat-lbl">Parcelles</div></div>
-      <div class="stat-card ${r.volume_restant>0?'red':''}" style="flex:1;min-width:120px;"><div class="stat-val">${fmt(r.volume_restant)} kg</div><div class="stat-lbl">Non affecté</div></div>
-    </div>`;
-
-  let exclusHtml = '';
-  if (r.exclus_stock && r.exclus_stock.length > 0) {
-    exclusHtml += `<div class="alert alert-warning">⚠️ ${r.exclus_stock.length} parcelle(s) exclue(s) — stock insuffisant</div>`;
-  }
-  if (r.exclus_intervalle && r.exclus_intervalle.length > 0) {
-    exclusHtml += `<div class="alert alert-warning">⏱️ ${r.exclus_intervalle.length} parcelle(s) exclue(s) — intervalle 14j non atteint</div>`;
-  }
-  document.getElementById('simExclus').innerHTML = exclusHtml;
-
-  let totalVol = 0, totalSacs = 0, totalMontant = 0;
-  const tbody = r.lignes.map((l,i) => {
-    totalVol += l.volume_attribue;
-    totalSacs += l.nombre_sacs;
-    totalMontant += l.montant||0;
-    const pct = (l.score_calcule * 100).toFixed(1);
+  tbody.innerHTML = liste.map(p => {
+    const labels = [];
+    if (p.rainforest_alliance) labels.push('<span style="background:rgba(82,183,136,.12);color:#1a6b45;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:600">RA</span>');
+    if (p.fairtrade) labels.push('<span style="background:rgba(201,168,76,.12);color:#7a5c00;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:600">FT</span>');
     return `<tr>
-      <td>${i+1}</td>
-      <td><code>${l.code_parcelle}</code></td>
-      <td>${l.nom_producteur}</td>
-      <td>${l.section||''}</td>
-      <td>
-        <div class="score-bar">
-          <div class="score-bar-inner"><div class="score-bar-fill" style="width:${pct}%"></div></div>
-          <div class="score-val">${l.score_calcule.toFixed(4)}</div>
-        </div>
-      </td>
-      <td>${fmt(l.volume_attribue)}</td>
-      <td>${l.nombre_sacs}</td>
-      <td>${fmt(l.montant)}</td>
+      <td style="font-size:11px;color:var(--tg)">${p.code_parcelle}</td>
+      <td style="font-weight:500">${p.nom_producteur}</td>
+      <td>${p.section||'-'}</td>
+      <td style="text-align:right">${Math.round(p.estimation_kg||0).toLocaleString('fr-FR')} kg</td>
+      <td style="text-align:right">${Math.round(p.volume_livre_gt||0).toLocaleString('fr-FR')} kg</td>
+      <td style="text-align:right">${Math.round(p.volume_livre_pt||0).toLocaleString('fr-FR')} kg</td>
+      <td>${labels.join(' ')}</td>
     </tr>`;
   }).join('');
-
-  document.getElementById('simTableBody').innerHTML = tbody;
-  document.getElementById('simTotalVol').textContent = fmt(totalVol) + ' kg';
-  document.getElementById('simTotalSacs').textContent = totalSacs;
-  document.getElementById('simTotalMontant').textContent = fmt(totalMontant) + ' FCFA';
 }
 
-function confirmerGeneration() {
-  const r = state.simResult;
-  document.getElementById('modalGenererTxt').innerHTML =
-    `Vous allez générer une fiche <b>${r.label}</b> de <b>${fmt(r.volume_affecte)} kg</b> (${r.nombre_sacs} sacs) pour <b>${r.nombre_lignes} parcelles</b>.`;
-  document.getElementById('modalGenerer').classList.add('open');
+function filtrerProd() { afficherProducteurs(); }
+
+function filtrerLabel(label, btn) {
+  PROD_FILTRE_LABEL = label;
+  document.querySelectorAll('.prod-filters .pf-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  afficherProducteurs();
 }
 
-function fermerModalGenerer() { document.getElementById('modalGenerer').classList.remove('open'); }
-
-async function confirmerGenerationOK() {
-  fermerModalGenerer();
-  const r = state.simResult;
-  const motif = document.getElementById('motifDerogation').value.trim();
-  const plafond = r.plafond_applique;
-  const body = {
-    label: r.label,
-    volume_total: r.volume_total,
-    volume_affecte: r.volume_affecte,
-    nombre_sacs: r.nombre_sacs,
-    lignes: r.lignes,
-    date_livraison: document.getElementById('dateLivraison').value,
-    plafond_applique: plafond,
-    intervalle_saute: r.intervalle_saute,
-    motif_derogation: motif,
-    sections: document.getElementById('sections').value.trim().split(',').map(s=>s.trim()).filter(Boolean),
-  };
-
-  const res = await api('POST', '/api/repartition/generer', body);
-  if (res.error) { alert('Erreur: ' + res.error); return; }
-
-  state.numFicheGeneree = res.num_fiche;
-  document.getElementById('numFicheGeneree').textContent = res.num_fiche;
-  document.getElementById('faNumLot').value = res.num_fiche;
-  showEtape(4);
+// ── IMPORT ───────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('import-zone').style.borderColor = '';
+  const f = e.dataTransfer.files[0];
+  if (f) importRA(f);
 }
 
-function dlFicheRep() {
-  window.open('/api/fiches/' + state.numFicheGeneree + '/pdf', '_blank');
-}
-
-function passerFA() {
-  const fiche = state.simResult;
-  const label = fiche.label;
-  document.getElementById('faTitre').textContent = `Fiche d'accompagnement — ${label === 'RA' ? 'RAINFOREST ALLIANCE' : 'FAIRTRADE'} — ${state.numFicheGeneree}`;
-  document.getElementById('faNumLot').value = state.numFicheGeneree;
-  navTo('fa');
-}
-
-// ============================================================
-// FICHE D'ACCOMPAGNEMENT
-// ============================================================
-async function genererFA() {
-  const numFiche = document.getElementById('faNumLot').value;
-  if (!numFiche) { alert('Numéro de fiche requis'); return; }
-
-  const body = {
-    num_tracteur: document.getElementById('faTracteur').value.trim(),
-    num_remorque: document.getElementById('faRemorque').value.trim(),
-    nom_chauffeur: document.getElementById('faChauffeur').value.trim(),
-    num_connaissement_ccc: document.getElementById('faConnaissement').value.trim(),
-  };
-
-  const r = await api('POST', `/api/fiches/${numFiche}/accompagnement`, body);
-  if (r.error) { alert('Erreur: ' + r.error); return; }
-
-  state.faId = r.id;
-  document.getElementById('faSuccess').style.display = 'block';
-}
-
-function dlFA() {
-  if (state.faId) window.open('/api/accompagnement/' + state.faId + '/pdf', '_blank');
-}
-
-// ============================================================
-// LISTE FICHES
-// ============================================================
-async function chargerFiches() {
-  const label = document.getElementById('filtreLabel').value;
-  const saison = document.getElementById('filtreSaison').value;
-  let url = '/api/fiches?';
-  if (label) url += 'label=' + label + '&';
-  if (saison) url += 'saison=' + saison;
-  const fiches = await api('GET', url);
-
-  document.getElementById('tableFichesHisto').innerHTML = fiches.map(f => `<tr>
-    <td><b>${f.num_fiche}</b></td>
-    <td>${fmtDate(f.date_creation)}</td>
-    <td><span class="chip chip-${f.label.toLowerCase()}">${f.label==='RA'?'🌿 RA':'☀️ FT'}</span></td>
-    <td><span class="chip chip-${f.saison.toLowerCase()}">${f.saison}</span></td>
-    <td>${fmt(f.volume_affecte)} kg</td>
-    <td>${f.nombre_sacs}</td>
-    <td>${(f.plafond_applique*100).toFixed(0)}%</td>
-    <td>${f.nom_agent}</td>
-    <td>
-      <button class="btn btn-sm btn-secondary" onclick="window.open('/api/fiches/${f.num_fiche}/pdf','_blank')">📄 PDF</button>
-    </td>
-  </tr>`).join('');
-}
-
-// ============================================================
-// IMPORT REGISTRE
-// ============================================================
-function uploadFichier() {
-  const file = document.getElementById('fileInput').files[0];
+async function importRA(file) {
   if (!file) return;
-  document.getElementById('importResult').innerHTML = '<div class="alert alert-info">⏳ Import en cours...</div>';
-
+  toast('Import en cours...');
   const fd = new FormData();
   fd.append('file', file);
-
-  fetch('/api/import-registre', { method:'POST', credentials:'include', body: fd })
-    .then(r => r.json())
-    .then(r => {
-      if (r.error) {
-        document.getElementById('importResult').innerHTML = `<div class="alert alert-danger">❌ ${r.error}</div>`;
-      } else {
-        document.getElementById('importResult').innerHTML = `
-          <div class="alert alert-success">✅ Import réussi — ${r.insere} parcelles créées, ${r.maj} mises à jour</div>
-          ${r.erreurs && r.erreurs.length > 0 ? `<div class="alert alert-warning">⚠️ Erreurs: ${r.erreurs.join(', ')}</div>` : ''}`;
-      }
-    });
-}
-
-// Drag & drop
-const uz = document.getElementById('uploadZone');
-uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag-over'); });
-uz.addEventListener('dragleave', () => uz.classList.remove('drag-over'));
-uz.addEventListener('drop', e => {
-  e.preventDefault(); uz.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) {
-    const input = document.getElementById('fileInput');
-    const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
-    uploadFichier();
-  }
-});
-
-// ============================================================
-// DIRECTEUR - CONNEXIONS
-// ============================================================
-async function chargerConnexions() {
-  const sessions = await api('GET', '/api/directeur/connexions');
-  document.getElementById('tableConnexions').innerHTML = sessions.map(s => {
-    const debut = new Date(s.date_connexion);
-    const fin = s.date_deconnexion ? new Date(s.date_deconnexion) : null;
-    const duree = fin ? Math.round((fin-debut)/60000) + ' min' : 'En cours';
-    return `<tr>
-      <td>${debut.toLocaleString('fr-FR')}</td>
-      <td>${s.nom_agent}</td>
-      <td><span class="chip chip-ok">${s.profil}</span></td>
-      <td>${fin ? fin.toLocaleString('fr-FR') : '—'}</td>
-      <td>${duree}</td>
-    </tr>`;
-  }).join('');
-}
-
-// ============================================================
-// DIRECTEUR - STATS
-// ============================================================
-async function chargerStats() {
-  const [statsR, sectionsR] = await Promise.all([
-    api('GET', '/api/directeur/stats'),
-    api('GET', '/api/directeur/rapport-sections'),
-  ]);
-
-  const s = statsR.stats;
-  document.getElementById('statsDir').innerHTML = `
-    <div class="stat-card"><div class="stat-val">${s.nb_fiches_ra + s.nb_fiches_ft}</div><div class="stat-lbl">Fiches totales</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#1b5e20;">${s.nb_fiches_ra}</div><div class="stat-lbl">🌿 Fiches RA</div></div>
-    <div class="stat-card gold"><div class="stat-val" style="color:#e65100;">${s.nb_fiches_ft}</div><div class="stat-lbl">☀️ Fiches FT</div></div>
-    <div class="stat-card blue"><div class="stat-val">${s.nb_parcelles}</div><div class="stat-lbl">Parcelles actives</div></div>
-    <div class="stat-card"><div class="stat-val">${fmt(s.estimation_totale)} kg</div><div class="stat-lbl">Estimation totale</div></div>
-    <div class="stat-card gold"><div class="stat-val">${fmt(s.livre_gt)} kg</div><div class="stat-lbl">Livré GT</div></div>
-    <div class="stat-card"><div class="stat-val">${fmt(s.livre_pt)} kg</div><div class="stat-lbl">Livré PT</div></div>
-  `;
-
-  document.getElementById('tableSection').innerHTML = sectionsR.map(r => `<tr>
-    <td>${r.section}</td>
-    <td><span class="chip chip-${r.label.toLowerCase()}">${r.label}</span></td>
-    <td>${fmt(r.volume)} kg</td>
-    <td>${r.sacs}</td>
-    <td>${r.nb_parcelles}</td>
-  </tr>`).join('');
-
-  const journal = statsR.journal || [];
-  document.getElementById('tableJournal').innerHTML = journal.map(j => `<tr>
-    <td>${new Date(j.date_heure).toLocaleString('fr-FR')}</td>
-    <td>${j.nom_agent}</td>
-    <td><b>${j.action}</b></td>
-    <td>${j.details||''}</td>
-    <td>${j.reference||''}</td>
-  </tr>`).join('');
-}
-
-// ============================================================
-// CLOTURE GT
-// ============================================================
-async function chargerInfoCloture() {
-  const cfg = state.config;
-  const saison = cfg.SAISON_EN_COURS || 'GT';
-  const dateDebutPT = cfg.DATE_DEBUT_PT || '—';
-
-  if (saison !== 'GT') {
-    document.getElementById('clotureInfo').innerHTML = `<div class="alert alert-info">ℹ️ La saison en cours est déjà <b>PT</b>. La clôture GT a déjà été effectuée.</div>`;
-    document.querySelector('#pageCloture button').disabled = true;
-    return;
-  }
-
-  document.getElementById('clotureInfo').innerHTML = `
-    <div class="alert alert-warning">⚠️ Saison en cours: <b>GT</b>. La Petite Traite débute le <b>${fmtDate(dateDebutPT)}</b>.</div>`;
-}
-
-function ouvrirModalCloture() {
-  const desc = document.getElementById('clotureDescription').value.trim();
-  if (!desc) { alert('Description obligatoire'); return; }
-  document.getElementById('modalCloture').classList.add('open');
-}
-
-function fermerModalCloture() { document.getElementById('modalCloture').classList.remove('open'); }
-
-async function executerCloture() {
-  const desc = document.getElementById('clotureDescription').value.trim();
-  const r = await api('POST', '/api/cloture-gt', { description: desc });
-  fermerModalCloture();
-  if (r.error) {
-    alert('Erreur: ' + r.error);
-    return;
-  }
-  // Rafraîchir config
-  const cfg = await api('GET', '/api/config');
-  state.config = cfg;
-  document.getElementById('sidebarSaison').textContent = cfg.SAISON_EN_COURS || 'PT';
-  alert(`✅ Clôture GT effectuée.\n${r.volume_reporte.toLocaleString()} kg reportés sur ${r.nb_parcelles} parcelles.`);
-  navTo('dashboard');
-}
-
-// ============================================================
-// CONFIG
-// ============================================================
-async function chargerConfigForm() {
-  const cfg = state.config;
-  const fields = [
-    { key: 'COOP_NOM', label: 'Nom coopérative', type: 'text' },
-    { key: 'COOP_ADRESSE', label: 'Adresse', type: 'text' },
-    { key: 'COOP_TELEPHONE', label: 'Téléphone', type: 'text' },
-    { key: 'ANNEE_CAMPAGNE', label: 'Campagne (ex: 2024-2025)', type: 'text' },
-    { key: 'SAISON_EN_COURS', label: 'Saison en cours', type: 'select', opts: ['GT','PT'] },
-    { key: 'DATE_DEBUT_GT', label: 'Début Grande Traite', type: 'date' },
-    { key: 'DATE_FIN_GT', label: 'Fin Grande Traite', type: 'date' },
-    { key: 'DATE_DEBUT_PT', label: 'Début Petite Traite', type: 'date' },
-    { key: 'DATE_FIN_PT', label: 'Fin Petite Traite', type: 'date' },
-    { key: 'PRIX_KG_GT', label: 'Prix kg Grande Traite (FCFA)', type: 'number' },
-    { key: 'PRIX_KG_PT', label: 'Prix kg Petite Traite (FCFA)', type: 'number' },
-    { key: 'QUOTA_GT', label: 'Quota GT (0.80 = 80%)', type: 'number', step: '0.01' },
-    { key: 'PLAFOND_PARCELLE', label: 'Plafond par parcelle (0.30 = 30%)', type: 'number', step: '0.01' },
-    { key: 'INTERV_JOURS', label: 'Intervalle minimum jours', type: 'number' },
-    { key: 'POIDS_MIN', label: 'Poids minimum par ligne (kg)', type: 'number' },
-    { key: 'POIDS_SAC_KG', label: 'Poids par sac (kg)', type: 'number' },
-  ];
-
-  const html = fields.map(f => {
-    let input;
-    if (f.type === 'select') {
-      input = `<select id="cfg_${f.key}">
-        ${f.opts.map(o => `<option value="${o}" ${cfg[f.key]===o?'selected':''}>${o}</option>`).join('')}
-      </select>`;
-    } else {
-      input = `<input type="${f.type}" id="cfg_${f.key}" value="${cfg[f.key]||''}" ${f.step?`step="${f.step}"`:''}>`;
-    }
-    return `<div class="form-group"><label>${f.label}</label>${input}</div>`;
-  });
-
-  // Afficher en grille de 3
-  let out = '<div class="form-row" style="grid-template-columns:repeat(3,1fr);">';
-  html.forEach((h,i) => { out += h; if((i+1)%3===0) out += '</div><div class="form-row" style="grid-template-columns:repeat(3,1fr);">'; });
-  out += '</div>';
-  document.getElementById('configForm').innerHTML = out;
-}
-
-async function sauvegarderConfig() {
-  const keys = ['COOP_NOM','COOP_ADRESSE','COOP_TELEPHONE','ANNEE_CAMPAGNE','SAISON_EN_COURS',
-    'DATE_DEBUT_GT','DATE_FIN_GT','DATE_DEBUT_PT','DATE_FIN_PT',
-    'PRIX_KG_GT','PRIX_KG_PT','QUOTA_GT','PLAFOND_PARCELLE',
-    'INTERV_JOURS','POIDS_MIN','POIDS_SAC_KG'];
-  const data = {};
-  keys.forEach(k => {
-    const el = document.getElementById('cfg_' + k);
-    if (el) data[k] = el.value;
-  });
-  const r = await api('POST', '/api/config', data);
-  if (r.ok) {
-    state.config = await api('GET', '/api/config');
-    document.getElementById('sidebarCampagne').textContent = 'Campagne ' + (state.config.ANNEE_CAMPAGNE || '—');
-    document.getElementById('sidebarSaison').textContent = state.config.SAISON_EN_COURS || 'GT';
-    alert('✅ Configuration sauvegardée');
-  }
-}
-
-// ============================================================
-// INIT
-// ============================================================
-(async function() {
   try {
-    const me = await api('GET', '/api/me');
-    if (me && me.nom_agent) {
-      state.user = me;
-      await initApp();
-    }
+    const r = await api('/api/import-registre', { method: 'POST', body: fd });
+    const data = await r.json();
+    if (!r.ok) { toast(data.error || 'Erreur import', true); return; }
+
+    document.getElementById('ir-ajoutes').textContent = data.insere || 0;
+    document.getElementById('ir-maj').textContent = data.maj || 0;
+    document.getElementById('ir-erreurs').textContent = (data.erreurs||[]).length;
+    document.getElementById('import-result').classList.add('show');
+    toast('✅ Import réussi — ' + (data.insere||0) + ' parcelles');
+  } catch(e) {
+    toast('Erreur réseau', true);
+  }
+}
+
+// ── CONFIG ───────────────────────────────────────────────────
+async function chargerConfig() {
+  try {
+    const [rConfig, rParcelles] = await Promise.all([
+      api('/api/config'),
+      api('/api/parcelles')
+    ]);
+
+    const cfg = rConfig.ok ? await rConfig.json() : {};
+    STATE.config = cfg;
+    const parcelles = rParcelles.ok ? await rParcelles.json() : [];
+
+    const block = document.getElementById('config-block');
+    const cfgHtml = Object.entries(cfg).map(([k,v]) =>
+      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--s1);font-size:12px">
+        <span style="color:var(--tg)">${k}</span>
+        <span style="font-weight:600">${v}</span>
+      </div>`
+    ).join('');
+    block.innerHTML = cfgHtml || '<div style="font-size:12px;color:var(--tg)">Aucune configuration</div>';
+
+    document.getElementById('db-status').innerHTML =
+      `<strong>${parcelles.length}</strong> parcelles actives en base`;
   } catch(e) {}
-})();
+}
+
+// ── START ─────────────────────────────────────────────────────
+init();
 </script>
 </body>
 </html>

@@ -23,13 +23,25 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+
+# ── SECRET_KEY ──────────────────────────────────────────────
+_env_secret = os.environ.get('SECRET_KEY')
+if _env_secret:
+    app.secret_key = _env_secret
+else:
+    app.secret_key = secrets.token_hex(32)
+    print(
+        "[WARN] SECRET_KEY non définie — une clé aléatoire a été générée.\n"
+        "       Les utilisateurs seront déconnectés à chaque redémarrage.\n"
+        "       Définissez la variable d'environnement SECRET_KEY en production."
+    )
+
 CORS(app, supports_credentials=True)
 
 # ============================================================
 # CONFIGURATION SUPABASE
 # ============================================================
-SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').rstrip('/')
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY', '')
 
 def sb_headers():
@@ -40,16 +52,22 @@ def sb_headers():
         'Prefer': 'return=representation'
     }
 
+# FIX #2 — Supabase/PostgREST renvoie max 1000 lignes par défaut.
+# On force limit=50000 sauf si l'appelant en a fourni un explicite.
 def sb_get(table, params=None):
     url = f'{SUPABASE_URL}/rest/v1/{table}'
-    r = requests.get(url, headers=sb_headers(), params=params)
+    if params is None:
+        params = {}
+    if 'limit' not in params:
+        params['limit'] = '50000'
+    r = requests.get(url, headers=sb_headers(), params=params, timeout=15)
     if r.status_code in (200, 206):
         return r.json()
     return []
 
 def sb_post(table, data):
     url = f'{SUPABASE_URL}/rest/v1/{table}'
-    r = requests.post(url, headers=sb_headers(), json=data)
+    r = requests.post(url, headers=sb_headers(), json=data, timeout=15)
     if r.status_code in (200, 201):
         return r.json()
     return None
@@ -57,17 +75,16 @@ def sb_post(table, data):
 def sb_patch(table, filters, data):
     url = f'{SUPABASE_URL}/rest/v1/{table}'
     params = {k: f'eq.{v}' for k, v in filters.items()}
-    r = requests.patch(url, headers=sb_headers(), params=params, json=data)
+    r = requests.patch(url, headers=sb_headers(), params=params, json=data, timeout=15)
     return r.status_code in (200, 204)
 
 def sb_delete(table, filters):
     url = f'{SUPABASE_URL}/rest/v1/{table}'
     params = {k: f'eq.{v}' for k, v in filters.items()}
-    r = requests.delete(url, headers=sb_headers(), params=params)
+    r = requests.delete(url, headers=sb_headers(), params=params, timeout=15)
     return r.status_code in (200, 204)
 
 def get_config():
-    """Charge toute la configuration en dict."""
     rows = sb_get('config')
     return {r['cle']: r['valeur'] for r in rows}
 
@@ -95,7 +112,6 @@ def get_current_user():
     return rows[0] if rows else None
 
 def require_auth(profils=None):
-    """Décorateur: vérifie session active et profil."""
     def decorator(f):
         def wrapper(*args, **kwargs):
             user = get_current_user()
@@ -108,6 +124,9 @@ def require_auth(profils=None):
         return wrapper
     return decorator
 
+# FIX #1 — Accepte les codes HASHÉS (créés via /api/codes-acces) ET les codes
+# EN CLAIR (seedés via la migration SQL). Sans ça, personne ne peut se connecter
+# au premier déploiement avec DIR2024 / TRACE2024.
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
@@ -117,7 +136,11 @@ def login():
         return jsonify({'error': 'Code d\'accès et nom requis'}), 400
 
     code_hash = hash_code(code)
+    # 1. Chercher par hash (codes créés via /api/codes-acces)
     users = sb_get('utilisateurs', {'code_acces': f'eq.{code_hash}', 'actif': 'eq.true', 'select': '*'})
+    # 2. Fallback en clair (codes seedés via SQL : DIR2024, TRACE2024)
+    if not users:
+        users = sb_get('utilisateurs', {'code_acces': f'eq.{code.strip().upper()}', 'actif': 'eq.true', 'select': '*'})
     if not users:
         return jsonify({'error': 'Code d\'accès invalide'}), 401
 
@@ -131,7 +154,7 @@ def login():
     })
 
     session['token'] = token
-    journaliser(nom, user['profil'], 'CONNEXION', f'Connexion réussie')
+    journaliser(nom, user['profil'], 'CONNEXION', 'Connexion réussie')
 
     return jsonify({'profil': user['profil'], 'nom_agent': nom})
 
@@ -195,16 +218,14 @@ def import_registre():
         from openpyxl import load_workbook
 
         def parse_file(f, filename):
-            """Retourne une liste de dicts avec clés normalisées (MAJUSCULES_UNDERSCORE)."""
             if filename.endswith('.csv'):
                 content = f.read().decode('utf-8-sig')
-                # Détecter le séparateur
                 sep = ';' if content.count(';') > content.count(',') else ','
                 reader = csv.DictReader(io.StringIO(content), delimiter=sep)
                 rows = list(reader)
-                # Normaliser les clés
                 return [{k.strip().upper().replace(' ', '_'): v for k, v in r.items()} for r in rows]
-            elif filename.endswith(('.xls', '.xlsx')):
+            elif filename.endswith(('.xlsx', '.xlsm')):
+                # NOTE: .xls (ancien format binaire) n'est PAS supporté par openpyxl
                 wb = load_workbook(io.BytesIO(f.read()), read_only=True, data_only=True)
                 ws = wb.active
                 rows_iter = ws.iter_rows(values_only=True)
@@ -219,21 +240,16 @@ def import_registre():
 
         rows = parse_file(f, filename)
         if rows is None:
-            return jsonify({'error': 'Format non supporté (CSV ou Excel requis)'}), 400
-
+            return jsonify({'error': 'Format non supporté (CSV, XLSX ou XLSM requis)'}), 400
         if not rows:
             return jsonify({'error': 'Fichier vide'}), 400
 
-        # Colonnes disponibles
         all_cols = list(rows[0].keys())
-
-        # Colonnes obligatoires
         required = ['CODE_PARCELLE', 'CODE_PRODUCTEUR', 'NOM_PRENOMS', 'ESTIMATION_KG']
         missing = [c for c in required if c not in all_cols]
         if missing:
             return jsonify({'error': f'Colonnes manquantes: {", ".join(missing)}'}), 400
 
-        # Colonnes RA/FT — chercher variantes
         ra_col = next((c for c in all_cols if 'RAINFOREST' in c or c == 'RA'), None)
         ft_col = next((c for c in all_cols if 'FAIRTRADE' in c or c == 'FT'), None)
 
@@ -248,7 +264,6 @@ def import_registre():
             except (ValueError, TypeError):
                 return default
 
-        # Construire la liste complète des parcelles
         parcelles_list = []
         errors = []
 
@@ -276,15 +291,13 @@ def import_registre():
             except Exception as e:
                 errors.append(str(e))
 
-        # Upsert batch par tranches de 200
         nb_insere = 0
-        nb_maj = 0
         BATCH = 200
         for i in range(0, len(parcelles_list), BATCH):
             batch = parcelles_list[i:i+BATCH]
             url = f'{SUPABASE_URL}/rest/v1/parcelles'
             hdrs = {**sb_headers(), 'Prefer': 'resolution=merge-duplicates,return=representation'}
-            r = requests.post(url, headers=hdrs, json=batch)
+            r = requests.post(url, headers=hdrs, json=batch, timeout=30)
             if r.status_code in (200, 201):
                 result = r.json()
                 nb_insere += len(result)
@@ -315,7 +328,7 @@ def get_parcelles():
     if not user:
         return jsonify({'error': 'Non authentifié'}), 401
 
-    label = request.args.get('label')  # RA, FT, ou vide
+    label = request.args.get('label')
     params = {'actif': 'eq.true', 'select': '*', 'order': 'nom_producteur.asc'}
     if label == 'RA':
         params['rainforest_alliance'] = 'eq.true'
@@ -330,11 +343,6 @@ def get_parcelles():
 # ============================================================
 
 def calculer_stock_disponible(p, cfg, saison):
-    """
-    Calcule le stock disponible pour une parcelle selon la saison.
-    GT: 80% de l'estimation - volume_livre_gt - reserve_gt
-    PT: estimation - volume_livre_gt - volume_livre_pt - reserve_gt - reserve_pt + report_gt_vers_pt
-    """
     estim = float(p.get('estimation_kg', 0))
     livre_gt = float(p.get('volume_livre_gt', 0))
     livre_pt = float(p.get('volume_livre_pt', 0))
@@ -346,20 +354,14 @@ def calculer_stock_disponible(p, cfg, saison):
     if saison == 'GT':
         plafond = estim * quota_gt
         dispo = plafond - livre_gt - reserve_gt
-    else:  # PT
-        # Le quota PT = 100% de l'estimation totale - ce qui est en GT
-        # + résidus GT reportés
+    else:
         quota_gt_vol = estim * quota_gt
-        dispo_pt_base = estim - quota_gt_vol  # ~20%
-        # On ajoute les résidus GT reportés
+        dispo_pt_base = estim - quota_gt_vol
         dispo = dispo_pt_base + report - livre_pt - reserve_pt
 
     return max(0, dispo)
 
 def calculer_score(p, cfg, saison, date_ref):
-    """
-    Score = (1-taux)*0.5 + min(1, stk/1000)*0.3 + min(1, jours/(14×3))*0.2
-    """
     w1 = float(cfg.get('SCORE_UTILISATION', 0.50))
     w2 = float(cfg.get('SCORE_VOLUME', 0.30))
     w3 = float(cfg.get('SCORE_DISPO', 0.20))
@@ -368,24 +370,21 @@ def calculer_score(p, cfg, saison, date_ref):
     livre = float(p.get('volume_livre_gt', 0)) if saison == 'GT' else float(p.get('volume_livre_pt', 0))
     stk = calculer_stock_disponible(p, cfg, saison)
 
-    # Taux d'utilisation
     taux = (livre / estim) if estim > 0 else 1.0
     taux = min(taux, 1.0)
 
-    # Jours depuis dernière livraison
     interv = int(cfg.get('INTERV_JOURS', 14))
     derniere = p.get('_derniere_livraison')
     if derniere:
         d = datetime.strptime(str(derniere)[:10], '%Y-%m-%d').date()
         jours = (date_ref - d).days
     else:
-        jours = interv * 3  # Jamais livré = max score dispo
+        jours = interv * 3
 
     score = (1 - taux) * w1 + min(1.0, stk / 1000.0) * w2 + min(1.0, jours / (interv * 3)) * w3
     return round(score, 6), stk
 
 def get_derniere_livraison(code_parcelle):
-    """Dernière date de livraison pour une parcelle."""
     rows = sb_get('lignes_repartition', {
         'code_parcelle': f'eq.{code_parcelle}',
         'select': 'date_livraison',
@@ -398,21 +397,17 @@ def get_derniere_livraison(code_parcelle):
 
 @app.route('/api/repartition/simuler', methods=['POST'])
 def simuler_repartition():
-    """
-    Simule la répartition sans enregistrer.
-    Retourne la liste des producteurs sélectionnés avec leurs volumes et scores.
-    """
     user = get_current_user()
     if not user:
         return jsonify({'error': 'Non authentifié'}), 401
 
     data = request.json
-    label = data.get('label')  # RA ou FT
+    label = data.get('label')
     volume_total = float(data.get('volume_total', 0))
     date_ref_str = data.get('date_ref', date.today().isoformat())
-    sections = data.get('sections', [])  # Filtrer par section(s)
-    plafond_override = data.get('plafond_override')  # Dérogation plafond
-    sauter_intervalle = data.get('sauter_intervalle', False)  # Dérogation intervalle
+    sections = data.get('sections', [])
+    plafond_override = data.get('plafond_override')
+    sauter_intervalle = data.get('sauter_intervalle', False)
 
     if not label or volume_total <= 0:
         return jsonify({'error': 'Label et volume requis'}), 400
@@ -429,7 +424,6 @@ def simuler_repartition():
 
     plafond = float(plafond_override) if plafond_override else plafond_base
 
-    # 1. Charger parcelles éligibles selon label
     params = {'actif': 'eq.true', 'select': '*'}
     if label == 'RA':
         params['rainforest_alliance'] = 'eq.true'
@@ -442,11 +436,28 @@ def simuler_repartition():
     if not parcelles:
         return jsonify({'error': 'Aucune parcelle éligible'}), 400
 
-    # 2. Enrichir chaque parcelle avec dernière livraison
+    # FIX #3 — Charge en UNE passe les dernières livraisons (batch par 200 codes)
+    # au lieu de N requêtes individuelles (N parcelles). Gain : ~20 min → ~5 s.
+    all_codes = [p['code_parcelle'] for p in parcelles]
+    dernieres = {}
+    BATCH_Q = 200
+    for i in range(0, len(all_codes), BATCH_Q):
+        batch = all_codes[i:i+BATCH_Q]
+        codes_str = ','.join('"' + c.replace('"', '') + '"' for c in batch)
+        rows = sb_get('lignes_repartition', {
+            'code_parcelle': f'in.({codes_str})',
+            'select': 'code_parcelle,date_livraison'
+        })
+        for r in rows:
+            cp = r.get('code_parcelle')
+            dl = r.get('date_livraison')
+            if not cp:
+                continue
+            if cp not in dernieres or (dl and dl > (dernieres[cp] or '')):
+                dernieres[cp] = dl
     for p in parcelles:
-        p['_derniere_livraison'] = get_derniere_livraison(p['code_parcelle'])
+        p['_derniere_livraison'] = dernieres.get(p['code_parcelle'])
 
-    # 3. Filtrer: stock > POIDS_MIN + contrainte 14j (sauf dérogation)
     eligibles = []
     exclus_intervalle = []
     exclus_stock = []
@@ -474,18 +485,14 @@ def simuler_repartition():
             'exclus_intervalle': exclus_intervalle
         }), 400
 
-    # 4. Calculer score pour chaque éligible
     for p in eligibles:
         score, stk = calculer_score(p, cfg, saison, date_ref)
         p['_score'] = score
         p['_stk_dispo'] = stk
 
-    # 5. Trier par score décroissant, ex-aequo mélangés aléatoirement
-    # Regrouper par score arrondi à 4 décimales
     random.shuffle(eligibles)
     eligibles.sort(key=lambda p: p['_score'], reverse=True)
 
-    # 6. Répartir le volume selon l'algorithme
     volume_restant = volume_total
     lignes = []
 
@@ -501,7 +508,6 @@ def simuler_repartition():
         if attrib < poids_min or attrib > volume_restant:
             continue
 
-        # Arrondir au sac entier
         nb_sacs = math.floor(attrib / poids_sac)
         if nb_sacs == 0:
             nb_sacs = 1
@@ -516,7 +522,6 @@ def simuler_repartition():
         if attrib_final > stk or attrib_final < poids_min:
             continue
 
-        # Prix
         prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
         prix_kg = float(cfg.get(prix_cle, 0))
         montant = attrib_final * prix_kg
@@ -561,10 +566,6 @@ def simuler_repartition():
 
 @app.route('/api/repartition/generer', methods=['POST'])
 def generer_repartition():
-    """
-    Génère et enregistre définitivement une fiche de répartition.
-    Met à jour les réserves des parcelles.
-    """
     user = get_current_user()
     if not user or user['profil'] != 'TRACABILITE':
         return jsonify({'error': 'Accès refusé'}), 403
@@ -588,7 +589,6 @@ def generer_repartition():
     saison = cfg.get('SAISON_EN_COURS', 'GT')
     plafond_base = float(cfg.get('PLAFOND_PARCELLE', 0.30))
 
-    # Générer numéro de fiche: FR-YYYYMMDD-NNN
     today_str = date.today().strftime('%Y%m%d')
     prefix = f'FR-{today_str}-'
     existing = sb_get('fiches_repartition', {
@@ -604,7 +604,6 @@ def generer_repartition():
         seq = 1
     num_fiche = f'{prefix}{seq:03d}'
 
-    # Enregistrer fiche
     fiche = {
         'num_fiche': num_fiche,
         'saison': saison,
@@ -620,11 +619,9 @@ def generer_repartition():
     }
     sb_post('fiches_repartition', fiche)
 
-    # Enregistrer lignes + mettre à jour réserves
     date_livraison = datetime.strptime(date_livraison_str, '%Y-%m-%d').date().isoformat()
 
     for ligne in lignes:
-        # Insérer ligne
         sb_post('lignes_repartition', {
             'num_fiche': num_fiche,
             'code_parcelle': ligne['code_parcelle'],
@@ -640,7 +637,6 @@ def generer_repartition():
             'date_livraison': date_livraison,
         })
 
-        # Mettre à jour volume livré (pas réserve — c'est "livré en caisse")
         parcelles_row = sb_get('parcelles', {'code_parcelle': f'eq.{ligne["code_parcelle"]}', 'select': '*'})
         if parcelles_row:
             p = parcelles_row[0]
@@ -654,7 +650,6 @@ def generer_repartition():
                     'volume_livre_pt': float(p.get('volume_livre_pt', 0)) + vol
                 })
 
-    # Enregistrer dérogations si nécessaire
     if plafond_applique != plafond_base:
         sb_post('derogations', {
             'num_fiche': num_fiche,
@@ -682,7 +677,7 @@ def generer_repartition():
     return jsonify({'ok': True, 'num_fiche': num_fiche})
 
 # ============================================================
-# FICHES (liste, détail)
+# FICHES
 # ============================================================
 
 @app.route('/api/fiches', methods=['GET'])
@@ -691,11 +686,7 @@ def get_fiches():
     if not user:
         return jsonify({'error': 'Non authentifié'}), 401
 
-    params = {
-        'select': '*',
-        'order': 'date_creation.desc',
-        'limit': '100'
-    }
+    params = {'select': '*', 'order': 'date_creation.desc', 'limit': '100'}
     label = request.args.get('label')
     saison = request.args.get('saison')
     if label:
@@ -757,7 +748,6 @@ def pdf_fiche_repartition(num_fiche):
     styles = getSampleStyleSheet()
     elements = []
 
-    # Titre
     label_txt = 'RAINFOREST ALLIANCE' if fiche['label'] == 'RA' else 'FAIRTRADE'
     title = Paragraph(
         f'<b>FICHE DE RÉPARTITION {label_txt}</b>',
@@ -766,7 +756,6 @@ def pdf_fiche_repartition(num_fiche):
     elements.append(title)
     elements.append(Spacer(1, 0.3*cm))
 
-    # Infos fiche
     info_data = [
         [f'N° Fiche: {num_fiche}', f'Saison: {fiche["saison"]}', f'Campagne: {campagne}'],
         [f'Date: {fiche["date_creation"][:10]}', f'Label: {fiche["label"]}', f'Agent: {fiche["nom_agent"]}'],
@@ -782,7 +771,6 @@ def pdf_fiche_repartition(num_fiche):
     elements.append(info_table)
     elements.append(Spacer(1, 0.4*cm))
 
-    # Tableau lignes
     headers = ['#', 'Code Parcelle', 'Producteur', 'Section', 'Score', 'Stock Dispo', 'Volume (kg)', 'Sacs', 'Montant (FCFA)', 'Lat', 'Lon']
     rows = [headers]
     prix_cle = 'PRIX_KG_GT' if fiche['saison'] == 'GT' else 'PRIX_KG_PT'
@@ -795,7 +783,7 @@ def pdf_fiche_repartition(num_fiche):
             l['nom_producteur'],
             l.get('section', ''),
             f'{l.get("score_calcule", 0):.4f}',
-            '',  # stock dispo pas stocké en ligne
+            '',
             f'{l["volume_attribue"]:,.0f}',
             str(l['nombre_sacs']),
             f'{l.get("montant", 0):,.0f}',
@@ -803,7 +791,6 @@ def pdf_fiche_repartition(num_fiche):
             f'{l.get("longitude", ""):.4f}' if l.get('longitude') else '',
         ])
 
-    # Ligne totaux
     total_vol = sum(l['volume_attribue'] for l in lignes)
     total_sacs = sum(l['nombre_sacs'] for l in lignes)
     total_montant = sum(l.get('montant', 0) for l in lignes)
@@ -905,7 +892,6 @@ def pdf_accompagnement(fa_id):
     styles = getSampleStyleSheet()
     elements = []
 
-    # En-tête coop
     label_cert = 'RAINFOREST' if fa['label'] == 'RA' else 'FAIRTRADE'
     header_data = [
         [
@@ -924,7 +910,6 @@ def pdf_accompagnement(fa_id):
     elements.append(h_table)
     elements.append(Spacer(1, 0.3*cm))
 
-    # Infos transport
     transport_data = [
         ['N° LOT:', fa.get('num_lot', ''), 'Tracteur:', fa.get('num_tracteur', ''), 'Remorque:', fa.get('num_remorque', '')],
         ['Connaissement CCC N°:', fa.get('num_connaissement_ccc', ''), 'Chauffeur:', fa.get('nom_chauffeur', ''), '', ''],
@@ -943,7 +928,6 @@ def pdf_accompagnement(fa_id):
     elements.append(t_transport)
     elements.append(Spacer(1, 0.5*cm))
 
-    # Tableau producteurs
     headers = ['N°', 'Code Plantation', 'Producteur', 'Montant (FCFA)', 'Section', 'Nombre Sacs', 'Poids Net (kg)', 'Latitude', 'Longitude']
     rows = [headers]
 
@@ -983,7 +967,6 @@ def pdf_accompagnement(fa_id):
     elements.append(t)
     elements.append(Spacer(1, 0.5*cm))
 
-    # Signatures
     sig_data = [['Agent de traçabilité:', '', 'Chauffeur:', '', 'Réceptionné par:']]
     sig_table = Table(sig_data, colWidths=[4*cm, 7*cm, 3*cm, 7*cm, 4.5*cm])
     sig_table.setStyle(TableStyle([
@@ -1014,7 +997,7 @@ def get_alertes():
 
     cfg = get_config()
     saison = cfg.get('SAISON_EN_COURS', 'GT')
-    seuil_critique = 0.10  # <10%
+    seuil_critique = 0.10
 
     parcelles = sb_get('parcelles', {'actif': 'eq.true', 'select': '*'})
     alertes = []
@@ -1041,10 +1024,6 @@ def get_alertes():
 
 @app.route('/api/cloture-gt', methods=['POST'])
 def cloture_gt():
-    """
-    Irréversible — reporte les résidus GT vers PT.
-    Vérifie que la date de début PT est atteinte.
-    """
     user = get_current_user()
     if not user or user['profil'] != 'DIRECTEUR':
         return jsonify({'error': 'Seul le directeur peut clôturer la GT'}), 403
@@ -1059,7 +1038,6 @@ def cloture_gt():
     if saison_en_cours != 'GT':
         return jsonify({'error': 'La saison en cours n\'est pas GT'}), 400
 
-    # Vérifier date début PT
     date_debut_pt_str = cfg.get('DATE_DEBUT_PT', '')
     if date_debut_pt_str:
         date_debut_pt = datetime.strptime(date_debut_pt_str, '%Y-%m-%d').date()
@@ -1068,7 +1046,6 @@ def cloture_gt():
                 'error': f'La petite traite ne commence que le {date_debut_pt.strftime("%d/%m/%Y")}. Clôture impossible avant cette date.'
             }), 400
 
-    # Calculer résidus pour chaque parcelle
     parcelles = sb_get('parcelles', {'actif': 'eq.true', 'select': '*'})
     quota_gt = float(cfg.get('QUOTA_GT', 0.80))
     nb_parcelles = 0
@@ -1081,7 +1058,6 @@ def cloture_gt():
         residu = max(0, plafond_gt - livre_gt)
 
         if residu > 0:
-            # Reporter sur PT
             ancien_report = float(p.get('report_gt_vers_pt', 0))
             sb_patch('parcelles', {'code_parcelle': p['code_parcelle']}, {
                 'report_gt_vers_pt': ancien_report + residu
@@ -1089,10 +1065,8 @@ def cloture_gt():
             volume_reporte += residu
             nb_parcelles += 1
 
-    # Changer saison → PT
     sb_patch('config', {'cle': 'SAISON_EN_COURS'}, {'valeur': 'PT'})
 
-    # Enregistrer clôture
     sb_post('clotures_saison', {
         'saison_cloturee': 'GT',
         'campagne': cfg.get('ANNEE_CAMPAGNE', ''),
@@ -1121,7 +1095,6 @@ def get_chargement_ami():
     user = get_current_user()
     if not user:
         return jsonify({'error': 'Non authentifié'}), 401
-    # Placeholder — logique existante à brancher
     return jsonify({'message': 'Module chargement ami — à compléter selon logique métier existante'})
 
 # ============================================================
@@ -1150,14 +1123,10 @@ def directeur_stats():
     cfg = get_config()
     saison = cfg.get('SAISON_EN_COURS', 'GT')
 
-    # Fiches
     fiches = sb_get('fiches_repartition', {'select': 'label,saison,volume_affecte,nombre_sacs,date_creation'})
-    # Parcelles
     parcelles = sb_get('parcelles', {'actif': 'eq.true', 'select': 'estimation_kg,volume_livre_gt,volume_livre_pt,section,rainforest_alliance,fairtrade'})
-    # Journal (dernières 50)
     journal = sb_get('journal', {'select': '*', 'order': 'date_heure.desc', 'limit': '50'})
 
-    # Stats par label
     stats = {
         'nb_fiches_ra': sum(1 for f in fiches if f['label'] == 'RA'),
         'nb_fiches_ft': sum(1 for f in fiches if f['label'] == 'FT'),
@@ -1172,7 +1141,6 @@ def directeur_stats():
         'saison_en_cours': saison,
     }
 
-    # Par section
     sections = {}
     for p in parcelles:
         s = p.get('section', 'N/A')
@@ -1189,7 +1157,6 @@ def directeur_stats():
 
 @app.route('/api/directeur/rapport-sections', methods=['GET'])
 def rapport_sections():
-    """Rapport de distribution par section pour le directeur."""
     user = get_current_user()
     if not user or user['profil'] != 'DIRECTEUR':
         return jsonify({'error': 'Accès refusé'}), 403
@@ -1197,7 +1164,6 @@ def rapport_sections():
     cfg = get_config()
     saison = request.args.get('saison', cfg.get('SAISON_EN_COURS', 'GT'))
 
-    # Lignes de répartition avec info section
     fiches_saison = sb_get('fiches_repartition', {'saison': f'eq.{saison}', 'select': 'num_fiche'})
     num_fiches = [f['num_fiche'] for f in fiches_saison]
 
@@ -1218,7 +1184,7 @@ def rapport_sections():
     return jsonify(list(rapport.values()))
 
 # ============================================================
-# GESTION CODES D'ACCES (directeur)
+# GESTION CODES D'ACCES
 # ============================================================
 
 @app.route('/api/codes-acces', methods=['GET'])
@@ -1243,7 +1209,7 @@ def creer_code_acces():
         return jsonify({'error': 'Code et profil valides requis'}), 400
 
     code_hash = hash_code(code)
-    result = sb_post('utilisateurs', {'code_acces': code_hash, 'profil': profil})
+    sb_post('utilisateurs', {'code_acces': code_hash, 'profil': profil})
     journaliser(user['nom_agent'], user['profil'], 'CODE_CREE', f'Profil: {profil}')
     return jsonify({'ok': True})
 
@@ -1264,7 +1230,14 @@ def toggle_code_acces(uid):
 
 @app.route('/')
 def index():
+    user = get_current_user()
+    if not user:
+        return app.send_static_file('index.html')
     return app.send_static_file('app.html')
+
+@app.route('/login')
+def login_page():
+    return app.send_static_file('index.html')
 
 @app.route('/health')
 def health():

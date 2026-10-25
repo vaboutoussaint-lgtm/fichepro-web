@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FichePro — Connexion</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --vf:#1B4332;--vm:#2D6A4F;--vc:#52B788;
+  --or:#C9A84C;
+  --ra:#006747;--ft:#003DA5;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --serif:'Cormorant Garamond',Georgia,serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--vf);
+  background-image:
+    radial-gradient(ellipse at 20% 50%,rgba(82,183,136,.12) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(201,168,76,.08) 0%,transparent 50%);
+}
+
+/* CARD */
+.card{background:#fff;border-radius:20px;width:420px;box-shadow:0 24px 80px rgba(0,0,0,.28);overflow:hidden}
+
+/* HEADER */
+.card-header{
+  background:linear-gradient(148deg,var(--vf) 0%,var(--vm) 100%);
+  padding:28px 28px 22px;text-align:center;
+}
+.logo-badge{
+  width:56px;height:56px;border-radius:50%;
+  background:rgba(201,168,76,.18);border:2px solid rgba(201,168,76,.4);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;
+}
+.logo-f{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--or)}
+.card-title{font-family:var(--serif);font-size:21px;font-weight:700;color:#fff;margin-bottom:3px}
+.card-sub{font-size:11.5px;color:rgba(255,255,255,.5);letter-spacing:.04em}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:1px solid #E5E7EB}
+.tab{
+  flex:1;padding:12px 6px;border:none;background:none;cursor:pointer;
+  font-family:var(--sans);font-size:10px;font-weight:500;
+  color:#9CA3AF;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  border-bottom:2px solid transparent;position:relative;top:1px;
+}
+.tab:hover{color:#374151}
+/* active states */
+.tab.act-ra {color:var(--ra);border-bottom-color:var(--ra)}
+.tab.act-ft {color:var(--ft);border-bottom-color:var(--ft)}
+.tab.act-dir{color:var(--vf);border-bottom-color:var(--or)}
+.tab svg{opacity:.45;transition:opacity .2s}
+.tab.act-ra svg,.tab.act-ft svg,.tab.act-dir svg{opacity:1}
+.tab-lbl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase}
+
+/* FORM */
+.form-wrap{padding:22px 26px 26px}
+.panel{display:none}
+.panel.show{display:block}
+
+.cert-badge{
+  display:flex;align-items:center;gap:9px;
+  padding:10px 13px;border-radius:9px;margin-bottom:14px;
+  font-size:11.5px;font-weight:500;
+}
+.cert-badge.ra{background:rgba(0,103,71,.07);color:var(--ra)}
+.cert-badge.ft{background:rgba(0,61,165,.07);color:var(--ft)}
+.cert-badge.dir{background:rgba(27,67,50,.07);color:var(--vf)}
+
+.field-group{margin-bottom:12px}
+.field-label{font-size:10.5px;font-weight:600;color:#6B7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.field-input{
+  width:100%;height:43px;border:1.5px solid #E5E7EB;border-radius:10px;
+  padding:0 13px;font-size:13.5px;font-family:var(--sans);
+  color:#111827;background:#fff;outline:none;transition:border .2s;
+}
+.field-input.focus-ra:focus,.field-input:focus{border-color:var(--vm)}
+.field-input.fft:focus{border-color:var(--ft)}
+.field-input.fra:focus{border-color:var(--ra)}
+
+.btn-login{
+  width:100%;height:44px;border:none;border-radius:11px;
+  font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--sans);
+  transition:all .22s;color:#fff;margin-top:5px;
+}
+.btn-login.bra {background:linear-gradient(135deg,#00855A,var(--ra))}
+.btn-login.bft {background:linear-gradient(135deg,#1751C4,var(--ft))}
+.btn-login.bdir{background:linear-gradient(135deg,var(--vm),var(--vf));color:var(--or)}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(0,0,0,.16)}
+.btn-login:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+.err-msg{
+  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);
+  border-radius:8px;padding:9px 13px;
+  font-size:11.5px;color:#B91C1C;margin-top:9px;display:none;
+}
+.err-msg.show{display:block}
+
+/* FOOTER */
+.card-footer{
+  background:#F9FAFB;border-top:1px solid #F3F4F6;
+  padding:13px 26px;text-align:center;font-size:10.5px;color:#9CA3AF;
+}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="card-header">
+    <div class="logo-badge">
+      <span class="logo-f">F</span>
+    </div>
+    <div class="card-title">FichePro Manager</div>
+    <div class="card-sub">Gestion cacao certifié — Capressa</div>
+  </div>
+
+  <!-- ONGLETS avec logos officiels SVG -->
+  <div class="tabs">
+
+    <!-- RAINFOREST ALLIANCE -->
+    <button class="tab act-ra" id="tab-ra" onclick="showTab('ra')">
+      <svg width="44" height="30" viewBox="0 0 44 30">
+        <!-- Cercle vert RA -->
+        <circle cx="15" cy="15" r="13" fill="#006747"/>
+        <!-- Grenouille stylisée (frog) -->
+        <ellipse cx="15" cy="16" rx="6" ry="5" fill="#8DC63F"/>
+        <circle cx="12" cy="11" r="2.5" fill="#8DC63F"/>
+        <circle cx="18" cy="11" r="2.5" fill="#8DC63F"/>
+        <circle cx="12" cy="11" r="1.2" fill="#fff"/>
+        <circle cx="18" cy="11" r="1.2" fill="#fff"/>
+        <path d="M10 19 Q15 22 20 19" stroke="#006747" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+        <!-- Texte RA -->
+        <text x="31" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#006747">RA</text>
+        <text x="28" y="23" font-family="Arial" font-size="6.5" fill="#6B7280">Alliance</text>
+      </svg>
+      <span class="tab-lbl">Rainforest</span>
+    </button>
+
+    <!-- FAIRTRADE -->
+    <button class="tab" id="tab-ft" onclick="showTab('ft')">
+      <svg width="44" height="30" viewBox="0 0 44 30">
+        <!-- Cercle bleu FT -->
+        <circle cx="15" cy="15" r="13" fill="#003DA5"/>
+        <!-- Figure humaine stylisée Fairtrade -->
+        <circle cx="15" cy="8" r="3" fill="#fff"/>
+        <rect x="11.5" y="12" width="7" height="8" rx="2" fill="#fff"/>
+        <rect x="8" y="14" width="14" height="3.5" rx="1.5" fill="#fff"/>
+        <!-- Texte FT -->
+        <text x="31" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#003DA5">FT</text>
+        <text x="27" y="23" font-family="Arial" font-size="6.5" fill="#6B7280">Fairtrade</text>
+      </svg>
+      <span class="tab-lbl">Fairtrade</span>
+    </button>
+
+    <!-- DIRECTION -->
+    <button class="tab" id="tab-dir" onclick="showTab('dir')">
+      <svg width="44" height="30" viewBox="0 0 44 30">
+        <!-- Cercle vert foncé -->
+        <circle cx="15" cy="15" r="13" fill="#1B4332"/>
+        <!-- Icône directeur / étoile -->
+        <circle cx="15" cy="10" r="3.5" fill="#C9A84C"/>
+        <path d="M7 24 Q15 17 23 24" stroke="#C9A84C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Texte DIR -->
+        <text x="29" y="14" font-family="Arial" font-weight="bold" font-size="8" fill="#1B4332">DIR</text>
+        <text x="27" y="23" font-family="Arial" font-size="6.5" fill="#6B7280">Direction</text>
+      </svg>
+      <span class="tab-lbl">Direction</span>
+    </button>
+
+  </div>
+
+  <!-- FORMULAIRES -->
+  <div class="form-wrap">
+
+    <!-- PANEL RAINFOREST ALLIANCE -->
+    <div class="panel show" id="panel-ra">
+      <div class="cert-badge ra">
+        <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#006747"/><ellipse cx="12" cy="13" rx="5" ry="4" fill="#8DC63F"/><circle cx="9.5" cy="9" r="2" fill="#8DC63F"/><circle cx="14.5" cy="9" r="2" fill="#8DC63F"/></svg>
+        Accès agent Rainforest Alliance
+      </div>
+      <div class="field-group">
+        <div class="field-label">Nom et prénom</div>
+        <input class="field-input fra" type="text" id="ra-nom" placeholder="Ex: Kouassi Jean" autocomplete="name">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Code d'accès</div>
+        <input class="field-input fra" type="password" id="ra-code" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter')doLogin('ra')">
+      </div>
+      <div class="err-msg" id="err-ra"></div>
+      <button class="btn-login bra" id="btn-ra" onclick="doLogin('ra')">Se connecter — Rainforest Alliance</button>
+    </div>
+
+    <!-- PANEL FAIRTRADE -->
+    <div class="panel" id="panel-ft">
+      <div class="cert-badge ft">
+        <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#003DA5"/><circle cx="12" cy="8" r="3" fill="#fff"/><rect x="8.5" y="12" width="7" height="6" rx="2" fill="#fff"/></svg>
+        Accès agent Fairtrade
+      </div>
+      <div class="field-group">
+        <div class="field-label">Nom et prénom</div>
+        <input class="field-input fft" type="text" id="ft-nom" placeholder="Ex: Kouassi Jean" autocomplete="name">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Code d'accès</div>
+        <input class="field-input fft" type="password" id="ft-code" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter')doLogin('ft')">
+      </div>
+      <div class="err-msg" id="err-ft"></div>
+      <button class="btn-login bft" id="btn-ft" onclick="doLogin('ft')">Se connecter — Fairtrade</button>
+    </div>
+
+    <!-- PANEL DIRECTION -->
+    <div class="panel" id="panel-dir">
+      <div class="cert-badge dir">
+        <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1B4332"/><circle cx="12" cy="8" r="3.5" fill="#C9A84C"/><path d="M5 20 Q12 14 19 20" stroke="#C9A84C" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+        Accès Direction — tableau de bord complet
+      </div>
+      <div class="field-group">
+        <div class="field-label">Nom et prénom</div>
+        <input class="field-input" type="text" id="dir-nom" placeholder="Ex: Villaret ESMEL" autocomplete="name">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Code d'accès</div>
+        <input class="field-input" type="password" id="dir-code" placeholder="••••••••"
+               onkeydown="if(event.key==='Enter')doLogin('dir')">
+      </div>
+      <div class="err-msg" id="err-dir"></div>
+      <button class="btn-login bdir" id="btn-dir" onclick="doLogin('dir')">Se connecter — Direction</button>
+    </div>
+
+  </div>
+
+  <div class="card-footer">
+    FichePro Manager v4 · Capressa · <span id="yr"></span>
+  </div>
+</div>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+var BTN_LABELS = {
+  ra:  'Se connecter — Rainforest Alliance',
+  ft:  'Se connecter — Fairtrade',
+  dir: 'Se connecter — Direction'
+};
+
+function showTab(t) {
+  ['ra','ft','dir'].forEach(function(x){
+    document.getElementById('panel-'+x).classList.remove('show');
+    document.getElementById('tab-'+x).className='tab';
+  });
+  document.getElementById('panel-'+t).classList.add('show');
+  document.getElementById('tab-'+t).className='tab act-'+t;
+  setTimeout(function(){ document.getElementById(t+'-nom').focus(); },50);
+}
+
+async function doLogin(t) {
+  var nom  = document.getElementById(t+'-nom').value.trim();
+  var code = document.getElementById(t+'-code').value.trim();
+  var err  = document.getElementById('err-'+t);
+  var btn  = document.getElementById('btn-'+t);
+
+  err.className='err-msg'; err.textContent='';
+  if(!nom){ err.textContent='Veuillez entrer votre nom.'; err.className='err-msg show'; return; }
+  if(!code){ err.textContent="Veuillez entrer votre code d'accès."; err.className='err-msg show'; return; }
+
+  btn.disabled=true; btn.textContent='Connexion…';
+  try {
+    var r = await fetch('/api/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body:JSON.stringify({nom_agent:nom, code_acces:code})
+    });
+    var d = await r.json();
+    if(d.error){
+      err.textContent = d.error.includes('invalide')||d.error.includes('incorrect')
+        ? "Code d'accès incorrect. Veuillez réessayer."
+        : d.error;
+      err.className='err-msg show';
+    } else {
+      window.location.href='/';
+    }
+  } catch(e) {
+    err.textContent='Erreur réseau. Vérifiez votre connexion.';
+    err.className='err-msg show';
+  } finally {
+    btn.disabled=false;
+    btn.textContent=BTN_LABELS[t];
+  }
+}
+</script>
+</body>
+</html>
