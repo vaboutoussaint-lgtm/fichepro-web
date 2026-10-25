@@ -15,63 +15,120 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+/* ── FOND CAROUSEL ─────────────────────────────────── */
 body{
   min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:var(--vf);
-  background-image:
-    radial-gradient(ellipse at 20% 50%,rgba(82,183,136,.12) 0%,transparent 60%),
-    radial-gradient(ellipse at 80% 20%,rgba(201,168,76,.08) 0%,transparent 50%);
+  position:relative;overflow:hidden;
 }
 
-/* CARD */
-.card{background:#fff;border-radius:20px;width:420px;box-shadow:0 24px 80px rgba(0,0,0,.28);overflow:hidden}
+.bg-slides{
+  position:fixed;inset:0;z-index:0;
+}
+.bg-slide{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  opacity:0;transition:opacity 1.4s ease-in-out;
+}
+.bg-slide.active{opacity:1}
 
-/* HEADER */
+/* Overlay sombre pour lisibilité */
+.bg-overlay{
+  position:fixed;inset:0;z-index:1;
+  background:linear-gradient(
+    135deg,
+    rgba(10,30,20,.72) 0%,
+    rgba(27,67,50,.65) 50%,
+    rgba(0,20,10,.75) 100%
+  );
+}
+
+/* ── CARD ──────────────────────────────────────────── */
+.card{
+  position:relative;z-index:2;
+  background:rgba(255,255,255,.97);
+  border-radius:22px;width:430px;
+  box-shadow:0 32px 90px rgba(0,0,0,.45),0 2px 0 rgba(201,168,76,.3);
+  overflow:hidden;
+  backdrop-filter:blur(12px);
+}
+
+/* ── HEADER ────────────────────────────────────────── */
 .card-header{
   background:linear-gradient(148deg,var(--vf) 0%,var(--vm) 100%);
-  padding:28px 28px 22px;text-align:center;
+  padding:26px 28px 20px;text-align:center;
+  position:relative;
 }
-.logo-badge{
-  width:56px;height:56px;border-radius:50%;
-  background:rgba(201,168,76,.18);border:2px solid rgba(201,168,76,.4);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 12px;
+.card-header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--ra),var(--or),var(--ft));
 }
-.logo-f{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--or)}
-.card-title{font-family:var(--serif);font-size:21px;font-weight:700;color:#fff;margin-bottom:3px}
+
+/* Logos RA + FT côte à côte dans le header */
+.header-logos{
+  display:flex;align-items:center;justify-content:center;gap:16px;
+  margin-bottom:14px;
+}
+.header-logo{
+  height:48px;width:auto;
+  border-radius:8px;
+  object-fit:contain;
+  background:#fff;
+  padding:4px 6px;
+  box-shadow:0 2px 10px rgba(0,0,0,.2);
+}
+.header-logo-sep{
+  width:1px;height:36px;
+  background:rgba(255,255,255,.2);
+}
+
+.card-title{font-family:var(--serif);font-size:22px;font-weight:700;color:#fff;margin-bottom:3px}
 .card-sub{font-size:11.5px;color:rgba(255,255,255,.5);letter-spacing:.04em}
 
-/* TABS */
+/* ── TABS ──────────────────────────────────────────── */
 .tabs{display:flex;background:#fff;border-bottom:1px solid #E5E7EB}
 .tab{
-  flex:1;padding:12px 6px;border:none;background:none;cursor:pointer;
+  flex:1;padding:11px 6px;border:none;background:none;cursor:pointer;
   font-family:var(--sans);font-size:10px;font-weight:500;
   color:#9CA3AF;transition:all .2s;
-  display:flex;flex-direction:column;align-items:center;gap:5px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
   border-bottom:2px solid transparent;position:relative;top:1px;
 }
 .tab:hover{color:#374151}
-/* active states */
 .tab.act-ra {color:var(--ra);border-bottom-color:var(--ra)}
 .tab.act-ft {color:var(--ft);border-bottom-color:var(--ft)}
 .tab.act-dir{color:var(--vf);border-bottom-color:var(--or)}
-.tab svg{opacity:.45;transition:opacity .2s}
-.tab.act-ra svg,.tab.act-ft svg,.tab.act-dir svg{opacity:1}
-.tab-lbl{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase}
+.tab-img{
+  height:28px;width:auto;
+  object-fit:contain;
+  border-radius:4px;
+  opacity:.55;transition:opacity .2s;
+  filter:grayscale(30%);
+}
+.tab.act-ra .tab-img,.tab.act-ft .tab-img{opacity:1;filter:none}
+.tab.act-dir .tab-dir-icon{opacity:1}
+.tab-dir-icon{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--vm),var(--vf));
+  display:flex;align-items:center;justify-content:center;
+  opacity:.5;transition:opacity .2s;
+}
+.tab-lbl{font-size:9px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
 
-/* FORM */
-.form-wrap{padding:22px 26px 26px}
+/* ── FORM ──────────────────────────────────────────── */
+.form-wrap{padding:20px 26px 24px}
 .panel{display:none}
 .panel.show{display:block}
 
 .cert-badge{
-  display:flex;align-items:center;gap:9px;
+  display:flex;align-items:center;gap:10px;
   padding:10px 13px;border-radius:9px;margin-bottom:14px;
   font-size:11.5px;font-weight:500;
 }
 .cert-badge.ra{background:rgba(0,103,71,.07);color:var(--ra)}
 .cert-badge.ft{background:rgba(0,61,165,.07);color:var(--ft)}
 .cert-badge.dir{background:rgba(27,67,50,.07);color:var(--vf)}
+.cert-badge img{height:22px;width:auto;border-radius:3px;object-fit:contain}
 
 .field-group{margin-bottom:12px}
 .field-label{font-size:10.5px;font-weight:600;color:#6B7280;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
@@ -80,20 +137,22 @@ body{
   padding:0 13px;font-size:13.5px;font-family:var(--sans);
   color:#111827;background:#fff;outline:none;transition:border .2s;
 }
-.field-input.focus-ra:focus,.field-input:focus{border-color:var(--vm)}
-.field-input.fft:focus{border-color:var(--ft)}
 .field-input.fra:focus{border-color:var(--ra)}
+.field-input.fft:focus{border-color:var(--ft)}
+.field-input:focus{border-color:var(--vm)}
 
 .btn-login{
   width:100%;height:44px;border:none;border-radius:11px;
   font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--sans);
   transition:all .22s;color:#fff;margin-top:5px;
+  display:flex;align-items:center;justify-content:center;gap:9px;
 }
 .btn-login.bra {background:linear-gradient(135deg,#00855A,var(--ra))}
 .btn-login.bft {background:linear-gradient(135deg,#1751C4,var(--ft))}
 .btn-login.bdir{background:linear-gradient(135deg,var(--vm),var(--vf));color:var(--or)}
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(0,0,0,.16)}
 .btn-login:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-login img{height:20px;width:auto;border-radius:3px;filter:brightness(0) invert(1)}
 
 .err-msg{
   background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);
@@ -102,75 +161,83 @@ body{
 }
 .err-msg.show{display:block}
 
-/* FOOTER */
+/* ── FOOTER ────────────────────────────────────────── */
 .card-footer{
   background:#F9FAFB;border-top:1px solid #F3F4F6;
-  padding:13px 26px;text-align:center;font-size:10.5px;color:#9CA3AF;
+  padding:11px 26px;text-align:center;font-size:10.5px;color:#9CA3AF;
+}
+
+/* ── INDICATEUR CAROUSEL ───────────────────────────── */
+.bg-dots{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  z-index:3;display:flex;gap:7px;
+}
+.bg-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,.35);
+  transition:background .4s;cursor:pointer;
+}
+.bg-dot.on{background:rgba(201,168,76,.9);width:22px;border-radius:4px}
+
+@media(max-width:480px){
+  .card{width:95vw;margin:12px}
 }
 </style>
 </head>
 <body>
+
+<!-- FOND CAROUSEL -->
+<div class="bg-slides" id="bgSlides">
+  <div class="bg-slide active" style="background-image:url('/static/plantation.jpg')"></div>
+  <div class="bg-slide" style="background-image:url('/static/cacao_cabosses.jpg')"></div>
+  <div class="bg-slide" style="background-image:url('/static/cacao_rouge.jpg')"></div>
+  <div class="bg-slide" style="background-image:url('/static/champ_cacao.jpg')"></div>
+  <div class="bg-slide" style="background-image:url('/static/cacaoyer.jpg')"></div>
+  <div class="bg-slide" style="background-image:url('/static/cacao_grains.jpg')"></div>
+</div>
+<div class="bg-overlay"></div>
+
+<!-- INDICATEURS -->
+<div class="bg-dots" id="bgDots"></div>
+
+<!-- CARD LOGIN -->
 <div class="card">
 
   <!-- HEADER -->
   <div class="card-header">
-    <div class="logo-badge">
-      <span class="logo-f">F</span>
+    <div class="header-logos">
+      <img class="header-logo" src="/static/logo_ra.jpg" alt="Rainforest Alliance"
+           onerror="this.style.display='none'">
+      <div class="header-logo-sep"></div>
+      <img class="header-logo" src="/static/logo_fairtrade.jpg" alt="Fairtrade"
+           onerror="this.style.display='none'">
     </div>
     <div class="card-title">FichePro Manager</div>
     <div class="card-sub">Gestion cacao certifié — Capressa</div>
   </div>
 
-  <!-- ONGLETS avec logos officiels SVG -->
+  <!-- ONGLETS -->
   <div class="tabs">
 
-    <!-- RAINFOREST ALLIANCE -->
     <button class="tab act-ra" id="tab-ra" onclick="showTab('ra')">
-      <svg width="44" height="30" viewBox="0 0 44 30">
-        <!-- Cercle vert RA -->
-        <circle cx="15" cy="15" r="13" fill="#006747"/>
-        <!-- Grenouille stylisée (frog) -->
-        <ellipse cx="15" cy="16" rx="6" ry="5" fill="#8DC63F"/>
-        <circle cx="12" cy="11" r="2.5" fill="#8DC63F"/>
-        <circle cx="18" cy="11" r="2.5" fill="#8DC63F"/>
-        <circle cx="12" cy="11" r="1.2" fill="#fff"/>
-        <circle cx="18" cy="11" r="1.2" fill="#fff"/>
-        <path d="M10 19 Q15 22 20 19" stroke="#006747" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-        <!-- Texte RA -->
-        <text x="31" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#006747">RA</text>
-        <text x="28" y="23" font-family="Arial" font-size="6.5" fill="#6B7280">Alliance</text>
-      </svg>
+      <img class="tab-img" src="/static/logo_ra.jpg" alt="RA"
+           onerror="this.outerHTML='<svg width=28 height=28 viewBox=\'0 0 24 24\'><circle cx=12 cy=12 r=11 fill=\'#006747\'/><circle cx=12 cy=10 r=3 fill=\'#8DC63F\'/></svg>'">
       <span class="tab-lbl">Rainforest</span>
     </button>
 
-    <!-- FAIRTRADE -->
     <button class="tab" id="tab-ft" onclick="showTab('ft')">
-      <svg width="44" height="30" viewBox="0 0 44 30">
-        <!-- Cercle bleu FT -->
-        <circle cx="15" cy="15" r="13" fill="#003DA5"/>
-        <!-- Figure humaine stylisée Fairtrade -->
-        <circle cx="15" cy="8" r="3" fill="#fff"/>
-        <rect x="11.5" y="12" width="7" height="8" rx="2" fill="#fff"/>
-        <rect x="8" y="14" width="14" height="3.5" rx="1.5" fill="#fff"/>
-        <!-- Texte FT -->
-        <text x="31" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#003DA5">FT</text>
-        <text x="27" y="23" font-family="Arial" font-size="6.5" fill="#6B7280">Fairtrade</text>
-      </svg>
+      <img class="tab-img" src="/static/logo_fairtrade.jpg" alt="FT"
+           onerror="this.outerHTML='<svg width=28 height=28 viewBox=\'0 0 24 24\'><circle cx=12 cy=12 r=11 fill=\'#003DA5\'/><circle cx=12 cy=8 r=3 fill=\'#fff\'/></svg>'">
       <span class="tab-lbl">Fairtrade</span>
     </button>
 
-    <!-- DIRECTION -->
     <button class="tab" id="tab-dir" onclick="showTab('dir')">
-      <svg width="44" height="30" viewBox="0 0 44 30">
-        <!-- Cercle vert foncé -->
-        <circle cx="15" cy="15" r="13" fill="#1B4332"/>
-        <!-- Icône directeur / étoile -->
-        <circle cx="15" cy="10" r="3.5" fill="#C9A84C"/>
-        <path d="M7 24 Q15 17 23 24" stroke="#C9A84C" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <!-- Texte DIR -->
-        <text x="29" y="14" font-family="Arial" font-weight="bold" font-size="8" fill="#1B4332">DIR</text>
-        <text x="27" y="23" font-family="Arial" font-size="6.5" fill="#6B7280">Direction</text>
-      </svg>
+      <div class="tab-dir-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" fill="#C9A84C"/>
+          <path d="M4 20 Q12 14 20 20" stroke="#C9A84C" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
       <span class="tab-lbl">Direction</span>
     </button>
 
@@ -182,7 +249,7 @@ body{
     <!-- PANEL RAINFOREST ALLIANCE -->
     <div class="panel show" id="panel-ra">
       <div class="cert-badge ra">
-        <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#006747"/><ellipse cx="12" cy="13" rx="5" ry="4" fill="#8DC63F"/><circle cx="9.5" cy="9" r="2" fill="#8DC63F"/><circle cx="14.5" cy="9" r="2" fill="#8DC63F"/></svg>
+        <img src="/static/logo_ra.jpg" alt="RA" onerror="this.style.display='none'">
         Accès agent Rainforest Alliance
       </div>
       <div class="field-group">
@@ -195,13 +262,16 @@ body{
                onkeydown="if(event.key==='Enter')doLogin('ra')">
       </div>
       <div class="err-msg" id="err-ra"></div>
-      <button class="btn-login bra" id="btn-ra" onclick="doLogin('ra')">Se connecter — Rainforest Alliance</button>
+      <button class="btn-login bra" id="btn-ra" onclick="doLogin('ra')">
+        <img src="/static/logo_ra.jpg" alt="">
+        Se connecter — Rainforest Alliance
+      </button>
     </div>
 
     <!-- PANEL FAIRTRADE -->
     <div class="panel" id="panel-ft">
       <div class="cert-badge ft">
-        <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#003DA5"/><circle cx="12" cy="8" r="3" fill="#fff"/><rect x="8.5" y="12" width="7" height="6" rx="2" fill="#fff"/></svg>
+        <img src="/static/logo_fairtrade.jpg" alt="FT" onerror="this.style.display='none'">
         Accès agent Fairtrade
       </div>
       <div class="field-group">
@@ -214,13 +284,19 @@ body{
                onkeydown="if(event.key==='Enter')doLogin('ft')">
       </div>
       <div class="err-msg" id="err-ft"></div>
-      <button class="btn-login bft" id="btn-ft" onclick="doLogin('ft')">Se connecter — Fairtrade</button>
+      <button class="btn-login bft" id="btn-ft" onclick="doLogin('ft')">
+        <img src="/static/logo_fairtrade.jpg" alt="">
+        Se connecter — Fairtrade
+      </button>
     </div>
 
     <!-- PANEL DIRECTION -->
     <div class="panel" id="panel-dir">
       <div class="cert-badge dir">
-        <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#1B4332"/><circle cx="12" cy="8" r="3.5" fill="#C9A84C"/><path d="M5 20 Q12 14 19 20" stroke="#C9A84C" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" fill="#C9A84C"/>
+          <path d="M4 20 Q12 14 20 20" stroke="#C9A84C" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
         Accès Direction — tableau de bord complet
       </div>
       <div class="field-group">
@@ -246,6 +322,32 @@ body{
 <script>
 document.getElementById('yr').textContent = new Date().getFullYear();
 
+// ── CAROUSEL ──────────────────────────────────────────
+var slides = document.querySelectorAll('.bg-slide');
+var dotsEl = document.getElementById('bgDots');
+var cur = 0;
+
+// Créer les dots
+slides.forEach(function(_,i){
+  var d = document.createElement('div');
+  d.className = 'bg-dot' + (i===0?' on':'');
+  d.onclick = function(){ goSlide(i); };
+  dotsEl.appendChild(d);
+});
+
+function goSlide(n){
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('on');
+  cur = n;
+  slides[cur].classList.add('active');
+  dotsEl.children[cur].classList.add('on');
+}
+
+setInterval(function(){
+  goSlide((cur + 1) % slides.length);
+}, 5000);
+
+// ── TABS ──────────────────────────────────────────────
 var BTN_LABELS = {
   ra:  'Se connecter — Rainforest Alliance',
   ft:  'Se connecter — Fairtrade',
@@ -262,6 +364,7 @@ function showTab(t) {
   setTimeout(function(){ document.getElementById(t+'-nom').focus(); },50);
 }
 
+// ── LOGIN ─────────────────────────────────────────────
 async function doLogin(t) {
   var nom  = document.getElementById(t+'-nom').value.trim();
   var code = document.getElementById(t+'-code').value.trim();
@@ -272,7 +375,10 @@ async function doLogin(t) {
   if(!nom){ err.textContent='Veuillez entrer votre nom.'; err.className='err-msg show'; return; }
   if(!code){ err.textContent="Veuillez entrer votre code d'accès."; err.className='err-msg show'; return; }
 
-  btn.disabled=true; btn.textContent='Connexion…';
+  btn.disabled=true;
+  var orig = btn.innerHTML;
+  btn.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.3)" stroke-width="3"/><path d="M12 3 A9 9 0 0 1 21 12" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg> Connexion…';
+
   try {
     var r = await fetch('/api/login',{
       method:'POST',
@@ -282,7 +388,7 @@ async function doLogin(t) {
     });
     var d = await r.json();
     if(d.error){
-      err.textContent = d.error.includes('invalide')||d.error.includes('incorrect')
+      err.textContent = (d.error.includes('invalide')||d.error.includes('incorrect'))
         ? "Code d'accès incorrect. Veuillez réessayer."
         : d.error;
       err.className='err-msg show';
@@ -294,9 +400,12 @@ async function doLogin(t) {
     err.className='err-msg show';
   } finally {
     btn.disabled=false;
-    btn.textContent=BTN_LABELS[t];
+    btn.innerHTML=orig;
   }
 }
 </script>
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </body>
 </html>
