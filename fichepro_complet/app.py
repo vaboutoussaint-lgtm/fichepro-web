@@ -248,8 +248,8 @@ def import_registre():
             except (ValueError, TypeError):
                 return default
 
-        nb_insere = 0
-        nb_maj = 0
+        # Construire la liste complète des parcelles
+        parcelles_list = []
         errors = []
 
         for row in rows:
@@ -257,10 +257,9 @@ def import_registre():
                 code_parcelle = str(row.get('CODE_PARCELLE') or '').strip()
                 if not code_parcelle or code_parcelle.lower() in ('none', 'nan', ''):
                     continue
-
                 lat = row.get('LATITUDE')
                 lon = row.get('LONGITUDE')
-                parcelle = {
+                parcelles_list.append({
                     'code_parcelle': code_parcelle,
                     'code_producteur': str(row.get('CODE_PRODUCTEUR') or '').strip(),
                     'nom_producteur': str(row.get('NOM_PRENOMS') or '').strip(),
@@ -273,39 +272,33 @@ def import_registre():
                     'rainforest_alliance': to_bool(row.get(ra_col)) if ra_col else False,
                     'fairtrade': to_bool(row.get(ft_col)) if ft_col else False,
                     'actif': True,
-                }
-
-                # Vérifier si existe
-                existing = sb_get('parcelles', {'code_parcelle': f'eq.{code_parcelle}', 'select': 'code_parcelle'})
-                if existing:
-                    # Mise à jour (ne touche pas aux volumes livrés)
-                    sb_patch('parcelles', {'code_parcelle': code_parcelle}, {
-                        'code_producteur': parcelle['code_producteur'],
-                        'nom_producteur': parcelle['nom_producteur'],
-                        'section': parcelle['section'],
-                        'village': parcelle['village'],
-                        'superficie_ha': parcelle['superficie_ha'],
-                        'estimation_kg': parcelle['estimation_kg'],
-                        'latitude': parcelle['latitude'],
-                        'longitude': parcelle['longitude'],
-                        'rainforest_alliance': parcelle['rainforest_alliance'],
-                        'fairtrade': parcelle['fairtrade'],
-                        'actif': True,
-                    })
-                    nb_maj += 1
-                else:
-                    sb_post('parcelles', parcelle)
-                    nb_insere += 1
+                })
             except Exception as e:
                 errors.append(str(e))
 
+        # Upsert batch par tranches de 200
+        nb_insere = 0
+        nb_maj = 0
+        BATCH = 200
+        for i in range(0, len(parcelles_list), BATCH):
+            batch = parcelles_list[i:i+BATCH]
+            url = f'{SUPABASE_URL}/rest/v1/parcelles'
+            hdrs = {**sb_headers(), 'Prefer': 'resolution=merge-duplicates,return=representation'}
+            r = requests.post(url, headers=hdrs, json=batch)
+            if r.status_code in (200, 201):
+                result = r.json()
+                nb_insere += len(result)
+            else:
+                errors.append(f'Batch {i//BATCH+1}: {r.text[:200]}')
+
+        nb_total = len(parcelles_list)
         journaliser(user['nom_agent'], user['profil'], 'IMPORT_REGISTRE',
-                    f'{nb_insere} insérées, {nb_maj} mises à jour')
+                    f'{nb_total} parcelles importées (upsert batch)')
 
         return jsonify({
             'ok': True,
-            'insere': nb_insere,
-            'maj': nb_maj,
+            'insere': nb_total,
+            'maj': 0,
             'erreurs': errors[:10]
         })
 
