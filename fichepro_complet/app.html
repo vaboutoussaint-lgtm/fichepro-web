@@ -553,6 +553,9 @@ body {
     <button class="sb-item" onclick="goPage('fiches',this)">
       <span class="ico">📋</span><span class="lbl">Fiches générées</span>
     </button>
+    <button class="sb-item" onclick="goPage('suivi-livraisons',this)">
+      <span class="ico">🚚</span><span class="lbl">Suivi Livraisons</span>
+    </button>
     <div class="sb-section">Paramètres</div>
     <button class="sb-item" onclick="goPage('config',this)">
       <span class="ico">⚙️</span><span class="lbl">Configuration</span>
@@ -850,6 +853,45 @@ body {
       </div>
     </div>
 
+    <!-- ── SUIVI LIVRAISONS ── -->
+    <div class="page" id="page-suivi-livraisons">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Suivi des livraisons par producteur</div>
+          <input class="prod-search" id="suivi-search" placeholder="Rechercher producteur..."
+                 oninput="filtrerSuivi()" style="width:220px">
+        </div>
+        <div style="padding:8px 20px 0">
+          <div id="suivi-totaux" style="display:flex;gap:24px;font-size:12px;color:var(--tg);padding-bottom:8px"></div>
+        </div>
+        <table class="prod-table">
+          <thead>
+            <tr>
+              <th>Code Prod.</th><th>Producteur</th><th>Section</th>
+              <th>Nb Livraisons</th><th>Volume total (kg)</th><th>Montant total (FCFA)</th><th>Dernière livraison</th><th>Détail</th>
+            </tr>
+          </thead>
+          <tbody id="suivi-tbody">
+            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tg)">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Détail livraisons d'un producteur -->
+      <div class="card" id="suivi-detail-card" style="display:none;margin-top:12px">
+        <div class="card-head">
+          <div class="card-title" id="suivi-detail-titre">Détail</div>
+          <button onclick="document.getElementById('suivi-detail-card').style.display='none'"
+            style="font-size:11px;color:var(--vm);background:none;border:none;cursor:pointer;font-weight:500">Fermer ✕</button>
+        </div>
+        <table class="prod-table">
+          <thead>
+            <tr><th>Parcelle</th><th>Fiche</th><th>Label</th><th>Saison</th><th>Date</th><th>Volume (kg)</th><th>Sacs</th><th>Montant (FCFA)</th></tr>
+          </thead>
+          <tbody id="suivi-detail-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- ── CONFIG ── -->
     <div class="page" id="page-config">
       <div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
@@ -945,6 +987,7 @@ function goPage(id, btn) {
   if (id === 'fiches') chargerFiches();
   if (id === 'config') chargerConfig();
   if (id === 'generer') chargerSections();
+  if (id === 'suivi-livraisons') chargerSuiviLivraisons();
 }
 
 // ── INIT — ne boucle JAMAIS ─────────────────────────────────
@@ -1442,7 +1485,105 @@ async function importRA(file) {
   }
 }
 
+// ── SUIVI LIVRAISONS ─────────────────────────────────────────
+let _suiviData = [];
+
+async function chargerSuiviLivraisons() {
+  const tbody = document.getElementById('suivi-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tg)">Chargement...</td></tr>';
+  try {
+    const r = await api('/api/suivi-livraisons');
+    const data = await safeJson(r);
+    if (!Array.isArray(data)) throw new Error('Erreur chargement');
+    _suiviData = data;
+    renderSuivi(_suiviData);
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:red">Erreur de chargement</td></tr>';
+  }
+}
+
+function renderSuivi(data) {
+  const tbody = document.getElementById('suivi-tbody');
+  const totDiv = document.getElementById('suivi-totaux');
+  if (!tbody) return;
+
+  const totalVol = data.reduce((s, d) => s + (d.total_volume || 0), 0);
+  const totalMnt = data.reduce((s, d) => s + (d.total_montant || 0), 0);
+  const totalLiv = data.reduce((s, d) => s + (d.nb_livraisons || 0), 0);
+  if (totDiv) {
+    totDiv.innerHTML = `
+      <span>${data.length} producteurs livrés</span>
+      <span>·</span>
+      <span>${totalLiv} livraisons</span>
+      <span>·</span>
+      <span>${Math.round(totalVol).toLocaleString('fr-FR')} kg</span>
+      <span>·</span>
+      <span>${Math.round(totalMnt).toLocaleString('fr-FR')} FCFA</span>`;
+  }
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tg)">Aucune livraison enregistrée</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(d => `<tr>
+    <td style="font-size:11px;color:var(--tg)">${d.code_producteur}</td>
+    <td style="font-weight:500">${d.nom_producteur}</td>
+    <td>${d.section || '-'}</td>
+    <td style="text-align:center">${d.nb_livraisons}</td>
+    <td style="text-align:right">${Math.round(d.total_volume).toLocaleString('fr-FR')} kg</td>
+    <td style="text-align:right">${Math.round(d.total_montant).toLocaleString('fr-FR')}</td>
+    <td style="font-size:11px;color:var(--tg)">${d.derniere_livraison ? d.derniere_livraison.slice(0,10) : '-'}</td>
+    <td><button onclick='afficherDetailSuivi(${JSON.stringify(d)})'
+      style="font-size:11px;padding:3px 8px;border:1px solid var(--bd);border-radius:4px;background:none;cursor:pointer;color:var(--vm)">Voir</button></td>
+  </tr>`).join('');
+}
+
+function filtrerSuivi() {
+  const q = (document.getElementById('suivi-search')?.value || '').toLowerCase();
+  const filtered = _suiviData.filter(d =>
+    (d.nom_producteur || '').toLowerCase().includes(q) ||
+    (d.code_producteur || '').toLowerCase().includes(q) ||
+    (d.section || '').toLowerCase().includes(q)
+  );
+  renderSuivi(filtered);
+}
+
+function afficherDetailSuivi(d) {
+  const card = document.getElementById('suivi-detail-card');
+  const titre = document.getElementById('suivi-detail-titre');
+  const tbody = document.getElementById('suivi-detail-tbody');
+  if (!card || !tbody) return;
+  titre.textContent = 'Livraisons — ' + d.nom_producteur + ' (' + d.code_producteur + ')';
+  const livs = (d.livraisons || []).sort((a,b) => (b.date_livraison||'').localeCompare(a.date_livraison||''));
+  tbody.innerHTML = livs.map(l => `<tr>
+    <td style="font-size:11px">${l.code_parcelle || '-'}</td>
+    <td style="font-size:11px">${l.num_fiche || '-'}</td>
+    <td>${l.label || '-'}</td>
+    <td>${l.saison || '-'}</td>
+    <td style="font-size:11px">${(l.date_livraison||'').slice(0,10)}</td>
+    <td style="text-align:right">${(l.volume_attribue||0).toLocaleString('fr-FR')} kg</td>
+    <td style="text-align:center">${l.nombre_sacs || 0}</td>
+    <td style="text-align:right">${Math.round(l.montant||0).toLocaleString('fr-FR')}</td>
+  </tr>`).join('');
+  card.style.display = '';
+  card.scrollIntoView({behavior:'smooth'});
+}
+
 // ── CONFIG ───────────────────────────────────────────────────
+const CONFIG_LABELS = {
+  SAISON_EN_COURS: 'Saison en cours (GT ou PT)',
+  PRIX_KG_GT: 'Prix/kg Grande Traite (FCFA)',
+  PRIX_KG_PT: 'Prix/kg Petite Traite (FCFA)',
+  POIDS_SAC_KG: 'Poids sac (kg)',
+  POIDS_MIN: 'Poids minimum livraison (kg)',
+  PLAFOND_PARCELLE: 'Plafond max par parcelle (ex: 0.30)',
+  QUOTA_GT: 'Quota Grande Traite (ex: 0.80)',
+  INTERV_JOURS: 'Intervalle minimum entre livraisons (jours)',
+  MAX_PAR_LIVRAISON_KG: 'Volume max par livraison (kg, pour fractionner)',
+};
+
 async function chargerConfig() {
   try {
     const [rConfig, rParcelles] = await Promise.all([
@@ -1455,17 +1596,52 @@ async function chargerConfig() {
     const parcelles = rParcelles.ok ? await rParcelles.json() : [];
 
     const block = document.getElementById('config-block');
-    const cfgHtml = Object.entries(cfg).map(([k,v]) =>
-      `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--s1);font-size:12px">
-        <span style="color:var(--tg)">${k}</span>
-        <span style="font-weight:600">${v}</span>
-      </div>`
-    ).join('');
+    // Afficher les clés connues en priorité, puis les autres
+    const knownKeys = Object.keys(CONFIG_LABELS);
+    const allKeys = [...new Set([...knownKeys, ...Object.keys(cfg)])];
+
+    const cfgHtml = allKeys.map(k => {
+      const v = cfg[k] !== undefined ? cfg[k] : '';
+      const label = CONFIG_LABELS[k] || k;
+      const isPrix = k.startsWith('PRIX_KG');
+      const highlight = isPrix && (!v || parseFloat(v) === 0)
+        ? 'style="color:var(--rd,#e55);font-weight:700"' : '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--s1);gap:8px">
+        <span style="font-size:12px;color:var(--tg);flex:1">${label}</span>
+        <input id="cfg-${k}" value="${v}" ${highlight}
+          style="width:140px;font-size:12px;font-weight:600;border:1px solid var(--bd);border-radius:4px;padding:3px 6px;background:var(--s1);color:var(--fg);text-align:right"
+          onkeydown="if(event.key==='Enter')sauvegarderCfg('${k}')">
+        <button onclick="sauvegarderCfg('${k}')"
+          style="font-size:11px;padding:3px 8px;border:1px solid var(--bd);border-radius:4px;background:var(--vm);color:#fff;cursor:pointer">✓</button>
+      </div>`;
+    }).join('');
     block.innerHTML = cfgHtml || '<div style="font-size:12px;color:var(--tg)">Aucune configuration</div>';
 
+    const nbProd = new Set(parcelles.map(p => p.code_producteur).filter(Boolean)).size;
     document.getElementById('db-status').innerHTML =
-      `<strong>${parcelles.length}</strong> parcelles actives en base`;
+      `<strong>${parcelles.length}</strong> parcelles actives · <strong>${nbProd}</strong> producteurs distincts en base`;
   } catch(e) {}
+}
+
+async function sauvegarderCfg(cle) {
+  const input = document.getElementById('cfg-' + cle);
+  if (!input) return;
+  const valeur = input.value.trim();
+  try {
+    const r = await api('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({[cle]: valeur})
+    });
+    if (r.ok) {
+      toast('✅ ' + (CONFIG_LABELS[cle] || cle) + ' sauvegardé');
+      STATE.config[cle] = valeur;
+      input.style.borderColor = 'var(--ok,#2a9)';
+      setTimeout(() => input.style.borderColor = '', 1500);
+    } else {
+      toast('Erreur : ' + r.status);
+    }
+  } catch(e) { toast('Erreur réseau'); }
 }
 
 // ── START ─────────────────────────────────────────────────────

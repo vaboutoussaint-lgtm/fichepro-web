@@ -497,6 +497,12 @@ def simuler_repartition():
     volume_restant = volume_total
     lignes = []
 
+    # Seuil au-delà duquel on fractionne en plusieurs livraisons pour plus de réalisme
+    MAX_PAR_LIVRAISON_KG = float(cfg.get('MAX_PAR_LIVRAISON_KG', 2500))
+
+    prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
+    prix_kg = float(cfg.get(prix_cle, 0))
+
     for p in eligibles:
         if volume_restant < poids_min:
             break
@@ -508,39 +514,51 @@ def simuler_repartition():
         if max_attrib < poids_min:
             continue
 
-        nb_sacs = math.floor(max_attrib / poids_sac)
-        if nb_sacs == 0:
+        nb_sacs_max = math.floor(max_attrib / poids_sac)
+        if nb_sacs_max == 0:
             continue
-        attrib_final = nb_sacs * poids_sac
 
-        if attrib_final > volume_restant:
-            nb_sacs = math.floor(volume_restant / poids_sac)
-            if nb_sacs == 0:
+        attrib_total_parcelle = nb_sacs_max * poids_sac
+        if attrib_total_parcelle > volume_restant:
+            nb_sacs_max = math.floor(volume_restant / poids_sac)
+            if nb_sacs_max == 0:
                 break
-            attrib_final = nb_sacs * poids_sac
+            attrib_total_parcelle = nb_sacs_max * poids_sac
 
-        if attrib_final > stk or attrib_final < poids_min:
+        if attrib_total_parcelle > stk or attrib_total_parcelle < poids_min:
             continue
 
-        prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
-        prix_kg = float(cfg.get(prix_cle, 0))
-        montant = attrib_final * prix_kg
+        # Fractionner en plusieurs livraisons si volume > MAX_PAR_LIVRAISON_KG
+        sacs_par_livraison = max(1, math.floor(MAX_PAR_LIVRAISON_KG / poids_sac))
+        sacs_restants = nb_sacs_max
+        num_livraison = 1
 
-        lignes.append({
-            'code_parcelle': p['code_parcelle'],
-            'code_producteur': p['code_producteur'],
-            'nom_producteur': p['nom_producteur'],
-            'section': p.get('section', ''),
-            'latitude': p.get('latitude'),
-            'longitude': p.get('longitude'),
-            'score_calcule': p['_score'],
-            'volume_attribue': attrib_final,
-            'nombre_sacs': nb_sacs,
-            'montant': montant,
-            'stk_dispo': stk,
-        })
+        while sacs_restants > 0:
+            sacs_cette_livraison = min(sacs_par_livraison, sacs_restants)
+            if sacs_cette_livraison == 0:
+                break
+            vol_livraison = sacs_cette_livraison * poids_sac
+            montant_livraison = vol_livraison * prix_kg
 
-        volume_restant -= attrib_final
+            lignes.append({
+                'code_parcelle': p['code_parcelle'],
+                'code_producteur': p['code_producteur'],
+                'nom_producteur': p['nom_producteur'],
+                'section': p.get('section', ''),
+                'latitude': p.get('latitude'),
+                'longitude': p.get('longitude'),
+                'score_calcule': p['_score'],
+                'volume_attribue': vol_livraison,
+                'nombre_sacs': sacs_cette_livraison,
+                'montant': montant_livraison,
+                'stk_dispo': stk,
+                'num_livraison': num_livraison,
+            })
+
+            sacs_restants -= sacs_cette_livraison
+            num_livraison += 1
+
+        volume_restant -= attrib_total_parcelle
 
     if not lignes:
         return jsonify({'error': 'Impossible de répartir le volume demandé'}), 400
@@ -986,6 +1004,72 @@ def pdf_accompagnement(fa_id):
                      download_name=f'FA-{fa["num_fiche_rep"]}.pdf')
 
 # ============================================================
+# SUIVI LIVRAISONS PAR PRODUCTEUR
+# ============================================================
+
+@app.route('/api/suivi-livraisons', methods=['GET'])
+def suivi_livraisons():
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    cfg = get_config()
+    saison = cfg.get('SAISON_EN_COURS', 'GT')
+
+    # Récupère toutes les lignes de répartition
+    lignes = sb_get('lignes_repartition', {
+        'select': 'code_producteur,nom_producteur,section,code_parcelle,volume_attribue,nombre_sacs,montant,date_livraison,num_fiche',
+        'order': 'date_livraison.desc'
+    })
+
+    # Enrichit avec label/saison depuis fiches_repartition
+    fiches_map = {}
+    fiches_list = sb_get('fiches_repartition', {'select': 'num_fiche,label,saison'})
+    for f in fiches_list:
+        fiches_map[f['num_fiche']] = f
+
+    # Agrège par producteur
+    par_producteur = {}
+    for l in lignes:
+        cp = l.get('code_producteur', '')
+        if not cp:
+            continue
+        if cp not in par_producteur:
+            par_producteur[cp] = {
+                'code_producteur': cp,
+                'nom_producteur': l.get('nom_producteur', ''),
+                'section': l.get('section', ''),
+                'total_volume': 0,
+                'total_montant': 0,
+                'nb_livraisons': 0,
+                'derniere_livraison': None,
+                'livraisons': []
+            }
+        rec = par_producteur[cp]
+        rec['total_volume'] += float(l.get('volume_attribue', 0) or 0)
+        rec['total_montant'] += float(l.get('montant', 0) or 0)
+        rec['nb_livraisons'] += 1
+        dl = l.get('date_livraison')
+        if dl and (not rec['derniere_livraison'] or dl > rec['derniere_livraison']):
+            rec['derniere_livraison'] = dl
+        num_fiche_val = l.get('num_fiche') or l.get('num_fiche_rep', '')
+        fiche_info = fiches_map.get(num_fiche_val, {})
+        rec['livraisons'].append({
+            'code_parcelle': l.get('code_parcelle'),
+            'volume_attribue': l.get('volume_attribue'),
+            'nombre_sacs': l.get('nombre_sacs'),
+            'montant': l.get('montant'),
+            'date_livraison': dl,
+            'num_fiche': num_fiche_val,
+            'label': fiche_info.get('label', ''),
+            'saison': fiche_info.get('saison', ''),
+        })
+
+    # Tri par nom producteur
+    result = sorted(par_producteur.values(), key=lambda x: x['nom_producteur'])
+    return jsonify(result)
+
+# ============================================================
 # ALERTES STOCK CRITIQUE
 # ============================================================
 
@@ -1124,8 +1208,11 @@ def directeur_stats():
     saison = cfg.get('SAISON_EN_COURS', 'GT')
 
     fiches = sb_get('fiches_repartition', {'select': 'label,saison,volume_affecte,nombre_sacs,date_creation'})
-    parcelles = sb_get('parcelles', {'actif': 'eq.true', 'select': 'estimation_kg,volume_livre_gt,volume_livre_pt,section,rainforest_alliance,fairtrade'})
+    parcelles = sb_get('parcelles', {'actif': 'eq.true', 'select': 'code_producteur,estimation_kg,volume_livre_gt,volume_livre_pt,section,rainforest_alliance,fairtrade'})
     journal = sb_get('journal', {'select': '*', 'order': 'date_heure.desc', 'limit': '50'})
+
+    # Comptage producteurs distincts
+    producteurs_distincts = set(p.get('code_producteur', '') for p in parcelles if p.get('code_producteur'))
 
     stats = {
         'nb_fiches_ra': sum(1 for f in fiches if f['label'] == 'RA'),
@@ -1133,12 +1220,15 @@ def directeur_stats():
         'volume_ra': sum(f['volume_affecte'] for f in fiches if f['label'] == 'RA'),
         'volume_ft': sum(f['volume_affecte'] for f in fiches if f['label'] == 'FT'),
         'nb_parcelles': len(parcelles),
+        'nb_producteurs': len(producteurs_distincts),
         'nb_parcelles_ra': sum(1 for p in parcelles if p.get('rainforest_alliance')),
         'nb_parcelles_ft': sum(1 for p in parcelles if p.get('fairtrade')),
         'estimation_totale': sum(p.get('estimation_kg', 0) for p in parcelles),
         'livre_gt': sum(p.get('volume_livre_gt', 0) for p in parcelles),
         'livre_pt': sum(p.get('volume_livre_pt', 0) for p in parcelles),
         'saison_en_cours': saison,
+        'prix_kg_gt': float(cfg.get('PRIX_KG_GT', 0)),
+        'prix_kg_pt': float(cfg.get('PRIX_KG_PT', 0)),
     }
 
     sections = {}
