@@ -430,7 +430,8 @@ def simuler_repartition():
     elif label == 'FT':
         params['fairtrade'] = 'eq.true'
     if sections:
-        params['section'] = f'in.("{",".join(sections)}")'
+        sections_str = ','.join(sections)
+        params['section'] = f'in.({sections_str})'
 
     parcelles = sb_get('parcelles', params)
     if not parcelles:
