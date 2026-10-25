@@ -496,20 +496,14 @@ def simuler_repartition():
 
     volume_restant = volume_total
     lignes = []
-    # Suivi du volume déjà attribué par producteur (plafond 30% par producteur)
-    volume_par_producteur = {}
 
     for p in eligibles:
         if volume_restant < poids_min:
             break
 
         stk = p['_stk_dispo']
-        # Plafond par parcelle ET par producteur = 30% du volume total
-        plafond_absolu = volume_total * plafond
-        deja_attribue_producteur = volume_par_producteur.get(p['code_producteur'], 0)
-        reste_plafond_producteur = max(0, plafond_absolu - deja_attribue_producteur)
-
-        max_attrib = min(stk, plafond_absolu, reste_plafond_producteur, volume_restant)
+        # Plafond 30% appliqué par parcelle uniquement
+        max_attrib = min(stk, volume_total * plafond, volume_restant)
 
         if max_attrib < poids_min:
             continue
@@ -547,7 +541,6 @@ def simuler_repartition():
         })
 
         volume_restant -= attrib_final
-        volume_par_producteur[p['code_producteur']] = deja_attribue_producteur + attrib_final
 
     if not lignes:
         return jsonify({'error': 'Impossible de répartir le volume demandé'}), 400
