@@ -80,4 +80,4 @@ Responsable Durabilité · Concepteur FichePro Manager
 - Tél : +225 07 08 73 55 67
 - WhatsApp : +225 01 02 02 50 25
 - Email : vaboutoussaint@gmail.com
-- Organisation : CAPRESSA · Côte d'Ivoire
+- Organisation : [Coopérative] · Côte d'Ivoire

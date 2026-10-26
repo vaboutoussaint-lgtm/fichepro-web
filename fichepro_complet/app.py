@@ -1,6 +1,6 @@
 """
 FichePro v4 - Backend Flask complet
-Coopérative CAPRESSA - Gestion répartition cacao certifié RA/FT
+Gestion répartition cacao certifié RA/FT
 """
 
 import os

@@ -1,5 +1,5 @@
 -- ============================================================
--- CAPRESSA FichePro v4 - Migration Supabase
+-- FichePro v4 - Migration Supabase
 -- ============================================================
 
 -- ============================================================
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS config (
 );
 
 INSERT INTO config (cle, valeur, description) VALUES
-    ('COOP_NOM',           'CAPRESSA',         'Nom de la cooperative'),
+    ('COOP_NOM',           '[NOM_COOP]',         'Nom de la cooperative'),
     ('COOP_ADRESSE',       '',                 'Adresse'),
     ('COOP_TELEPHONE',     '',                 'Telephone'),
     ('COOP_FAX',           '',                 'Fax'),
