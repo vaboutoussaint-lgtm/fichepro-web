@@ -1571,10 +1571,13 @@ def pdf_accompagnement(fa_id):
 @app.route('/api/reinitialiser-plateforme', methods=['POST'])
 def reinitialiser_plateforme():
     """Réinitialisation complète — vide tout sauf config et utilisateurs.
-    Protégée par le code admin FICHEPRO-ADMIN-WILFRIED-2026."""
+    Protégée par le code admin (variable d'environnement ADMIN_CODE)."""
+    admin_code = os.environ.get('ADMIN_CODE', '')
+    if not admin_code:
+        return jsonify({'error': 'ADMIN_CODE non configuré sur le serveur'}), 500
     data = request.get_json() or {}
     code = data.get('code_admin', '')
-    if code != 'FICHEPRO-ADMIN-WILFRIED-2026':
+    if code != admin_code:
         return jsonify({'error': 'Code administrateur incorrect'}), 403
 
     try:
