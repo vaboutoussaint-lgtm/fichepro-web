@@ -1343,6 +1343,7 @@ async function confirmerGeneration() {
   const btn = document.getElementById('btn-gen');
   btn.disabled = true;
   btn.textContent = '⏳ Génération en cours...';
+  let success = false;
 
   try {
     const body = {
@@ -1379,12 +1380,16 @@ async function confirmerGeneration() {
     document.getElementById('result-actions-genere').style.display = 'flex';
     document.getElementById('section-confirmer').style.display = 'none';
     STATE.simulationResult = null;
+    success = true;
+    btn.textContent = '✅ Fiche générée';
 
   } catch(e) {
     toast('Erreur réseau', true);
   } finally {
-    btn.disabled = false;
-    btn.textContent = '✅ Confirmer et générer la fiche';
+    if (!success) {
+      btn.disabled = false;
+      btn.textContent = '✅ Confirmer et générer la fiche';
+    }
   }
 }
 

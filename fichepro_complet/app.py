@@ -671,6 +671,16 @@ def generer_repartition():
 
     date_livraison = datetime.strptime(date_livraison_str, '%Y-%m-%d').date().isoformat()
 
+    # Dédupliquer les lignes par code_parcelle (garde la première occurrence)
+    seen_parcelles = set()
+    lignes_dedup = []
+    for l in lignes:
+        cp = l.get('code_parcelle')
+        if cp and cp not in seen_parcelles:
+            seen_parcelles.add(cp)
+            lignes_dedup.append(l)
+    lignes = lignes_dedup
+
     for ligne in lignes:
         sb_post('lignes_repartition', {
             'num_fiche': num_fiche,
