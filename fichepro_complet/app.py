@@ -393,6 +393,22 @@ def calculer_stock_disponible(p, cfg, saison):
 
     return max(0, dispo)
 
+def quota_producteur_atteint(p, cfg, saison):
+    """Retourne True si le producteur a atteint son quota de période (VBA: PCT_GT/PCT_PT).
+    GT : livré >= estimation * 80%
+    PT : livré >= estimation - (estimation * 80%) + report
+    """
+    estim = float(p.get('estimation_kg', 0))
+    if estim <= 0:
+        return True
+    quota_gt = float(cfg.get('QUOTA_GT', 0.80))
+    if saison == 'GT':
+        return float(p.get('volume_livre_gt', 0)) >= estim * quota_gt
+    else:
+        quota_gt_vol = estim * quota_gt
+        plafond_pt = estim - quota_gt_vol + float(p.get('report_gt_vers_pt', 0))
+        return float(p.get('volume_livre_pt', 0)) >= plafond_pt
+
 def calculer_score(p, cfg, saison, date_ref):
     w1 = float(cfg.get('SCORE_UTILISATION', 0.50))
     w2 = float(cfg.get('SCORE_VOLUME', 0.30))
@@ -494,8 +510,14 @@ def simuler_repartition():
     eligibles = []
     exclus_intervalle = []
     exclus_stock = []
+    exclus_quota = []
 
     for p in parcelles:
+        # FIX #1 — Vérification quota période (VBA: PCT_GT=80% / PCT_PT=20%)
+        if quota_producteur_atteint(p, cfg, saison):
+            exclus_quota.append(p['code_parcelle'])
+            continue
+
         stk = calculer_stock_disponible(p, cfg, saison)
         if stk < poids_min:
             exclus_stock.append(p['code_parcelle'])
@@ -535,13 +557,15 @@ def simuler_repartition():
     prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
     prix_kg = float(cfg.get(prix_cle, 0))
 
+    max_prod_kg = float(cfg.get('MAX_PROD_KG', 1000))  # FIX #2 — VBA: MAX_PROD=1000
+
     for p in eligibles:
         if volume_restant < poids_min:
             break
 
         stk = p['_stk_dispo']
-        # Plafond 30% appliqué par parcelle uniquement
-        max_attrib = min(stk, volume_total * plafond, volume_restant)
+        # Plafond 30% par parcelle + MAX_PROD=1000kg (VBA: PlafondProducteur)
+        max_attrib = min(stk, volume_total * plafond, volume_restant, max_prod_kg)
 
         if max_attrib < poids_min:
             continue
@@ -595,6 +619,55 @@ def simuler_repartition():
     if not lignes:
         return jsonify({'error': 'Impossible de répartir le volume demandé'}), 400
 
+    # FIX #3 — AbsorberResidu (VBA) : si reliquat >= poids_min, on tente
+    # T1 : ajouter un nouveau producteur (premier éligible non encore inclus)
+    # T2 : augmenter un producteur déjà dans la fiche (le meilleur score)
+    codes_inclus = {l['code_parcelle'] for l in lignes}
+    if volume_restant >= poids_min:
+        nouveaux = [p for p in eligibles if p['code_parcelle'] not in codes_inclus]
+        if nouveaux:
+            # T1 : premier producteur disponible non inclus
+            p = nouveaux[0]
+            stk = p['_stk_dispo']
+            max_attrib = min(stk, volume_total * plafond, volume_restant, max_prod_kg)
+            nb_sacs_residuel = math.floor(max_attrib / poids_sac)
+            if nb_sacs_residuel > 0:
+                vol_r = nb_sacs_residuel * poids_sac
+                lignes.append({
+                    'code_parcelle': p['code_parcelle'],
+                    'code_producteur': p['code_producteur'],
+                    'nom_producteur': p['nom_producteur'],
+                    'section': p.get('section', ''),
+                    'latitude': p.get('latitude'),
+                    'longitude': p.get('longitude'),
+                    'score_calcule': p['_score'],
+                    'volume_attribue': vol_r,
+                    'nombre_sacs': nb_sacs_residuel,
+                    'montant': vol_r * prix_kg,
+                    'stk_dispo': stk,
+                    'num_livraison': 1,
+                    'absorbe_residu': True,
+                })
+                volume_restant -= vol_r
+        elif volume_restant >= poids_min:
+            # T2 : augmenter un producteur déjà inclus (meilleur score en tête)
+            for ligne in lignes:
+                cp = ligne['code_parcelle']
+                p_ref = next((p for p in eligibles if p['code_parcelle'] == cp), None)
+                if not p_ref:
+                    continue
+                stk_restant = p_ref['_stk_dispo'] - ligne['volume_attribue']
+                if stk_restant < poids_sac:
+                    continue
+                sacs_add = math.floor(min(stk_restant, volume_restant) / poids_sac)
+                if sacs_add > 0:
+                    vol_add = sacs_add * poids_sac
+                    ligne['volume_attribue'] += vol_add
+                    ligne['nombre_sacs'] += sacs_add
+                    ligne['montant'] += vol_add * prix_kg
+                    volume_restant -= vol_add
+                    break
+
     volume_affecte = volume_total - volume_restant
     nb_sacs_total = sum(l['nombre_sacs'] for l in lignes)
 
@@ -612,6 +685,7 @@ def simuler_repartition():
         'lignes': lignes,
         'exclus_stock': exclus_stock,
         'exclus_intervalle': exclus_intervalle,
+        'exclus_quota': exclus_quota,
     })
 
 @app.route('/api/repartition/generer', methods=['POST'])
