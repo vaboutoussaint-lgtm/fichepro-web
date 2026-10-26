@@ -639,20 +639,22 @@ def generer_repartition():
     saison = cfg.get('SAISON_EN_COURS', 'GT')
     plafond_base = float(cfg.get('PLAFOND_PARCELLE', 0.30))
 
-    today_str = date.today().strftime('%Y%m%d')
-    prefix = f'FR-{today_str}-'
+    # Numérotation séquentielle globale (indépendante de la date)
     existing = sb_get('fiches_repartition', {
-        'num_fiche': f'like.{prefix}%',
+        'num_fiche': 'like.FR-%',
         'select': 'num_fiche',
         'order': 'num_fiche.desc',
         'limit': '1'
     })
     if existing:
         last = existing[0]['num_fiche']
-        seq = int(last.split('-')[-1]) + 1
+        try:
+            seq = int(last.split('-')[-1]) + 1
+        except (ValueError, IndexError):
+            seq = 1
     else:
         seq = 1
-    num_fiche = f'{prefix}{seq:03d}'
+    num_fiche = f'FR-{seq:03d}'
 
     fiche = {
         'num_fiche': num_fiche,
