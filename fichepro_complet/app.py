@@ -623,15 +623,26 @@ def simuler_repartition():
     prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
     prix_kg = float(cfg.get(prix_cle, 0))
 
-    max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))  # Plafond par attribution individuelle (défaut 3000 kg)
+    max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))  # Plafond par producteur (toutes parcelles confondues)
+
+    # Suivi du volume déjà attribué par producteur (pour respecter MAX_PROD_KG au niveau producteur)
+    volume_par_producteur = {}
 
     for p in eligibles:
         if volume_restant < poids_min:
             break
 
         stk = p['_stk_dispo']
-        # Plafond 30% par parcelle + MAX_PROD=1000kg (VBA: PlafondProducteur)
-        max_attrib = min(stk, volume_total * plafond, volume_restant, max_prod_kg)
+        code_prod = p['code_producteur']
+
+        # Volume déjà attribué à ce producteur dans cette fiche
+        deja_attribue = volume_par_producteur.get(code_prod, 0)
+        reste_prod = max_prod_kg - deja_attribue
+        if reste_prod < poids_min:
+            continue  # Ce producteur a déjà atteint son plafond
+
+        # Plafond 30% par parcelle + MAX_PROD par producteur (VBA: PlafondProducteur)
+        max_attrib = min(stk, volume_total * plafond, volume_restant, reste_prod)
 
         if max_attrib < poids_min:
             continue
@@ -656,9 +667,22 @@ def simuler_repartition():
         num_livraison = 1
 
         # VBA DateLivOptimale : date optimale pour cette parcelle
+        # Si le producteur a déjà une parcelle attribuée, on décale d'au moins INTERV_JOURS
+        # pour éviter deux livraisons identiques le même jour pour le même producteur
+        derniere_liv_producteur = p.get('_derniere_livraison')
+        if deja_attribue > 0:
+            # Chercher la date la plus récente déjà attribuée à ce producteur dans cette fiche
+            dates_prod = [
+                l['date_livraison'] for l in lignes
+                if l['code_producteur'] == code_prod
+            ]
+            if dates_prod:
+                from datetime import timedelta
+                date_max_str = max(dates_prod)
+                derniere_liv_producteur = date_max_str  # forcer le décalage à partir de cette date
         date_liv_parcelle = date_livraison_optimale(
             date_debut, date_ref,
-            p.get('_derniere_livraison'),
+            derniere_liv_producteur,
             interv_jours, densite_hebdo
         )
 
@@ -689,6 +713,8 @@ def simuler_repartition():
             num_livraison += 1
 
         volume_restant -= attrib_total_parcelle
+        # Comptabiliser au niveau producteur
+        volume_par_producteur[code_prod] = volume_par_producteur.get(code_prod, 0) + attrib_total_parcelle
 
     if not lignes:
         return jsonify({'error': 'Impossible de répartir le volume demandé'}), 400
