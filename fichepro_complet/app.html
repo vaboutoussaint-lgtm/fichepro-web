@@ -773,7 +773,7 @@ body {
             <div class="result-actions" id="result-actions-genere" style="display:none">
               <button class="btn-pdf" onclick="exportPDF()">⬇ PDF Répartition</button>
               <button class="btn-pdf" onclick="exportExcel()" style="background:linear-gradient(135deg,#1D6A3E,#145A32)">⬇ Excel Répartition</button>
-              <button class="btn-pdf" onclick="exportAccompagnementExcel()" style="background:linear-gradient(135deg,#145A32,#0B4023)">⬇ Excel Accompagnement</button>
+
             </div>
           </div>
         </div>
@@ -1454,10 +1454,6 @@ function exportExcel() {
   window.location.href = '/api/fiches/' + STATE.derniereNumFiche + '/excel';
 }
 
-function exportAccompagnementExcel() {
-  if (!STATE.derniereNumFiche) { toast('Générez d\'abord une fiche', true); return; }
-  window.location.href = '/api/fiches/' + STATE.derniereNumFiche + '/accompagnement-excel';
-}
 
 function telechargerExcel(numFiche) {
   window.location.href = '/api/fiches/' + numFiche + '/excel';
