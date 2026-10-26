@@ -771,7 +771,9 @@ body {
             </div>
             <div class="result-lignes" id="result-lignes"></div>
             <div class="result-actions" id="result-actions-genere" style="display:none">
-              <button class="btn-pdf" onclick="exportPDF()">⬇ Export PDF</button>
+              <button class="btn-pdf" onclick="exportPDF()">⬇ PDF Répartition</button>
+              <button class="btn-pdf" onclick="exportExcel()" style="background:linear-gradient(135deg,#1D6A3E,#145A32)">⬇ Excel Répartition</button>
+              <button class="btn-pdf" onclick="exportAccompagnementExcel()" style="background:linear-gradient(135deg,#145A32,#0B4023)">⬇ Excel Accompagnement</button>
             </div>
           </div>
         </div>
@@ -1447,6 +1449,20 @@ function telechargerPDF(numFiche) {
   window.open('/api/fiches/' + numFiche + '/pdf', '_blank');
 }
 
+function exportExcel() {
+  if (!STATE.derniereNumFiche) { toast('Générez d\'abord une fiche', true); return; }
+  window.location.href = '/api/fiches/' + STATE.derniereNumFiche + '/excel';
+}
+
+function exportAccompagnementExcel() {
+  if (!STATE.derniereNumFiche) { toast('Générez d\'abord une fiche', true); return; }
+  window.location.href = '/api/fiches/' + STATE.derniereNumFiche + '/accompagnement-excel';
+}
+
+function telechargerExcel(numFiche) {
+  window.location.href = '/api/fiches/' + numFiche + '/excel';
+}
+
 // ── FICHES ───────────────────────────────────────────────────
 async function chargerFiches() {
   const tbody = document.getElementById('fiches-body');
@@ -1475,8 +1491,12 @@ async function chargerFiches() {
         <td style="text-align:center;font-size:11px">${f.nom_agent||'-'}</td>
         <td style="text-align:center">
           <button onclick="telechargerPDF('${f.num_fiche}')"
-            style="background:var(--vf);color:var(--or);border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;font-family:var(--sans)">
+            style="background:var(--vf);color:var(--or);border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;font-family:var(--sans);margin-bottom:3px">
             ⬇ PDF
+          </button>
+          <button onclick="telechargerExcel('${f.num_fiche}')"
+            style="background:#1D6A3E;color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;font-family:var(--sans);margin-left:4px">
+            ⬇ XLS
           </button>
         </td>
       </tr>`;

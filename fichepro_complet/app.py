@@ -1014,7 +1014,7 @@ def pdf_fiche_repartition(num_fiche):
 
     label_txt = 'RAINFOREST ALLIANCE' if fiche['label'] == 'RA' else 'FAIRTRADE'
     title = Paragraph(
-        f'<b>FICHE DE RÉPARTITION {label_txt}</b>',
+        f'<b>FICHE D\'ACCOMPAGNEMENT {label_txt}</b>',
         ParagraphStyle('title', parent=styles['Title'], fontSize=14, alignment=TA_CENTER)
     )
     elements.append(title)
@@ -1055,8 +1055,9 @@ def pdf_fiche_repartition(num_fiche):
             f'{l.get("longitude", ""):.6f}' if l.get('longitude') else '',
         ])
 
-    total_vol = sum(l['volume_attribue'] for l in lignes)
-    total_sacs = sum(l['nombre_sacs'] for l in lignes)
+    # Utiliser les valeurs officielles de la fiche pour le total (cohérence avec l'en-tête)
+    total_vol = fiche['volume_affecte']
+    total_sacs = fiche['nombre_sacs']
     total_montant = sum(l.get('montant', 0) for l in lignes)
     rows.append(['', '', 'TOTAL', '', '', '', f'{total_vol:,.0f}', str(total_sacs), f'{total_montant:,.0f}', '', ''])
 
@@ -1080,6 +1081,289 @@ def pdf_fiche_repartition(num_fiche):
     buffer.seek(0)
     return send_file(buffer, mimetype='application/pdf',
                      as_attachment=True, download_name=f'{num_fiche}.pdf')
+
+
+@app.route('/api/fiches/<num_fiche>/excel', methods=['GET'])
+def export_fiche_excel(num_fiche):
+    """Export Excel de la fiche de répartition."""
+    user = get_current_user()
+    if not user or user['profil'] != 'TRACABILITE':
+        return jsonify({'error': 'Accès refusé'}), 403
+
+    fiches = sb_get('fiches_repartition', {'num_fiche': f'eq.{num_fiche}', 'select': '*'})
+    if not fiches:
+        return jsonify({'error': 'Fiche introuvable'}), 404
+    fiche = fiches[0]
+
+    lignes = sb_get('lignes_repartition', {
+        'num_fiche': f'eq.{num_fiche}',
+        'select': '*',
+        'order': 'section.asc,score_calcule.desc'
+    })
+
+    cfg = get_config()
+    coop_nom = cfg.get('COOP_NOM', 'COOPERATIVE')
+    campagne = cfg.get('ANNEE_CAMPAGNE', '')
+    prix_cle = 'PRIX_KG_GT' if fiche['saison'] == 'GT' else 'PRIX_KG_PT'
+    prix_kg = float(cfg.get(prix_cle, 0))
+    label_txt = 'Rainforest Alliance' if fiche['label'] == 'RA' else 'Fairtrade'
+
+    import io as _io
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    except ImportError:
+        return jsonify({'error': 'openpyxl non disponible'}), 500
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f'Fiche {num_fiche}'
+
+    bleu = PatternFill(start_color='1A5276', end_color='1A5276', fill_type='solid')
+    bleu_clair = PatternFill(start_color='D6EAF8', end_color='D6EAF8', fill_type='solid')
+    or_fill = PatternFill(start_color='C9A84C', end_color='C9A84C', fill_type='solid')
+    alt_fill = PatternFill(start_color='EAF4FB', end_color='EAF4FB', fill_type='solid')
+    thin = Border(
+        left=Side(style='thin', color='AAAAAA'), right=Side(style='thin', color='AAAAAA'),
+        top=Side(style='thin', color='AAAAAA'), bottom=Side(style='thin', color='AAAAAA')
+    )
+
+    # Titre
+    ws.merge_cells('A1:K1')
+    ws['A1'] = f'FICHE D\'ACCOMPAGNEMENT {label_txt.upper()} — {coop_nom}'
+    ws['A1'].font = Font(name='Arial', bold=True, size=13, color='FFFFFF')
+    ws['A1'].fill = bleu
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 32
+
+    # Infos fiche
+    infos = [
+        (f'N° Fiche: {num_fiche}', f'Saison: {fiche["saison"]}', f'Campagne: {campagne}'),
+        (f'Date: {fiche["date_creation"][:10]}', f'Label: {fiche["label"]}', f'Agent: {fiche["nom_agent"]}'),
+        (f'Volume total: {fiche["volume_affecte"]:,.0f} kg', f'Sacs: {fiche["nombre_sacs"]}', ''),
+    ]
+    for row_data in infos:
+        ws.append(list(row_data) + [''] * 8)
+        r = ws.max_row
+        for c in range(1, 12):
+            cell = ws.cell(r, c)
+            cell.fill = PatternFill(start_color='F2F3F4', end_color='F2F3F4', fill_type='solid')
+            cell.font = Font(name='Arial', size=9)
+            cell.border = thin
+        ws.cell(r, 1).font = Font(name='Arial', size=9, bold=True)
+
+    ws.append([])  # séparateur
+
+    # En-têtes
+    headers = ['#', 'Code Parcelle', 'Producteur', 'Section', 'Score', 'Stock Dispo',
+               'Volume (kg)', 'Nb Sacs', 'Montant (FCFA)', 'Latitude', 'Longitude']
+    ws.append(headers)
+    hr = ws.max_row
+    for ci, h in enumerate(headers, 1):
+        c = ws.cell(hr, ci)
+        c.value = h
+        c.font = Font(name='Arial', bold=True, size=10, color='FFFFFF')
+        c.fill = or_fill
+        c.alignment = Alignment(horizontal='center', vertical='center')
+        c.border = thin
+    ws.row_dimensions[hr].height = 22
+
+    # Données
+    for i, l in enumerate(lignes, 1):
+        rn = hr + i
+        fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid') if i % 2 == 1 else alt_fill
+        lat = round(float(l['latitude']), 6) if l.get('latitude') else ''
+        lon = round(float(l['longitude']), 6) if l.get('longitude') else ''
+        row_vals = [i, l['code_parcelle'], l['nom_producteur'], l.get('section', ''),
+                    round(float(l.get('score_calcule', 0)), 4), '',
+                    float(l['volume_attribue']), int(l['nombre_sacs']),
+                    float(l.get('montant', 0)), lat, lon]
+        ws.append(row_vals)
+        for ci in range(1, 12):
+            cell = ws.cell(rn, ci)
+            cell.fill = fill
+            cell.font = Font(name='Arial', size=9)
+            cell.border = thin
+            if ci in (7, 9):
+                cell.number_format = '#,##0'
+                cell.alignment = Alignment(horizontal='right')
+            elif ci == 8:
+                cell.alignment = Alignment(horizontal='center')
+            elif ci in (10, 11):
+                cell.number_format = '0.000000'
+                cell.alignment = Alignment(horizontal='right')
+
+    # Total
+    tr = hr + len(lignes) + 1
+    total_montant = sum(float(l.get('montant', 0)) for l in lignes)
+    total_data = ['', '', 'TOTAL', '', '', '',
+                  float(fiche['volume_affecte']), int(fiche['nombre_sacs']), total_montant, '', '']
+    ws.append(total_data)
+    for ci in range(1, 12):
+        c = ws.cell(tr, ci)
+        c.font = Font(name='Arial', bold=True, size=10)
+        c.fill = bleu_clair
+        c.border = thin
+        if ci in (7, 9):
+            c.number_format = '#,##0'
+            c.alignment = Alignment(horizontal='right')
+        elif ci == 8:
+            c.alignment = Alignment(horizontal='center')
+
+    # Largeurs
+    col_ws = [5, 18, 28, 16, 10, 14, 14, 10, 18, 14, 14]
+    for ci, w in enumerate(col_ws, 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(ci)].width = w
+
+    out = _io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    from flask import Response as Resp
+    return Resp(out.getvalue(),
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                headers={'Content-Disposition': f'attachment; filename={num_fiche}.xlsx'})
+
+
+@app.route('/api/fiches/<num_fiche>/accompagnement-excel', methods=['GET'])
+def export_accompagnement_excel(num_fiche):
+    """Export Excel de la fiche d'accompagnement."""
+    user = get_current_user()
+    if not user or user['profil'] != 'TRACABILITE':
+        return jsonify({'error': 'Accès refusé'}), 403
+
+    fas = sb_get('fiches_accompagnement', {'num_fiche_rep': f'eq.{num_fiche}', 'select': '*'})
+    if not fas:
+        return jsonify({'error': 'Fiche d\'accompagnement introuvable'}), 404
+    fa = fas[0]
+
+    lignes = sb_get('lignes_repartition', {
+        'num_fiche': f'eq.{num_fiche}',
+        'select': '*',
+        'order': 'section.asc,nom_producteur.asc'
+    })
+
+    cfg = get_config()
+    coop_nom = cfg.get('COOP_NOM', 'COOPERATIVE')
+    campagne = cfg.get('ANNEE_CAMPAGNE', '')
+    prix_cle = 'PRIX_KG_GT' if fa['saison'] == 'GT' else 'PRIX_KG_PT'
+    prix_kg = float(cfg.get(prix_cle, 0))
+    label_cert = 'RAINFOREST' if fa['label'] == 'RA' else 'FAIRTRADE'
+
+    import io as _io
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    except ImportError:
+        return jsonify({'error': 'openpyxl non disponible'}), 500
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f'FA-{num_fiche}'
+
+    vert = PatternFill(start_color='196F3D', end_color='196F3D', fill_type='solid')
+    vert_clair = PatternFill(start_color='D5F5E3', end_color='D5F5E3', fill_type='solid')
+    alt_fill = PatternFill(start_color='EAFAF1', end_color='EAFAF1', fill_type='solid')
+    thin = Border(
+        left=Side(style='thin', color='AAAAAA'), right=Side(style='thin', color='AAAAAA'),
+        top=Side(style='thin', color='AAAAAA'), bottom=Side(style='thin', color='AAAAAA')
+    )
+
+    # Titre
+    ws.merge_cells('A1:I1')
+    ws['A1'] = f'FICHE D\'ACCOMPAGNEMENT DU CACAO CERTIFIÉ {label_cert} — {coop_nom}'
+    ws['A1'].font = Font(name='Arial', bold=True, size=13, color='FFFFFF')
+    ws['A1'].fill = vert
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 32
+
+    # Transport
+    transport = [
+        ['N° LOT', fa.get('num_lot', ''), 'Tracteur', fa.get('num_tracteur', ''),
+         'Remorque', fa.get('num_remorque', ''), 'Date', date.today().strftime('%d/%m/%Y'), ''],
+        ['Connaissement CCC', fa.get('num_connaissement_ccc', ''), 'Chauffeur',
+         fa.get('nom_chauffeur', ''), 'Campagne', campagne, 'Agent', fa.get('nom_agent', ''), ''],
+        ['Volume total', f'{fa.get("volume_total", 0):,.0f} kg', 'Nombre sacs',
+         str(fa.get('nombre_sacs_total', 0)), '', '', '', '', ''],
+    ]
+    for row_data in transport:
+        ws.append(row_data)
+        r = ws.max_row
+        for ci in range(1, 10):
+            cell = ws.cell(r, ci)
+            cell.fill = PatternFill(start_color='F9F9F9', end_color='F9F9F9', fill_type='solid')
+            cell.font = Font(name='Arial', size=9, bold=(ci % 2 == 1))
+            cell.border = thin
+
+    ws.append([])
+
+    # En-têtes
+    headers = ['N°', 'Code Plantation', 'Producteur', 'Montant (FCFA)', 'Section',
+               'Nombre Sacs', 'Poids Net (kg)', 'Latitude', 'Longitude']
+    ws.append(headers)
+    hr = ws.max_row
+    for ci, h in enumerate(headers, 1):
+        c = ws.cell(hr, ci)
+        c.value = h
+        c.font = Font(name='Arial', bold=True, size=10, color='FFFFFF')
+        c.fill = vert
+        c.alignment = Alignment(horizontal='center', vertical='center')
+        c.border = thin
+    ws.row_dimensions[hr].height = 22
+
+    # Données
+    for i, l in enumerate(lignes, 1):
+        rn = hr + i
+        fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid') if i % 2 == 1 else alt_fill
+        montant = float(l.get('montant', l['volume_attribue'] * prix_kg))
+        lat = round(float(l['latitude']), 6) if l.get('latitude') else ''
+        lon = round(float(l['longitude']), 6) if l.get('longitude') else ''
+        ws.append([i, l['code_parcelle'], l['nom_producteur'], montant,
+                   l.get('section', ''), int(l['nombre_sacs']),
+                   float(l['volume_attribue']), lat, lon])
+        for ci in range(1, 10):
+            cell = ws.cell(rn, ci)
+            cell.fill = fill
+            cell.font = Font(name='Arial', size=9)
+            cell.border = thin
+            if ci in (4, 7):
+                cell.number_format = '#,##0'
+                cell.alignment = Alignment(horizontal='right')
+            elif ci == 6:
+                cell.alignment = Alignment(horizontal='center')
+            elif ci in (8, 9):
+                cell.number_format = '0.000000'
+                cell.alignment = Alignment(horizontal='right')
+
+    # Total
+    tr = hr + len(lignes) + 1
+    total_montant = sum(float(l.get('montant', l['volume_attribue'] * prix_kg)) for l in lignes)
+    total_vol = float(fa.get('volume_total', 0))
+    total_sacs = int(fa.get('nombre_sacs_total', 0))
+    ws.append(['', '', 'TOTAL', total_montant, '', total_sacs, total_vol, '', ''])
+    for ci in range(1, 10):
+        c = ws.cell(tr, ci)
+        c.font = Font(name='Arial', bold=True, size=10)
+        c.fill = vert_clair
+        c.border = thin
+        if ci in (4, 7):
+            c.number_format = '#,##0'
+            c.alignment = Alignment(horizontal='right')
+        elif ci == 6:
+            c.alignment = Alignment(horizontal='center')
+
+    # Largeurs
+    col_ws = [5, 20, 30, 18, 16, 12, 16, 14, 14]
+    for ci, w in enumerate(col_ws, 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(ci)].width = w
+
+    out = _io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    from flask import Response as Resp
+    return Resp(out.getvalue(),
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                headers={'Content-Disposition': f'attachment; filename=FA-{num_fiche}.xlsx'})
+
 
 # ============================================================
 # FICHE D'ACCOMPAGNEMENT
