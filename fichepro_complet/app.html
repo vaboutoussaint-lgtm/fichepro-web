@@ -747,6 +747,10 @@ body {
               style="background:linear-gradient(135deg,#C9A84C,#8B6914)">
               ✅ Confirmer et générer la fiche
             </button>
+            <button class="btn-gen" id="btn-annuler" onclick="annulerSimulation()"
+              style="background:linear-gradient(135deg,#888,#555);margin-top:8px">
+              ✖ Annuler
+            </button>
           </div>
         </div>
 
@@ -1292,8 +1296,12 @@ async function lancerSimulation() {
     const data = await r.json();
 
     if (!r.ok) {
-      toast(data.error || 'Erreur simulation', true);
-      afficherResultatVide();
+      if (data.error === 'VOLUME_INSUFFISANT') {
+        afficherErreurVolumeInsuffisant(data);
+      } else {
+        toast(data.error || 'Erreur simulation', true);
+        afficherResultatVide();
+      }
       return;
     }
 
@@ -1334,6 +1342,42 @@ function afficherSimulation(data) {
       <span class="rl-poids">${Math.round(l.volume_attribue).toLocaleString('fr-FR')} kg</span>
       <span class="rl-date">${l.nombre_sacs} sacs${l.date_livraison ? ' · ' + (l.date_livraison||'').slice(0,10).split('-').reverse().join('/') : ''}</span>
     </div>`).join('');
+}
+
+// ── ANNULER SIMULATION ───────────────────────────────────────
+function annulerSimulation() {
+  STATE.simulationResult = null;
+  document.getElementById('section-confirmer').style.display = 'none';
+  afficherResultatVide();
+  toast('Simulation annulée');
+}
+
+// ── ERREUR VOLUME INSUFFISANT ────────────────────────────────
+function afficherErreurVolumeInsuffisant(data) {
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('result-content').classList.add('show');
+  document.getElementById('section-confirmer').style.display = 'none';
+
+  document.getElementById('r-id').textContent = '⚠️ VOLUME INSUFFISANT';
+  document.getElementById('r-titre').textContent = data.message || 'Stock insuffisant dans les sections sélectionnées';
+  document.getElementById('r-prod').textContent = '—';
+  document.getElementById('r-poids').textContent = Math.round(data.volume_affectable || 0).toLocaleString('fr-FR');
+  document.getElementById('r-sacs').textContent = '—';
+  document.getElementById('r-restant').textContent = Math.round(data.volume_manquant || 0).toLocaleString('fr-FR');
+
+  const sugg = data.sections_supplementaires || [];
+  const lignesDiv = document.getElementById('result-lignes');
+  if (sugg.length > 0) {
+    lignesDiv.innerHTML = `<div style="padding:10px 0;font-weight:600;color:var(--warn,#c9a84c)">
+      💡 Sections pouvant compléter le volume :</div>` +
+      sugg.map(s => `<div class="rl-row">
+        <span class="rl-code">${s.section}</span>
+        <span class="rl-nom">Stock disponible</span>
+        <span class="rl-poids">${Math.round(s.volume_disponible).toLocaleString('fr-FR')} kg</span>
+      </div>`).join('');
+  } else {
+    lignesDiv.innerHTML = '<div style="padding:10px;color:#c00">Aucune section supplémentaire disponible. Volume total insuffisant dans la base.</div>';
+  }
 }
 
 // ── CONFIRMER GÉNÉRATION ─────────────────────────────────────

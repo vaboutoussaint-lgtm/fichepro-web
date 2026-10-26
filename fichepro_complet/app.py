@@ -742,6 +742,57 @@ def simuler_repartition():
                     volume_restant -= vol_add
                     break
 
+    # ── AJUSTEMENT FINAL POUR ATTEINDRE LE VOLUME EXACT ───────────────────────
+    # Si volume_restant > 0 après AbsorberResidu, deux cas :
+    # 1) volume_restant < poids_sac : on ajoute le reliquat en kg brut au dernier
+    #    producteur (hors contrainte sac) pour atteindre EXACTEMENT le volume demandé.
+    # 2) volume_restant >= poids_sac : les sections sélectionnées n'ont pas assez
+    #    de stock éligible → on retourne une erreur détaillée avec suggestions.
+    if volume_restant > 0:
+        if volume_restant < poids_sac:
+            # Cas 1 : reliquat infra-sac — on l'absorbe en kg brut dans la dernière ligne
+            if lignes:
+                ligne_cible = lignes[-1]
+                ligne_cible['volume_attribue'] += volume_restant
+                ligne_cible['montant'] += volume_restant * prix_kg
+                # nombre_sacs reste inchangé : il s'agit d'un ajout fractionné
+                ligne_cible['ajustement_kg_brut'] = volume_restant
+                volume_restant = 0
+        else:
+            # Cas 2 : stock insuffisant dans les sections sélectionnées
+            stock_total_eligible = sum(p['_stk_dispo'] for p in eligibles)
+            stock_total_exclus = sum(calculer_stock_disponible(p, cfg, saison)
+                                     for p in parcelles
+                                     if p['code_parcelle'] not in {e['code_parcelle'] for e in eligibles}
+                                     and not quota_producteur_atteint(p, cfg, saison))
+
+            sections_selectionnees = set(p.get('section', '') for p in eligibles)
+            sections_manquantes_volumes = {}
+            for p in parcelles:
+                sec = p.get('section', 'Inconnue')
+                if sec not in sections_selectionnees:
+                    stk = calculer_stock_disponible(p, cfg, saison)
+                    if stk >= poids_min and not quota_producteur_atteint(p, cfg, saison):
+                        sections_manquantes_volumes[sec] = sections_manquantes_volumes.get(sec, 0) + stk
+
+            suggestions = [
+                {'section': s, 'volume_disponible': round(v)}
+                for s, v in sorted(sections_manquantes_volumes.items(), key=lambda x: -x[1])
+            ]
+            return jsonify({
+                'error': 'VOLUME_INSUFFISANT',
+                'message': (
+                    f"Volume insuffisant dans les sections sélectionnées. "
+                    f"Demandé : {volume_total:.0f} kg. "
+                    f"Affectable : {volume_total - volume_restant:.0f} kg. "
+                    f"Manque : {volume_restant:.0f} kg."
+                ),
+                'volume_demande': volume_total,
+                'volume_affectable': volume_total - volume_restant,
+                'volume_manquant': volume_restant,
+                'sections_supplementaires': suggestions,
+            }), 422
+
     volume_affecte = volume_total - volume_restant
     nb_sacs_total = sum(l['nombre_sacs'] for l in lignes)
 
