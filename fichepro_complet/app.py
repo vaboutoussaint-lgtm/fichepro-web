@@ -557,7 +557,7 @@ def simuler_repartition():
     prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
     prix_kg = float(cfg.get(prix_cle, 0))
 
-    max_prod_kg = float(cfg.get('MAX_PROD_KG', 1000))  # FIX #2 — VBA: MAX_PROD=1000
+    max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))  # Plafond par attribution individuelle (défaut 3000 kg)
 
     for p in eligibles:
         if volume_restant < poids_min:
