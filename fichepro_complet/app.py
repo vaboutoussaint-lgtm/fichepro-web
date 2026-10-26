@@ -674,8 +674,8 @@ def simuler_repartition():
                 'code_producteur': p['code_producteur'],
                 'nom_producteur': p['nom_producteur'],
                 'section': p.get('section', ''),
-                'latitude': p.get('latitude'),
-                'longitude': p.get('longitude'),
+                'latitude': round(float(p['latitude']), 6) if p.get('latitude') is not None else None,
+                'longitude': round(float(p['longitude']), 6) if p.get('longitude') is not None else None,
                 'score_calcule': p['_score'],
                 'volume_attribue': vol_livraison,
                 'nombre_sacs': sacs_cette_livraison,
@@ -712,8 +712,8 @@ def simuler_repartition():
                     'code_producteur': p['code_producteur'],
                     'nom_producteur': p['nom_producteur'],
                     'section': p.get('section', ''),
-                    'latitude': p.get('latitude'),
-                    'longitude': p.get('longitude'),
+                    'latitude': round(float(p['latitude']), 6) if p.get('latitude') is not None else None,
+                    'longitude': round(float(p['longitude']), 6) if p.get('longitude') is not None else None,
                     'score_calcule': p['_score'],
                     'volume_attribue': vol_r,
                     'nombre_sacs': nb_sacs_residuel,
@@ -1051,8 +1051,8 @@ def pdf_fiche_repartition(num_fiche):
             f'{l["volume_attribue"]:,.0f}',
             str(l['nombre_sacs']),
             f'{l.get("montant", 0):,.0f}',
-            f'{l.get("latitude", ""):.4f}' if l.get('latitude') else '',
-            f'{l.get("longitude", ""):.4f}' if l.get('longitude') else '',
+            f'{l.get("latitude", ""):.6f}' if l.get('latitude') else '',
+            f'{l.get("longitude", ""):.6f}' if l.get('longitude') else '',
         ])
 
     total_vol = sum(l['volume_attribue'] for l in lignes)
@@ -1205,8 +1205,8 @@ def pdf_accompagnement(fa_id):
             l.get('section', ''),
             str(l['nombre_sacs']),
             f'{l["volume_attribue"]:,.0f}',
-            f'{l.get("latitude", ""):.4f}' if l.get('latitude') else '',
-            f'{l.get("longitude", ""):.4f}' if l.get('longitude') else '',
+            f'{l.get("latitude", ""):.6f}' if l.get('latitude') else '',
+            f'{l.get("longitude", ""):.6f}' if l.get('longitude') else '',
         ])
 
     total_vol = sum(l['volume_attribue'] for l in lignes)

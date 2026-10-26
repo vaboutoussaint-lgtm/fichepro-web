@@ -766,7 +766,6 @@ body {
             </div>
             <div class="result-stats">
               <div class="rs"><div class="rs-val" id="r-prod">-</div><div class="rs-lbl">Producteurs</div></div>
-              <div class="rs"><div class="rs-val" id="r-poids">-</div><div class="rs-lbl">kg affecté</div></div>
               <div class="rs"><div class="rs-val" id="r-sacs">-</div><div class="rs-lbl">Sacs</div></div>
               <div class="rs"><div class="rs-val" id="r-restant">-</div><div class="rs-lbl">kg restant</div></div>
             </div>
@@ -1328,9 +1327,8 @@ function afficherSimulation(data) {
   document.getElementById('result-content').classList.add('show');
 
   document.getElementById('r-id').textContent = 'SIMULATION — ' + data.label + ' / Saison ' + data.saison;
-  document.getElementById('r-titre').textContent = (data.label === 'RA' ? 'Rainforest Alliance' : 'Fairtrade') + ' — ' + Math.round(data.volume_affecte).toLocaleString('fr-FR') + ' kg';
+  document.getElementById('r-titre').textContent = 'Fiche d\'accompagnement ' + (data.label === 'RA' ? 'Rainforest Alliance' : 'Fairtrade');
   document.getElementById('r-prod').textContent = data.nombre_lignes;
-  document.getElementById('r-poids').textContent = Math.round(data.volume_affecte).toLocaleString('fr-FR');
   document.getElementById('r-sacs').textContent = data.nombre_sacs;
   document.getElementById('r-restant').textContent = Math.round(data.volume_restant).toLocaleString('fr-FR');
 
@@ -1361,7 +1359,6 @@ function afficherErreurVolumeInsuffisant(data) {
   document.getElementById('r-id').textContent = '⚠️ VOLUME INSUFFISANT';
   document.getElementById('r-titre').textContent = data.message || 'Stock insuffisant dans les sections sélectionnées';
   document.getElementById('r-prod').textContent = '—';
-  document.getElementById('r-poids').textContent = Math.round(data.volume_affectable || 0).toLocaleString('fr-FR');
   document.getElementById('r-sacs').textContent = '—';
   document.getElementById('r-restant').textContent = Math.round(data.volume_manquant || 0).toLocaleString('fr-FR');
 
