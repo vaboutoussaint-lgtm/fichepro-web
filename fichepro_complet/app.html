@@ -710,8 +710,14 @@ body {
                 <input class="form-input" type="date" id="f-date-ref">
               </div>
               <div class="form-group">
-                <label class="form-label">Date de livraison</label>
+                <label class="form-label">Date de livraison (repli)</label>
                 <input class="form-input" type="date" id="f-date-liv">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Début des livraisons</label>
+                <input class="form-input" type="date" id="f-date-debut-liv" title="Date la plus tôt possible pour les livraisons. Les dates seront réparties aléatoirement sur les semaines les moins chargées jusqu'à la date de référence.">
               </div>
             </div>
           </div>
@@ -1257,6 +1263,7 @@ async function lancerSimulation() {
   const label = document.getElementById('f-label').value;
   const poids = parseFloat(document.getElementById('f-poids').value);
   const dateRef = document.getElementById('f-date-ref').value;
+  const dateDebutLiv = document.getElementById('f-date-debut-liv').value;
   const sauterIntervalle = document.getElementById('f-sauter-intervalle').checked;
 
   if (!poids || poids < 25) { toast('Entrez un poids valide (min 25 kg)', true); return; }
@@ -1272,10 +1279,12 @@ async function lancerSimulation() {
   document.getElementById('result-actions-genere').style.display = 'none';
 
   try {
+    const today = new Date().toISOString().split('T')[0];
     const body = {
       label,
       volume_total: poids,
-      date_ref: dateRef || new Date().toISOString().split('T')[0],
+      date_ref: dateRef || today,
+      date_debut_livraison: dateDebutLiv || dateRef || today,
       sections: STATE.sectionsSelectionnees,
       sauter_intervalle: sauterIntervalle
     };
@@ -1329,7 +1338,7 @@ function afficherSimulation(data) {
       <span class="rl-code">${l.code_parcelle}</span>
       <span class="rl-nom">${l.nom_producteur}</span>
       <span class="rl-poids">${Math.round(l.volume_attribue).toLocaleString('fr-FR')} kg</span>
-      <span class="rl-date">${l.nombre_sacs} sacs</span>
+      <span class="rl-date">${l.nombre_sacs} sacs${l.date_livraison ? ' · ' + (l.date_livraison||'').slice(0,10).split('-').reverse().join('/') : ''}</span>
     </div>`).join('');
 }
 

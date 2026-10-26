@@ -443,6 +443,52 @@ def get_derniere_livraison(code_parcelle):
         return rows[0]['date_livraison']
     return None
 
+def date_livraison_optimale(d_debut, d_fin, derniere_livraison_str, interv_jours, densite_hebdo):
+    """VBA DateLivOptimale : choisit une date dans [d_debut, d_fin] en favorisant
+    les semaines les moins chargées (densite_hebdo), aléatoire sur égalité.
+    Respecte l'intervalle minimum depuis la dernière livraison de la parcelle.
+    densite_hebdo : dict {numéro_semaine_iso: count} — modifié en place après attribution.
+    """
+    from datetime import timedelta
+
+    contrainte = d_debut
+    if derniere_livraison_str:
+        try:
+            d_last = datetime.strptime(str(derniere_livraison_str)[:10], '%Y-%m-%d').date()
+            d_ideal = d_last + timedelta(days=interv_jours)
+            if d_ideal > contrainte:
+                contrainte = d_ideal
+        except ValueError:
+            pass
+
+    if contrainte > d_fin:
+        contrainte = d_fin
+
+    # Construire la liste des dates candidates avec leur charge hebdomadaire
+    nb_jours = (d_fin - contrainte).days + 1
+    if nb_jours <= 0:
+        return d_fin
+
+    charges = []
+    d = contrainte
+    for _ in range(nb_jours):
+        sem = d.isocalendar()[1]  # numéro de semaine ISO
+        charge = densite_hebdo.get(sem, 0)
+        charges.append((charge, d))
+        d += timedelta(days=1)
+
+    min_charge = min(c for c, _ in charges)
+    candidats = [dt for c, dt in charges if c == min_charge]
+
+    # Tirage au sort parmi les candidats de même charge (VBA: Rnd)
+    choix = random.choice(candidats)
+
+    # Incrémenter la densité de la semaine choisie
+    sem_choix = choix.isocalendar()[1]
+    densite_hebdo[sem_choix] = densite_hebdo.get(sem_choix, 0) + 1
+
+    return choix
+
 @app.route('/api/repartition/simuler', methods=['POST'])
 def simuler_repartition():
     user = get_current_user()
@@ -453,6 +499,7 @@ def simuler_repartition():
     label = data.get('label')
     volume_total = float(data.get('volume_total', 0))
     date_ref_str = data.get('date_ref', date.today().isoformat())
+    date_debut_str = data.get('date_debut_livraison', date_ref_str)  # VBA: dDebutLiv
     sections = data.get('sections', [])
     plafond_override = data.get('plafond_override')
     sauter_intervalle = data.get('sauter_intervalle', False)
@@ -463,6 +510,9 @@ def simuler_repartition():
         return jsonify({'error': 'Label invalide (RA ou FT)'}), 400
 
     date_ref = datetime.strptime(date_ref_str, '%Y-%m-%d').date()
+    date_debut = datetime.strptime(date_debut_str, '%Y-%m-%d').date()
+    if date_debut > date_ref:
+        date_debut = date_ref
     cfg = get_config()
     saison = cfg.get('SAISON_EN_COURS', 'GT')
     poids_min = float(cfg.get('POIDS_MIN', 25))
@@ -551,6 +601,22 @@ def simuler_repartition():
     volume_restant = volume_total
     lignes = []
 
+    # VBA: g_densiteHebdo — densité de livraisons par semaine ISO, pour répartir les dates
+    densite_hebdo = {}
+    # Pré-charger les livraisons existantes de la saison en cours dans la densité
+    try:
+        lignes_existantes = sb_get('lignes_repartition', {'select': 'date_livraison'})
+        for le in lignes_existantes:
+            dl = le.get('date_livraison')
+            if dl:
+                try:
+                    sem = datetime.strptime(str(dl)[:10], '%Y-%m-%d').date().isocalendar()[1]
+                    densite_hebdo[sem] = densite_hebdo.get(sem, 0) + 1
+                except ValueError:
+                    pass
+    except Exception:
+        pass
+
     # Seuil au-delà duquel on fractionne en plusieurs livraisons pour plus de réalisme
     MAX_PAR_LIVRAISON_KG = float(cfg.get('MAX_PAR_LIVRAISON_KG', 2500))
 
@@ -589,6 +655,13 @@ def simuler_repartition():
         sacs_restants = nb_sacs_max
         num_livraison = 1
 
+        # VBA DateLivOptimale : date optimale pour cette parcelle
+        date_liv_parcelle = date_livraison_optimale(
+            date_debut, date_ref,
+            p.get('_derniere_livraison'),
+            interv_jours, densite_hebdo
+        )
+
         while sacs_restants > 0:
             sacs_cette_livraison = min(sacs_par_livraison, sacs_restants)
             if sacs_cette_livraison == 0:
@@ -609,6 +682,7 @@ def simuler_repartition():
                 'montant': montant_livraison,
                 'stk_dispo': stk,
                 'num_livraison': num_livraison,
+                'date_livraison': date_liv_parcelle.isoformat(),
             })
 
             sacs_restants -= sacs_cette_livraison
@@ -745,7 +819,8 @@ def generer_repartition():
     }
     sb_post('fiches_repartition', fiche)
 
-    date_livraison = datetime.strptime(date_livraison_str, '%Y-%m-%d').date().isoformat()
+    # date_livraison_str sert de date de repli si la ligne n'a pas sa propre date (VBA)
+    date_livraison_defaut = datetime.strptime(date_livraison_str, '%Y-%m-%d').date().isoformat()
 
     # Dédupliquer les lignes par code_parcelle (garde la première occurrence)
     seen_parcelles = set()
@@ -758,6 +833,8 @@ def generer_repartition():
     lignes = lignes_dedup
 
     for ligne in lignes:
+        # Utiliser la date calculée par la simulation (VBA: DateLivOptimale), ou la date de repli
+        date_liv = ligne.get('date_livraison') or date_livraison_defaut
         sb_post('lignes_repartition', {
             'num_fiche': num_fiche,
             'code_parcelle': ligne['code_parcelle'],
@@ -770,7 +847,7 @@ def generer_repartition():
             'volume_attribue': ligne['volume_attribue'],
             'nombre_sacs': ligne['nombre_sacs'],
             'montant': ligne.get('montant', 0),
-            'date_livraison': date_livraison,
+            'date_livraison': date_liv,
         })
 
         parcelles_row = sb_get('parcelles', {'code_parcelle': f'eq.{ligne["code_parcelle"]}', 'select': '*'})
