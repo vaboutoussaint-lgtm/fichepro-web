@@ -1299,6 +1299,16 @@ async function lancerSimulation() {
     if (!r.ok) {
       if (data.error === 'VOLUME_INSUFFISANT') {
         afficherErreurVolumeInsuffisant(data);
+      } else if (data.error === 'PRIX_NON_CONFIGURE') {
+        toast('⚠️ ' + data.message, true);
+        afficherResultatVide();
+        // Basculer vers l'onglet Paramètres pour que l'utilisateur configure le prix
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        const tabParam = document.getElementById('tab-parametres');
+        const btnParam = document.querySelector('[onclick*="parametres"]') || document.querySelector('[data-tab="parametres"]');
+        if (tabParam) tabParam.classList.add('active');
+        if (btnParam) btnParam.classList.add('active');
       } else {
         toast(data.error || 'Erreur simulation', true);
         afficherResultatVide();
@@ -1732,15 +1742,19 @@ async function chargerConfig() {
 }
 
 async function confirmerReinit() {
-  const msg = 'ATTENTION : Cette action va supprimer toutes les fiches et lignes de répartition de la saison en cours.\n\nTapez "REINIT" pour confirmer :';
-  const rep = prompt(msg);
-  if (rep !== 'REINIT') { toast('Réinitialisation annulée'); return; }
+  const code = prompt('⚠️ RÉINITIALISATION COMPLÈTE\n\nCette action va supprimer :\n• Toutes les fiches et lignes de répartition\n• Tout le registre (parcelles / producteurs)\n• Les sessions et journaux\n\nconfig et utilisateurs sont conservés.\n\nEntrez le code administrateur pour confirmer :');
+  if (!code) { toast('Réinitialisation annulée'); return; }
   try {
-    const r = await fetch('/api/reinitialiser-test', {method:'POST'});
+    const r = await fetch('/api/reinitialiser-plateforme', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code_admin: code})
+    });
     const d = await r.json();
     if (r.ok) {
       toast('✅ ' + d.message);
       chargerConfig();
+      chargerFiches();
     } else {
       toast('❌ ' + (d.error || 'Erreur'));
     }

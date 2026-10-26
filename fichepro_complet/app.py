@@ -622,6 +622,11 @@ def simuler_repartition():
 
     prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
     prix_kg = float(cfg.get(prix_cle, 0))
+    if prix_kg <= 0:
+        return jsonify({
+            'error': 'PRIX_NON_CONFIGURE',
+            'message': f'Le prix au kg ({prix_cle}) n\'est pas configuré. Veuillez le renseigner dans Paramètres avant de générer une fiche.'
+        }), 422
 
     max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))  # Plafond par producteur (toutes parcelles confondues)
 
@@ -1563,43 +1568,47 @@ def pdf_accompagnement(fa_id):
 # SUIVI LIVRAISONS PAR PRODUCTEUR
 # ============================================================
 
-@app.route('/api/reinitialiser-test', methods=['POST'])
-def reinitialiser_test():
-    user = get_current_user()
-    if not user:
-        return jsonify({'error': 'Non authentifié'}), 401
-
-    cfg = get_config()
-    saison = cfg.get('SAISON_EN_COURS', 'GT')
+@app.route('/api/reinitialiser-plateforme', methods=['POST'])
+def reinitialiser_plateforme():
+    """Réinitialisation complète — vide tout sauf config et utilisateurs.
+    Protégée par le code admin FICHEPRO-ADMIN-WILFRIED-2026."""
+    data = request.get_json() or {}
+    code = data.get('code_admin', '')
+    if code != 'FICHEPRO-ADMIN-WILFRIED-2026':
+        return jsonify({'error': 'Code administrateur incorrect'}), 403
 
     try:
-        # Récupérer les fiches de la saison en cours
-        fiches = sb_get('fiches_repartition', {'saison': f'eq.{saison}', 'select': 'num_fiche'})
-        num_fiches = [f['num_fiche'] for f in fiches if f.get('num_fiche')]
-
-        lignes_supprimees = 0
-        fiches_supprimees = 0
-
-        # Supprimer les lignes de répartition pour chaque fiche
-        for nf in num_fiches:
+        resultats = {}
+        # Tables à vider dans l'ordre (clés étrangères : lignes avant fiches)
+        tables = [
+            'lignes_repartition',
+            'fiches_accompagnement',
+            'derogations',
+            'fiches_repartition',
+            'clotures_saison',
+            'journal',
+            'sessions',
+            'parcelles',
+        ]
+        for table in tables:
             r = requests.delete(
-                f"{SUPABASE_URL}/rest/v1/lignes_repartition?num_fiche=eq.{nf}",
+                f"{SUPABASE_URL}/rest/v1/{table}?id=gte.0",
                 headers=sb_headers()
             )
-            if r.status_code in (200, 204):
-                lignes_supprimees += 1
-
-        # Supprimer les fiches de la saison
-        r2 = requests.delete(
-            f"{SUPABASE_URL}/rest/v1/fiches_repartition?saison=eq.{saison}",
-            headers=sb_headers()
-        )
-        fiches_supprimees = len(num_fiches)
+            # Supabase renvoie 200 ou 204 selon la version
+            if r.status_code not in (200, 204):
+                # Fallback : filtre générique sur created_at ou num_fiche
+                r2 = requests.delete(
+                    f"{SUPABASE_URL}/rest/v1/{table}?created_at=gte.2000-01-01",
+                    headers=sb_headers()
+                )
+                resultats[table] = 'ok' if r2.status_code in (200, 204) else f'err {r2.status_code}'
+            else:
+                resultats[table] = 'ok'
 
         return jsonify({
-            'message': f'{fiches_supprimees} fiche(s) et leurs lignes supprimées. Saison {saison} réinitialisée pour test.',
-            'fiches': fiches_supprimees,
-            'saison': saison
+            'message': 'Plateforme réinitialisée. Registre et fiches supprimés. config et utilisateurs conservés.',
+            'detail': resultats
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
