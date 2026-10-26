@@ -1007,6 +1007,48 @@ def pdf_accompagnement(fa_id):
 # SUIVI LIVRAISONS PAR PRODUCTEUR
 # ============================================================
 
+@app.route('/api/reinitialiser-test', methods=['POST'])
+def reinitialiser_test():
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    cfg = get_config()
+    saison = cfg.get('SAISON_EN_COURS', 'GT')
+
+    try:
+        # Récupérer les fiches de la saison en cours
+        fiches = sb_get('fiches_repartition', {'saison': f'eq.{saison}', 'select': 'num_fiche'})
+        num_fiches = [f['num_fiche'] for f in fiches if f.get('num_fiche')]
+
+        lignes_supprimees = 0
+        fiches_supprimees = 0
+
+        # Supprimer les lignes de répartition pour chaque fiche
+        for nf in num_fiches:
+            r = requests.delete(
+                f"{SUPABASE_URL}/rest/v1/lignes_repartition?num_fiche=eq.{nf}",
+                headers=sb_headers()
+            )
+            if r.status_code in (200, 204):
+                lignes_supprimees += 1
+
+        # Supprimer les fiches de la saison
+        r2 = requests.delete(
+            f"{SUPABASE_URL}/rest/v1/fiches_repartition?saison=eq.{saison}",
+            headers=sb_headers()
+        )
+        fiches_supprimees = len(num_fiches)
+
+        return jsonify({
+            'message': f'{fiches_supprimees} fiche(s) et leurs lignes supprimées. Saison {saison} réinitialisée pour test.',
+            'fiches': fiches_supprimees,
+            'saison': saison
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/suivi-livraisons', methods=['GET'])
 def suivi_livraisons():
     user = get_current_user()
@@ -1068,6 +1110,134 @@ def suivi_livraisons():
     # Tri par nom producteur
     result = sorted(par_producteur.values(), key=lambda x: x['nom_producteur'])
     return jsonify(result)
+
+
+@app.route('/api/suivi-livraisons/export-excel', methods=['GET'])
+def suivi_livraisons_excel():
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    import io
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    except ImportError:
+        return jsonify({'error': 'openpyxl non disponible'}), 500
+
+    cfg = get_config()
+    saison = cfg.get('SAISON_EN_COURS', 'GT')
+    coop_nom = cfg.get('COOP_NOM', 'COOPERATIVE')
+
+    lignes = sb_get('lignes_repartition', {
+        'select': 'code_producteur,nom_producteur,section,code_parcelle,volume_attribue,nombre_sacs,montant,date_livraison,num_fiche',
+        'order': 'date_livraison.desc'
+    })
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f'Suivi Livraisons {saison}'
+
+    # Styles
+    vert_fonce = PatternFill(start_color='1B4332', end_color='1B4332', fill_type='solid')
+    vert_clair = PatternFill(start_color='D8F3DC', end_color='D8F3DC', fill_type='solid')
+    or_fill = PatternFill(start_color='C9A84C', end_color='C9A84C', fill_type='solid')
+    blanc_fill = PatternFill(start_color='FFFFFF', end_color='FFFFFF', fill_type='solid')
+    gris_fill = PatternFill(start_color='F0F4F2', end_color='F0F4F2', fill_type='solid')
+    thin = Border(
+        left=Side(style='thin', color='B0C4BB'),
+        right=Side(style='thin', color='B0C4BB'),
+        top=Side(style='thin', color='B0C4BB'),
+        bottom=Side(style='thin', color='B0C4BB')
+    )
+
+    # Titre
+    ws.merge_cells('A1:I1')
+    ws['A1'] = f'{coop_nom} — Suivi des Livraisons — Saison {saison}'
+    ws['A1'].font = Font(name='Arial', bold=True, size=14, color='FFFFFF')
+    ws['A1'].fill = vert_fonce
+    ws['A1'].alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 30
+
+    ws.merge_cells('A2:I2')
+    from datetime import date
+    ws['A2'] = f'Exporté le {date.today().strftime("%d/%m/%Y")} — {len(lignes)} ligne(s)'
+    ws['A2'].font = Font(name='Arial', size=10, color='2D6A4F')
+    ws['A2'].fill = vert_clair
+    ws['A2'].alignment = Alignment(horizontal='center')
+
+    # En-têtes colonnes
+    headers = ['Code Producteur', 'Nom Producteur', 'Section', 'Code Parcelle',
+               'N° Fiche', 'Date Livraison', 'Volume (kg)', 'Nb Sacs', 'Montant (FCFA)']
+    ws.append([])  # ligne 3 vide
+    ws.append(headers)
+    header_row = 4
+    for col_idx, h in enumerate(headers, 1):
+        cell = ws.cell(row=header_row, column=col_idx)
+        cell.font = Font(name='Arial', bold=True, size=10, color='FFFFFF')
+        cell.fill = or_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.border = thin
+
+    ws.row_dimensions[header_row].height = 22
+
+    # Données
+    for i, l in enumerate(lignes):
+        row_num = header_row + 1 + i
+        fill = blanc_fill if i % 2 == 0 else gris_fill
+        vals = [
+            l.get('code_producteur', ''),
+            l.get('nom_producteur', ''),
+            l.get('section', ''),
+            l.get('code_parcelle', ''),
+            l.get('num_fiche', ''),
+            l.get('date_livraison', ''),
+            float(l.get('volume_attribue', 0) or 0),
+            int(l.get('nombre_sacs', 0) or 0),
+            float(l.get('montant', 0) or 0),
+        ]
+        ws.append(vals)
+        for col_idx in range(1, 10):
+            cell = ws.cell(row=row_num, column=col_idx)
+            cell.fill = fill
+            cell.border = thin
+            cell.font = Font(name='Arial', size=9)
+            if col_idx in (7, 9):
+                cell.number_format = '#,##0'
+                cell.alignment = Alignment(horizontal='right')
+            elif col_idx == 8:
+                cell.alignment = Alignment(horizontal='center')
+
+    # Ligne totaux
+    last_row = header_row + 1 + len(lignes)
+    ws.cell(last_row, 1, 'TOTAL').font = Font(name='Arial', bold=True, size=10)
+    ws.cell(last_row, 1).fill = vert_clair
+    total_vol = sum(float(l.get('volume_attribue', 0) or 0) for l in lignes)
+    total_sacs = sum(int(l.get('nombre_sacs', 0) or 0) for l in lignes)
+    total_mont = sum(float(l.get('montant', 0) or 0) for l in lignes)
+    for col, val in [(7, total_vol), (8, total_sacs), (9, total_mont)]:
+        c = ws.cell(last_row, col, val)
+        c.font = Font(name='Arial', bold=True, size=10)
+        c.fill = vert_clair
+        c.border = thin
+        c.number_format = '#,##0'
+        c.alignment = Alignment(horizontal='right')
+
+    # Largeurs colonnes
+    col_widths = [18, 28, 16, 20, 14, 16, 14, 10, 18]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    from flask import Response
+    return Response(
+        output.getvalue(),
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename=suivi_livraisons_{saison}.xlsx'}
+    )
 
 # ============================================================
 # ALERTES STOCK CRITIQUE
