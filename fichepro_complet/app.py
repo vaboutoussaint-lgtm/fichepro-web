@@ -52,18 +52,42 @@ def sb_headers():
         'Prefer': 'return=representation'
     }
 
-# FIX #2 — Supabase/PostgREST renvoie max 1000 lignes par défaut.
-# On force limit=50000 sauf si l'appelant en a fourni un explicite.
+# FIX #2 — Supabase/PostgREST renvoie max 1000 lignes par défaut (plan gratuit).
+# On pagine automatiquement par tranches de 1000 pour tout ramener.
 def sb_get(table, params=None):
     url = f'{SUPABASE_URL}/rest/v1/{table}'
     if params is None:
         params = {}
-    if 'limit' not in params:
-        params['limit'] = '50000'
-    r = requests.get(url, headers=sb_headers(), params=params, timeout=15)
-    if r.status_code in (200, 206):
-        return r.json()
-    return []
+
+    # Si l'appelant a fixé une limit explicite (ex: '50' pour le journal), on respecte
+    explicit_limit = 'limit' in params
+
+    if explicit_limit:
+        r = requests.get(url, headers=sb_headers(), params=params, timeout=30)
+        if r.status_code in (200, 206):
+            return r.json()
+        return []
+
+    # Pagination automatique : on lit par tranches de 1000 jusqu'à épuisement
+    PAGE_SIZE = 1000
+    all_rows = []
+    offset = 0
+    while True:
+        page_params = dict(params)
+        page_params['limit'] = str(PAGE_SIZE)
+        page_params['offset'] = str(offset)
+        r = requests.get(url, headers=sb_headers(), params=page_params, timeout=30)
+        if r.status_code not in (200, 206):
+            break
+        batch = r.json()
+        if not batch:
+            break
+        all_rows.extend(batch)
+        if len(batch) < PAGE_SIZE:
+            # Dernière page
+            break
+        offset += PAGE_SIZE
+    return all_rows
 
 def sb_post(table, data):
     url = f'{SUPABASE_URL}/rest/v1/{table}'
@@ -188,11 +212,19 @@ def get_config_api():
 @app.route('/api/config', methods=['POST'])
 def update_config():
     user = get_current_user()
-    if not user or user['profil'] != 'DIRECTEUR':
+    if not user or user['profil'] not in ('DIRECTEUR', 'TRACABILITE'):
         return jsonify({'error': 'Accès refusé'}), 403
     data = request.json
+    headers_upsert = dict(sb_headers())
+    headers_upsert['Prefer'] = 'resolution=merge-duplicates,return=minimal'
     for cle, valeur in data.items():
-        sb_patch('config', {'cle': cle}, {'valeur': str(valeur)})
+        # UPSERT : crée la ligne si elle n'existe pas, met à jour sinon
+        requests.post(
+            f"{SUPABASE_URL}/rest/v1/config",
+            headers=headers_upsert,
+            json={'cle': cle, 'valeur': str(valeur)},
+            timeout=15
+        )
     journaliser(user['nom_agent'], user['profil'], 'CONFIG_MODIFIEE', json.dumps(data))
     return jsonify({'ok': True})
 
