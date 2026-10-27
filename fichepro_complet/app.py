@@ -639,7 +639,7 @@ def simuler_repartition():
             'message': f'Le prix au kg ({prix_cle}) n\'est pas configuré. Veuillez le renseigner dans Paramètres avant de générer une fiche.'
         }), 422
 
-    max_prod_kg = float(cfg.get('MAX_PROD_KG', 1000))  # Plafond par producteur — VBA Const MAX_PROD = 1000 kg
+    max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))  # Plafond par producteur (toutes parcelles confondues)
 
     # Suivi du volume déjà attribué par producteur (pour respecter MAX_PROD_KG au niveau producteur)
     volume_par_producteur = {}
