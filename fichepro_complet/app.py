@@ -657,8 +657,12 @@ def simuler_repartition():
         if reste_prod < poids_min:
             continue  # Ce producteur a déjà atteint son plafond
 
-        # Plafond 30% par parcelle + MAX_PROD par producteur (VBA: PlafondProducteur)
-        max_attrib = min(stk, volume_total * plafond, volume_restant, reste_prod)
+        # Plafond 30% par parcelle : VBA LIMITE_FICHE appliqué sur l'estimation de la parcelle,
+        # PAS sur le volume total de la fiche. Une parcelle ne peut fournir plus de
+        # 30% de son estimation sur une seule fiche.
+        estim_parcelle = float(p.get('estimation_kg', 0))
+        plafond_parcelle = estim_parcelle * plafond  # ex: 1399 * 0.30 = 420 kg
+        max_attrib = min(stk, plafond_parcelle, volume_restant, reste_prod)
 
         if max_attrib < poids_min:
             continue
@@ -745,7 +749,8 @@ def simuler_repartition():
             # T1 : premier producteur disponible non inclus
             p = nouveaux[0]
             stk = p['_stk_dispo']
-            max_attrib = min(stk, volume_total * plafond, volume_restant, max_prod_kg)
+            estim_p = float(p.get('estimation_kg', 0))
+            max_attrib = min(stk, estim_p * plafond, volume_restant, max_prod_kg)
             nb_sacs_residuel = math.floor(max_attrib / poids_sac)
             if nb_sacs_residuel > 0:
                 vol_r = nb_sacs_residuel * poids_sac
