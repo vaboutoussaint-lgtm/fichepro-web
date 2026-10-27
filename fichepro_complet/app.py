@@ -752,12 +752,24 @@ def simuler_repartition():
             # Aucun producteur n'a pu être attribué ce tour
             if bloc_lim30:
                 # VBA CalculerPalierMinimum : palier minimum pour débloquer
-                # = volume_restant / total_stock_eligible
+                # Logique : pour chaque producteur, le nouveau plafond doit permettre
+                # libre30_nouveau = stk*palier_nouveau - deja_attribue >= poids_min
+                # → palier_nouveau >= (deja_attribue + poids_min) / stk
+                # On prend le max sur tous les producteurs bloqués, + marge 5pp
+                palier_requis_max = plafond  # au moins le plafond actuel
+                for p in eligibles:
+                    stk = p['_stk_dispo']
+                    if stk <= 0:
+                        continue
+                    deja = volume_par_producteur.get(p['code_producteur'], 0)
+                    palier_requis = (deja + poids_min) / stk
+                    if palier_requis > palier_requis_max:
+                        palier_requis_max = palier_requis
+                import math as _math
+                # +5pp de marge, arrondi au 5% supérieur pour affichage propre
+                palier_min = palier_requis_max + 0.05
+                palier_min = min(1.0, _math.ceil(palier_min * 20) / 20)  # arrondi au 5% supérieur
                 stock_total = sum(p['_stk_dispo'] for p in eligibles)
-                if stock_total > 0:
-                    palier_min = round(min(1.0, volume_restant / stock_total + 0.05), 2)
-                else:
-                    palier_min = 1.0
                 # Si même à 100% c'est insuffisant → AnnulationAvecRetour
                 stock_max_attrib = sum(p['_stk_dispo'] for p in eligibles)
                 if stock_max_attrib < volume_restant:
