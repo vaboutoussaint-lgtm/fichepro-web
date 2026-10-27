@@ -382,10 +382,15 @@ def calculer_stock_disponible(p, cfg, saison):
     reserve_pt = float(p.get('reserve_pt', 0))
     report = float(p.get('report_gt_vers_pt', 0))
     quota_gt = float(cfg.get('QUOTA_GT', 0.80))
+    # _volume_en_fiche = volumes déjà attribués dans des lignes existantes
+    # (fiches générées mais confirmation pas encore faite → volume_livre_gt pas encore mis à jour)
+    # Cela correspond au "reserve_gt" du VBA, qu'on calcule dynamiquement.
+    volume_en_fiche = float(p.get('_volume_en_fiche', 0))
 
     if saison == 'GT':
         plafond = estim * quota_gt
-        dispo = plafond - livre_gt - reserve_gt
+        # On soustrait : livré (confirmé) + réservé en fiches existantes + reserve_gt legacy
+        dispo = plafond - livre_gt - reserve_gt - volume_en_fiche
     else:
         quota_gt_vol = estim * quota_gt
         dispo_pt_base = estim - quota_gt_vol
@@ -535,27 +540,33 @@ def simuler_repartition():
     if not parcelles:
         return jsonify({'error': 'Aucune parcelle éligible'}), 400
 
-    # FIX #3 — Charge en UNE passe les dernières livraisons (batch par 200 codes)
-    # au lieu de N requêtes individuelles (N parcelles). Gain : ~20 min → ~5 s.
+    # FIX #3 — Charge en UNE passe les dernières livraisons + volumes déjà en fiche
+    # (batch par 200 codes). Gain : ~20 min → ~5 s.
+    # IMPORTANT : on lit aussi volume_attribue pour déduire ce qui est déjà réservé
+    # dans des fiches générées mais pas encore reflété dans volume_livre_gt (réserve VBA).
     all_codes = [p['code_parcelle'] for p in parcelles]
     dernieres = {}
+    volumes_en_fiche = {}  # volume total déjà attribué dans des lignes existantes
     BATCH_Q = 200
     for i in range(0, len(all_codes), BATCH_Q):
         batch = all_codes[i:i+BATCH_Q]
         codes_str = ','.join('"' + c.replace('"', '') + '"' for c in batch)
         rows = sb_get('lignes_repartition', {
             'code_parcelle': f'in.({codes_str})',
-            'select': 'code_parcelle,date_livraison'
+            'select': 'code_parcelle,date_livraison,volume_attribue'
         })
         for r in rows:
             cp = r.get('code_parcelle')
             dl = r.get('date_livraison')
+            vol = float(r.get('volume_attribue') or 0)
             if not cp:
                 continue
             if cp not in dernieres or (dl and dl > (dernieres[cp] or '')):
                 dernieres[cp] = dl
+            volumes_en_fiche[cp] = volumes_en_fiche.get(cp, 0) + vol
     for p in parcelles:
         p['_derniere_livraison'] = dernieres.get(p['code_parcelle'])
+        p['_volume_en_fiche'] = volumes_en_fiche.get(p['code_parcelle'], 0)
 
     eligibles = []
     exclus_intervalle = []
