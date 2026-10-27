@@ -1302,7 +1302,6 @@ async function lancerSimulation() {
       } else if (data.error === 'PRIX_NON_CONFIGURE') {
         toast('⚠️ ' + data.message, true);
         afficherResultatVide();
-        // Basculer vers l'onglet Paramètres pour que l'utilisateur configure le prix
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         const tabParam = document.getElementById('tab-parametres');
@@ -1313,6 +1312,16 @@ async function lancerSimulation() {
         toast(data.error || 'Erreur simulation', true);
         afficherResultatVide();
       }
+      return;
+    }
+
+    // ── Alertes VBA (HTTP 200 avec warning) ──────────────────
+    if (data.warning === 'PALIER_INSUFFISANT') {
+      afficherWarningPalier(data);
+      return;
+    }
+    if (data.warning === 'INTERVALLE_BLOQUANT') {
+      afficherWarningIntervalle(data);
       return;
     }
 
@@ -1386,6 +1395,148 @@ function afficherErreurVolumeInsuffisant(data) {
       </div>`).join('');
   } else {
     lignesDiv.innerHTML = '<div style="padding:10px;color:#c00">Aucune section supplémentaire disponible. Volume total insuffisant dans la base.</div>';
+  }
+}
+
+// ── WARNING PALIER INSUFFISANT (VBA : MsgBox relèvement palier) ──────────────
+function afficherWarningPalier(data) {
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('result-content').classList.add('show');
+  document.getElementById('section-confirmer').style.display = 'none';
+
+  const palierSugg = Math.round((data.palier_minimum_suggere || 0.5) * 100);
+  const palierActuel = Math.round((data.palier_actuel || 0.3) * 100);
+
+  document.getElementById('r-id').textContent = '⚠️ PLAFOND INSUFFISANT';
+  document.getElementById('r-titre').textContent = data.message || 'Limite atteinte';
+  document.getElementById('r-prod').textContent = '—';
+  document.getElementById('r-sacs').textContent = '—';
+  document.getElementById('r-restant').textContent = Math.round(data.volume_manquant || 0).toLocaleString('fr-FR');
+
+  const lignesDiv = document.getElementById('result-lignes');
+  lignesDiv.innerHTML = `
+    <div style="padding:12px;background:var(--warn-bg,#2a2000);border-radius:8px;margin-bottom:10px">
+      <div style="color:var(--warn,#c9a84c);font-weight:600;margin-bottom:8px">
+        💡 Tous les producteurs ont atteint leur limite de ${palierActuel}% du stock disponible.
+      </div>
+      <div style="margin-bottom:12px;font-size:13px">
+        Il reste <strong>${Math.round(data.volume_manquant || 0).toLocaleString('fr-FR')} kg</strong> à distribuer.<br>
+        Relancez avec un plafond d'au moins <strong>${palierSugg}%</strong> pour continuer.
+      </div>
+      <button class="btn-sec" onclick="relancerAvecPalier(${data.palier_minimum_suggere || 0.5})"
+        style="background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px">
+        🔄 Relancer avec plafond ${palierSugg}%
+      </button>
+    </div>
+    ${(data.lignes_partielles || []).length > 0 ? '<div style="font-size:12px;color:var(--tg);margin-bottom:6px">Répartition partielle déjà calculée (' + data.lignes_partielles.length + ' lignes) :</div>' +
+      (data.lignes_partielles || []).map(l => `
+        <div class="rl-row">
+          <span class="rl-code">${l.code_parcelle}</span>
+          <span class="rl-nom">${l.nom_producteur}</span>
+          <span class="rl-poids">${Math.round(l.volume_attribue).toLocaleString('fr-FR')} kg</span>
+          <span class="rl-date">${l.nombre_sacs} sacs</span>
+        </div>`).join('') : ''}`;
+}
+
+function relancerAvecPalier(palier) {
+  // Injecter le plafond override dans le body de la prochaine simulation
+  STATE._plafondOverride = palier;
+  toast('Relance avec plafond ' + Math.round(palier * 100) + '%...');
+  lancerSimulationAvecOptions({ plafond_override: palier });
+}
+
+// ── WARNING INTERVALLE BLOQUANT (VBA : MsgBox raccourcir intervalle) ──────────
+function afficherWarningIntervalle(data) {
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('result-content').classList.add('show');
+  document.getElementById('section-confirmer').style.display = 'none';
+
+  document.getElementById('r-id').textContent = '⚠️ INTERVALLE BLOQUANT';
+  document.getElementById('r-titre').textContent = data.message || 'Intervalle non respecté';
+  document.getElementById('r-prod').textContent = '—';
+  document.getElementById('r-sacs').textContent = '—';
+  document.getElementById('r-restant').textContent = Math.round(data.volume_manquant || 0).toLocaleString('fr-FR');
+
+  const lignesDiv = document.getElementById('result-lignes');
+  lignesDiv.innerHTML = `
+    <div style="padding:12px;background:var(--warn-bg,#2a2000);border-radius:8px;margin-bottom:10px">
+      <div style="color:var(--warn,#c9a84c);font-weight:600;margin-bottom:8px">
+        💡 Tous les producteurs disponibles n'ont pas atteint l'intervalle de ${data.intervalle_jours || 14} jours.
+      </div>
+      <div style="margin-bottom:12px;font-size:13px">
+        Il reste <strong>${Math.round(data.volume_manquant || 0).toLocaleString('fr-FR')} kg</strong> à distribuer.<br>
+        Cochez "Sauter la contrainte 14 jours" et relancez, ou attendez que l'intervalle soit écoulé.
+      </div>
+      <button class="btn-sec" onclick="relancerSansIntervalle()"
+        style="background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px">
+        🔄 Relancer sans contrainte d'intervalle
+      </button>
+    </div>
+    ${(data.lignes_partielles || []).length > 0 ? '<div style="font-size:12px;color:var(--tg);margin-bottom:6px">Répartition partielle déjà calculée (' + data.lignes_partielles.length + ' lignes) :</div>' +
+      (data.lignes_partielles || []).map(l => `
+        <div class="rl-row">
+          <span class="rl-code">${l.code_parcelle}</span>
+          <span class="rl-nom">${l.nom_producteur}</span>
+          <span class="rl-poids">${Math.round(l.volume_attribue).toLocaleString('fr-FR')} kg</span>
+          <span class="rl-date">${l.nombre_sacs} sacs</span>
+        </div>`).join('') : ''}`;
+}
+
+function relancerSansIntervalle() {
+  document.getElementById('f-sauter-intervalle').checked = true;
+  toast('Relance sans contrainte d\'intervalle...');
+  lancerSimulationAvecOptions({ sauter_intervalle: true });
+}
+
+// ── LANCER SIMULATION AVEC OPTIONS SUPPLÉMENTAIRES ───────────
+async function lancerSimulationAvecOptions(optsExtra) {
+  const label = document.getElementById('f-label').value;
+  const poids = parseFloat(document.getElementById('f-poids').value);
+  const dateRef = document.getElementById('f-date-ref').value;
+  const dateDebutLiv = document.getElementById('f-date-debut-liv').value;
+  const sauterIntervalle = document.getElementById('f-sauter-intervalle').checked;
+  const today = new Date().toISOString().split('T')[0];
+
+  const body = {
+    label,
+    volume_total: poids,
+    date_ref: dateRef || today,
+    date_debut_livraison: dateDebutLiv || dateRef || today,
+    sections: STATE.sectionsSelectionnees,
+    sauter_intervalle: sauterIntervalle,
+    ...optsExtra
+  };
+
+  const btn = document.getElementById('btn-simuler');
+  btn.disabled = true;
+  btn.textContent = '⏳ Simulation en cours...';
+  document.getElementById('section-confirmer').style.display = 'none';
+  STATE.simulationResult = null;
+
+  try {
+    const r = await api('/api/repartition/simuler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+
+    if (!r.ok) {
+      if (data.error === 'VOLUME_INSUFFISANT') { afficherErreurVolumeInsuffisant(data); }
+      else { toast(data.error || 'Erreur simulation', true); afficherResultatVide(); }
+      return;
+    }
+    if (data.warning === 'PALIER_INSUFFISANT') { afficherWarningPalier(data); return; }
+    if (data.warning === 'INTERVALLE_BLOQUANT') { afficherWarningIntervalle(data); return; }
+
+    STATE.simulationResult = data;
+    afficherSimulation(data);
+    document.getElementById('section-confirmer').style.display = 'block';
+  } catch(e) {
+    toast('Erreur réseau', true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Simuler la répartition';
   }
 }
 
