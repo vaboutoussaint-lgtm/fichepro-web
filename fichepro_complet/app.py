@@ -609,12 +609,8 @@ def simuler_repartition():
     random.shuffle(eligibles)
     eligibles.sort(key=lambda p: p['_score'], reverse=True)
 
-    volume_restant = volume_total
-    lignes = []
-
     # VBA: g_densiteHebdo — densité de livraisons par semaine ISO, pour répartir les dates
     densite_hebdo = {}
-    # Pré-charger les livraisons existantes de la saison en cours dans la densité
     try:
         lignes_existantes = sb_get('lignes_repartition', {'select': 'date_livraison'})
         for le in lignes_existantes:
@@ -628,7 +624,6 @@ def simuler_repartition():
     except Exception:
         pass
 
-    # Seuil au-delà duquel on fractionne en plusieurs livraisons pour plus de réalisme
     MAX_PAR_LIVRAISON_KG = float(cfg.get('MAX_PAR_LIVRAISON_KG', 2500))
 
     prix_cle = 'PRIX_KG_GT' if saison == 'GT' else 'PRIX_KG_PT'
@@ -639,119 +634,206 @@ def simuler_repartition():
             'message': f'Le prix au kg ({prix_cle}) n\'est pas configuré. Veuillez le renseigner dans Paramètres avant de générer une fiche.'
         }), 422
 
-    max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))  # Plafond par producteur (toutes parcelles confondues)
+    max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))
 
-    # Suivi du volume déjà attribué par producteur (pour respecter MAX_PROD_KG au niveau producteur)
-    volume_par_producteur = {}
+    # ── BOUCLE MULTI-TOUR VBA (Do While poidsRestant > 0 And tour < 300) ────────────
+    # Fidèle au VBA lignes 1796-1901 :
+    #   - Chaque tour parcourt tous les éligibles
+    #   - blocLim30 = True si au moins un producteur bloqué par limite 30%
+    #   - blocIntv  = True si au moins un producteur bloqué par intervalle
+    #   - Si poidsRestant n'a pas bougé après un tour complet → blocage total
+    #     → retourner warning pour que l'utilisateur relance avec paramètres ajustés
+    #   - AbsorberResidu appliqué après la boucle (reliquat < poids_min)
+    # En contexte web (pas de MsgBox) :
+    #   - warning 'PALIER_INSUFFISANT' → relancer avec plafond_override plus élevé
+    #   - warning 'INTERVALLE_BLOQUANT' → relancer avec sauter_intervalle=true
 
-    for p in eligibles:
-        if volume_restant < poids_min:
-            break
+    volume_restant = volume_total
+    lignes = []
+    volume_par_producteur = {}  # code_prod → volume attribué dans cette fiche
 
-        stk = p['_stk_dispo']
-        code_prod = p['code_producteur']
+    # Suivi des attributions par parcelle (pour AbsorberResidu T2)
+    vol_attrib_par_parcelle = {}  # code_parcelle → volume total attribué
 
-        # Volume déjà attribué à ce producteur dans cette fiche
-        deja_attribue = volume_par_producteur.get(code_prod, 0)
-        reste_prod = max_prod_kg - deja_attribue
-        if reste_prod < poids_min:
-            continue  # Ce producteur a déjà atteint son plafond
+    MAX_TOURS = 300
+    tour = 0
 
-        # Plafond 30% par parcelle — VBA PlafondProducteur ligne 636 :
-        #   lim30 = CLng(stk * g_limiteActuelle)   ← base = stk (stock disponible)
-        #   libre30 = lim30 - dejaProd
-        #   plafond = Min(stk, quota, libre30, poidsRestant, MAX_PROD)
-        # deja_attribue joue le rôle de dejaProd (volume déjà dans cette fiche pour ce producteur)
-        lim30 = stk * plafond          # 30% du stock disponible
-        libre30 = lim30 - deja_attribue  # ce qui reste de la limite 30% pour ce producteur
-        max_attrib = min(stk, libre30, volume_restant, reste_prod)
+    while volume_restant >= poids_min and tour < MAX_TOURS:
+        avant_tour = volume_restant
+        bloc_lim30 = False
+        bloc_intv = False
 
-        if max_attrib < poids_min:
-            continue
-
-        nb_sacs_max = math.floor(max_attrib / poids_sac)
-        if nb_sacs_max == 0:
-            continue
-
-        attrib_total_parcelle = nb_sacs_max * poids_sac
-        if attrib_total_parcelle > volume_restant:
-            nb_sacs_max = math.floor(volume_restant / poids_sac)
-            if nb_sacs_max == 0:
+        for p in eligibles:
+            if volume_restant < poids_min:
                 break
+
+            stk = p['_stk_dispo']
+            code_prod = p['code_producteur']
+            code_parc = p['code_parcelle']
+
+            deja_attribue_prod = volume_par_producteur.get(code_prod, 0)
+            reste_prod = max_prod_kg - deja_attribue_prod
+            if reste_prod < poids_min:
+                continue
+
+            # VBA PlafondProducteur : lim30 = stk * g_limiteActuelle
+            lim30 = stk * plafond
+            libre30 = lim30 - deja_attribue_prod
+            if libre30 < poids_min:
+                bloc_lim30 = True
+                continue
+
+            # Vérification intervalle (si pas déjà sauté)
+            if not sauter_intervalle:
+                derniere = p.get('_derniere_livraison')
+                if derniere:
+                    d = datetime.strptime(str(derniere)[:10], '%Y-%m-%d').date()
+                    jours = (date_ref - d).days
+                    if jours < interv_jours:
+                        bloc_intv = True
+                        continue
+
+            max_attrib = min(stk, libre30, volume_restant, reste_prod)
+            if max_attrib < poids_min:
+                continue
+
+            nb_sacs_max = math.floor(max_attrib / poids_sac)
+            if nb_sacs_max == 0:
+                continue
+
             attrib_total_parcelle = nb_sacs_max * poids_sac
 
-        if attrib_total_parcelle > stk or attrib_total_parcelle < poids_min:
-            continue
+            # Fractionner si volume > MAX_PAR_LIVRAISON_KG
+            sacs_par_livraison = max(1, math.floor(MAX_PAR_LIVRAISON_KG / poids_sac))
+            sacs_restants = nb_sacs_max
+            num_livraison = (vol_attrib_par_parcelle.get(code_parc, 0) // MAX_PAR_LIVRAISON_KG) + 1
 
-        # Fractionner en plusieurs livraisons si volume > MAX_PAR_LIVRAISON_KG
-        sacs_par_livraison = max(1, math.floor(MAX_PAR_LIVRAISON_KG / poids_sac))
-        sacs_restants = nb_sacs_max
-        num_livraison = 1
+            derniere_liv_prod = p.get('_derniere_livraison')
+            if deja_attribue_prod > 0:
+                dates_prod = [l['date_livraison'] for l in lignes if l['code_producteur'] == code_prod]
+                if dates_prod:
+                    derniere_liv_prod = max(dates_prod)
 
-        # VBA DateLivOptimale : date optimale pour cette parcelle
-        # Si le producteur a déjà une parcelle attribuée, on décale d'au moins INTERV_JOURS
-        # pour éviter deux livraisons identiques le même jour pour le même producteur
-        derniere_liv_producteur = p.get('_derniere_livraison')
-        if deja_attribue > 0:
-            # Chercher la date la plus récente déjà attribuée à ce producteur dans cette fiche
-            dates_prod = [
-                l['date_livraison'] for l in lignes
-                if l['code_producteur'] == code_prod
-            ]
-            if dates_prod:
-                from datetime import timedelta
-                date_max_str = max(dates_prod)
-                derniere_liv_producteur = date_max_str  # forcer le décalage à partir de cette date
-        date_liv_parcelle = date_livraison_optimale(
-            date_debut, date_ref,
-            derniere_liv_producteur,
-            interv_jours, densite_hebdo
-        )
+            date_liv_parcelle = date_livraison_optimale(
+                date_debut, date_ref, derniere_liv_prod, interv_jours, densite_hebdo
+            )
 
-        while sacs_restants > 0:
-            sacs_cette_livraison = min(sacs_par_livraison, sacs_restants)
-            if sacs_cette_livraison == 0:
+            while sacs_restants > 0:
+                sacs_cette_livraison = min(sacs_par_livraison, sacs_restants)
+                if sacs_cette_livraison == 0:
+                    break
+                vol_livraison = sacs_cette_livraison * poids_sac
+                lignes.append({
+                    'code_parcelle': code_parc,
+                    'code_producteur': code_prod,
+                    'nom_producteur': p['nom_producteur'],
+                    'section': p.get('section', ''),
+                    'latitude': round(float(p['latitude']), 6) if p.get('latitude') is not None else None,
+                    'longitude': round(float(p['longitude']), 6) if p.get('longitude') is not None else None,
+                    'score_calcule': p['_score'],
+                    'volume_attribue': vol_livraison,
+                    'nombre_sacs': sacs_cette_livraison,
+                    'montant': vol_livraison * prix_kg,
+                    'stk_dispo': stk,
+                    'num_livraison': int(num_livraison),
+                    'date_livraison': date_liv_parcelle.isoformat(),
+                })
+                sacs_restants -= sacs_cette_livraison
+                num_livraison += 1
+
+            volume_restant -= attrib_total_parcelle
+            volume_par_producteur[code_prod] = deja_attribue_prod + attrib_total_parcelle
+            vol_attrib_par_parcelle[code_parc] = vol_attrib_par_parcelle.get(code_parc, 0) + attrib_total_parcelle
+
+        tour += 1
+
+        # VBA : si poidsRestant n'a pas bougé → blocage total
+        if volume_restant >= avant_tour - (poids_min / 2):
+            # Aucun producteur n'a pu être attribué ce tour
+            if bloc_lim30:
+                # VBA CalculerPalierMinimum : palier minimum pour débloquer
+                # = volume_restant / total_stock_eligible
+                stock_total = sum(p['_stk_dispo'] for p in eligibles)
+                if stock_total > 0:
+                    palier_min = round(min(1.0, volume_restant / stock_total + 0.05), 2)
+                else:
+                    palier_min = 1.0
+                # Si même à 100% c'est insuffisant → AnnulationAvecRetour
+                stock_max_attrib = sum(p['_stk_dispo'] for p in eligibles)
+                if stock_max_attrib < volume_restant:
+                    # Rollback complet (VBA AnnulationAvecRetour)
+                    sections_selectionnees = set(p.get('section', '') for p in eligibles)
+                    sections_manquantes_volumes = {}
+                    for p in parcelles:
+                        sec = p.get('section', 'Inconnue')
+                        if sec not in sections_selectionnees:
+                            stk2 = calculer_stock_disponible(p, cfg, saison)
+                            if stk2 >= poids_min and not quota_producteur_atteint(p, cfg, saison):
+                                sections_manquantes_volumes[sec] = sections_manquantes_volumes.get(sec, 0) + stk2
+                    suggestions = [
+                        {'section': s, 'volume_disponible': round(v)}
+                        for s, v in sorted(sections_manquantes_volumes.items(), key=lambda x: -x[1])
+                    ]
+                    return jsonify({
+                        'error': 'VOLUME_INSUFFISANT',
+                        'message': (
+                            f"Stock total insuffisant même sans plafond. "
+                            f"Demandé : {volume_total:.0f} kg. "
+                            f"Affectable : {volume_total - volume_restant:.0f} kg. "
+                            f"Manque : {volume_restant:.0f} kg."
+                        ),
+                        'volume_demande': volume_total,
+                        'volume_affectable': volume_total - volume_restant,
+                        'volume_manquant': volume_restant,
+                        'sections_supplementaires': suggestions,
+                    }), 422
+                # VBA MsgBox → en web : retourner warning avec palier suggéré
+                # L'utilisateur relance avec plafond_override=palier_min
+                return jsonify({
+                    'warning': 'PALIER_INSUFFISANT',
+                    'message': (
+                        f"Tous les producteurs ont atteint leur limite de {plafond*100:.0f}% du stock disponible. "
+                        f"Il reste {volume_restant:.0f} kg à distribuer. "
+                        f"Relancez avec un plafond d'au moins {palier_min*100:.0f}% pour continuer."
+                    ),
+                    'volume_demande': volume_total,
+                    'volume_affecte': volume_total - volume_restant,
+                    'volume_manquant': volume_restant,
+                    'palier_minimum_suggere': palier_min,
+                    'palier_actuel': plafond,
+                    'lignes_partielles': lignes,
+                    'tours_effectues': tour,
+                }), 200
+            elif bloc_intv:
+                # VBA MsgBox intervalle → en web : retourner warning intervalle
+                # L'utilisateur relance avec sauter_intervalle=true
+                return jsonify({
+                    'warning': 'INTERVALLE_BLOQUANT',
+                    'message': (
+                        f"Tous les producteurs disponibles n'ont pas atteint l'intervalle de {interv_jours} jours. "
+                        f"Il reste {volume_restant:.0f} kg à distribuer. "
+                        f"Relancez avec sauter_intervalle=true pour forcer la distribution."
+                    ),
+                    'volume_demande': volume_total,
+                    'volume_affecte': volume_total - volume_restant,
+                    'volume_manquant': volume_restant,
+                    'intervalle_jours': interv_jours,
+                    'lignes_partielles': lignes,
+                    'tours_effectues': tour,
+                }), 200
+            else:
+                # Blocage inexpliqué (plus de stock disponible)
                 break
-            vol_livraison = sacs_cette_livraison * poids_sac
-            montant_livraison = vol_livraison * prix_kg
 
-            lignes.append({
-                'code_parcelle': p['code_parcelle'],
-                'code_producteur': p['code_producteur'],
-                'nom_producteur': p['nom_producteur'],
-                'section': p.get('section', ''),
-                'latitude': round(float(p['latitude']), 6) if p.get('latitude') is not None else None,
-                'longitude': round(float(p['longitude']), 6) if p.get('longitude') is not None else None,
-                'score_calcule': p['_score'],
-                'volume_attribue': vol_livraison,
-                'nombre_sacs': sacs_cette_livraison,
-                'montant': montant_livraison,
-                'stk_dispo': stk,
-                'num_livraison': num_livraison,
-                'date_livraison': date_liv_parcelle.isoformat(),
-            })
-
-            sacs_restants -= sacs_cette_livraison
-            num_livraison += 1
-
-        volume_restant -= attrib_total_parcelle
-        # Comptabiliser au niveau producteur
-        volume_par_producteur[code_prod] = volume_par_producteur.get(code_prod, 0) + attrib_total_parcelle
-
-    if not lignes:
-        return jsonify({'error': 'Impossible de répartir le volume demandé'}), 400
-
-    # FIX #3 — AbsorberResidu (VBA) : si reliquat >= poids_min, on tente
-    # T1 : ajouter un nouveau producteur (premier éligible non encore inclus)
-    # T2 : augmenter un producteur déjà dans la fiche (le meilleur score)
-    codes_inclus = {l['code_parcelle'] for l in lignes}
+    # ── AbsorberResidu VBA ────────────────────────────────────────────────────────
+    # Après la boucle : si reliquat >= poids_min, tenter de l'absorber
     if volume_restant >= poids_min:
+        codes_inclus = {l['code_parcelle'] for l in lignes}
         nouveaux = [p for p in eligibles if p['code_parcelle'] not in codes_inclus]
+        absorbe = False
         if nouveaux:
-            # T1 : premier producteur disponible non inclus
             p = nouveaux[0]
             stk = p['_stk_dispo']
-            # AbsorberResidu — même logique VBA : lim30 basé sur stk
             lim30_r = stk * plafond
             max_attrib = min(stk, lim30_r, volume_restant, max_prod_kg)
             nb_sacs_residuel = math.floor(max_attrib / poids_sac)
@@ -773,14 +855,15 @@ def simuler_repartition():
                     'absorbe_residu': True,
                 })
                 volume_restant -= vol_r
-        elif volume_restant >= poids_min:
-            # T2 : augmenter un producteur déjà inclus (meilleur score en tête)
+                absorbe = True
+        if not absorbe and volume_restant >= poids_min:
+            # T2 : augmenter un producteur déjà inclus
             for ligne in lignes:
                 cp = ligne['code_parcelle']
                 p_ref = next((p for p in eligibles if p['code_parcelle'] == cp), None)
                 if not p_ref:
                     continue
-                stk_restant = p_ref['_stk_dispo'] - ligne['volume_attribue']
+                stk_restant = p_ref['_stk_dispo'] - vol_attrib_par_parcelle.get(cp, 0)
                 if stk_restant < poids_sac:
                     continue
                 sacs_add = math.floor(min(stk_restant, volume_restant) / poids_sac)
@@ -792,56 +875,45 @@ def simuler_repartition():
                     volume_restant -= vol_add
                     break
 
-    # ── AJUSTEMENT FINAL POUR ATTEINDRE LE VOLUME EXACT ───────────────────────
-    # Si volume_restant > 0 après AbsorberResidu, deux cas :
-    # 1) volume_restant < poids_sac : on ajoute le reliquat en kg brut au dernier
-    #    producteur (hors contrainte sac) pour atteindre EXACTEMENT le volume demandé.
-    # 2) volume_restant >= poids_sac : les sections sélectionnées n'ont pas assez
-    #    de stock éligible → on retourne une erreur détaillée avec suggestions.
-    if volume_restant > 0:
-        if volume_restant < poids_sac:
-            # Cas 1 : reliquat infra-sac — on l'absorbe en kg brut dans la dernière ligne
-            if lignes:
-                ligne_cible = lignes[-1]
-                ligne_cible['volume_attribue'] += volume_restant
-                ligne_cible['montant'] += volume_restant * prix_kg
-                # nombre_sacs reste inchangé : il s'agit d'un ajout fractionné
-                ligne_cible['ajustement_kg_brut'] = volume_restant
-                volume_restant = 0
-        else:
-            # Cas 2 : stock insuffisant dans les sections sélectionnées
-            stock_total_eligible = sum(p['_stk_dispo'] for p in eligibles)
-            stock_total_exclus = sum(calculer_stock_disponible(p, cfg, saison)
-                                     for p in parcelles
-                                     if p['code_parcelle'] not in {e['code_parcelle'] for e in eligibles}
-                                     and not quota_producteur_atteint(p, cfg, saison))
+    if not lignes:
+        return jsonify({'error': 'Impossible de répartir le volume demandé'}), 400
 
-            sections_selectionnees = set(p.get('section', '') for p in eligibles)
-            sections_manquantes_volumes = {}
-            for p in parcelles:
-                sec = p.get('section', 'Inconnue')
-                if sec not in sections_selectionnees:
-                    stk = calculer_stock_disponible(p, cfg, saison)
-                    if stk >= poids_min and not quota_producteur_atteint(p, cfg, saison):
-                        sections_manquantes_volumes[sec] = sections_manquantes_volumes.get(sec, 0) + stk
+    # ── AJUSTEMENT FINAL INFRA-SAC ────────────────────────────────────────────────
+    # Reliquat < poids_sac : absorber en kg brut dans la dernière ligne
+    if 0 < volume_restant < poids_sac:
+        ligne_cible = lignes[-1]
+        ligne_cible['volume_attribue'] += volume_restant
+        ligne_cible['montant'] += volume_restant * prix_kg
+        ligne_cible['ajustement_kg_brut'] = volume_restant
+        volume_restant = 0
 
-            suggestions = [
-                {'section': s, 'volume_disponible': round(v)}
-                for s, v in sorted(sections_manquantes_volumes.items(), key=lambda x: -x[1])
-            ]
-            return jsonify({
-                'error': 'VOLUME_INSUFFISANT',
-                'message': (
-                    f"Volume insuffisant dans les sections sélectionnées. "
-                    f"Demandé : {volume_total:.0f} kg. "
-                    f"Affectable : {volume_total - volume_restant:.0f} kg. "
-                    f"Manque : {volume_restant:.0f} kg."
-                ),
-                'volume_demande': volume_total,
-                'volume_affectable': volume_total - volume_restant,
-                'volume_manquant': volume_restant,
-                'sections_supplementaires': suggestions,
-            }), 422
+    # ── VOLUME INSUFFISANT FINAL (VBA AnnulationAvecRetour) ──────────────────────
+    if volume_restant >= poids_sac:
+        sections_selectionnees = set(p.get('section', '') for p in eligibles)
+        sections_manquantes_volumes = {}
+        for p in parcelles:
+            sec = p.get('section', 'Inconnue')
+            if sec not in sections_selectionnees:
+                stk2 = calculer_stock_disponible(p, cfg, saison)
+                if stk2 >= poids_min and not quota_producteur_atteint(p, cfg, saison):
+                    sections_manquantes_volumes[sec] = sections_manquantes_volumes.get(sec, 0) + stk2
+        suggestions = [
+            {'section': s, 'volume_disponible': round(v)}
+            for s, v in sorted(sections_manquantes_volumes.items(), key=lambda x: -x[1])
+        ]
+        return jsonify({
+            'error': 'VOLUME_INSUFFISANT',
+            'message': (
+                f"Volume insuffisant dans les sections sélectionnées. "
+                f"Demandé : {volume_total:.0f} kg. "
+                f"Affectable : {volume_total - volume_restant:.0f} kg. "
+                f"Manque : {volume_restant:.0f} kg."
+            ),
+            'volume_demande': volume_total,
+            'volume_affectable': volume_total - volume_restant,
+            'volume_manquant': volume_restant,
+            'sections_supplementaires': suggestions,
+        }), 422
 
     volume_affecte = volume_total - volume_restant
     nb_sacs_total = sum(l['nombre_sacs'] for l in lignes)
@@ -857,6 +929,7 @@ def simuler_repartition():
         'nombre_sacs': nb_sacs_total,
         'plafond_applique': plafond,
         'intervalle_saute': sauter_intervalle,
+        'tours_effectues': tour,
         'lignes': lignes,
         'exclus_stock': exclus_stock,
         'exclus_intervalle': exclus_intervalle,
