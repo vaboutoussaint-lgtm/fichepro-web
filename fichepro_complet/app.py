@@ -639,7 +639,7 @@ def simuler_repartition():
             'message': f'Le prix au kg ({prix_cle}) n\'est pas configuré. Veuillez le renseigner dans Paramètres avant de générer une fiche.'
         }), 422
 
-    max_prod_kg = float(cfg.get('MAX_PROD_KG', 3000))  # Plafond par producteur (toutes parcelles confondues)
+    max_prod_kg = float(cfg.get('MAX_PROD_KG', 1000))  # Plafond par producteur — VBA Const MAX_PROD = 1000 kg
 
     # Suivi du volume déjà attribué par producteur (pour respecter MAX_PROD_KG au niveau producteur)
     volume_par_producteur = {}
@@ -657,12 +657,14 @@ def simuler_repartition():
         if reste_prod < poids_min:
             continue  # Ce producteur a déjà atteint son plafond
 
-        # Plafond 30% par parcelle : VBA LIMITE_FICHE appliqué sur l'estimation de la parcelle,
-        # PAS sur le volume total de la fiche. Une parcelle ne peut fournir plus de
-        # 30% de son estimation sur une seule fiche.
-        estim_parcelle = float(p.get('estimation_kg', 0))
-        plafond_parcelle = estim_parcelle * plafond  # ex: 1399 * 0.30 = 420 kg
-        max_attrib = min(stk, plafond_parcelle, volume_restant, reste_prod)
+        # Plafond 30% par parcelle — VBA PlafondProducteur ligne 636 :
+        #   lim30 = CLng(stk * g_limiteActuelle)   ← base = stk (stock disponible)
+        #   libre30 = lim30 - dejaProd
+        #   plafond = Min(stk, quota, libre30, poidsRestant, MAX_PROD)
+        # deja_attribue joue le rôle de dejaProd (volume déjà dans cette fiche pour ce producteur)
+        lim30 = stk * plafond          # 30% du stock disponible
+        libre30 = lim30 - deja_attribue  # ce qui reste de la limite 30% pour ce producteur
+        max_attrib = min(stk, libre30, volume_restant, reste_prod)
 
         if max_attrib < poids_min:
             continue
@@ -749,8 +751,9 @@ def simuler_repartition():
             # T1 : premier producteur disponible non inclus
             p = nouveaux[0]
             stk = p['_stk_dispo']
-            estim_p = float(p.get('estimation_kg', 0))
-            max_attrib = min(stk, estim_p * plafond, volume_restant, max_prod_kg)
+            # AbsorberResidu — même logique VBA : lim30 basé sur stk
+            lim30_r = stk * plafond
+            max_attrib = min(stk, lim30_r, volume_restant, max_prod_kg)
             nb_sacs_residuel = math.floor(max_attrib / poids_sac)
             if nb_sacs_residuel > 0:
                 vol_r = nb_sacs_residuel * poids_sac
@@ -920,15 +923,9 @@ def generer_repartition():
     # date_livraison_str sert de date de repli si la ligne n'a pas sa propre date (VBA)
     date_livraison_defaut = datetime.strptime(date_livraison_str, '%Y-%m-%d').date().isoformat()
 
-    # Dédupliquer les lignes par code_parcelle (garde la première occurrence)
-    seen_parcelles = set()
-    lignes_dedup = []
-    for l in lignes:
-        cp = l.get('code_parcelle')
-        if cp and cp not in seen_parcelles:
-            seen_parcelles.add(cp)
-            lignes_dedup.append(l)
-    lignes = lignes_dedup
+    # VBA : chaque appel à Enregistrer() crée UNE ligne distincte, même pour la même parcelle
+    # (plusieurs livraisons fractionnées). On ne déduplique PAS par code_parcelle.
+    # La déduplication ici était la cause du décalage 97 lignes (simulation) vs 96 (Excel).
 
     for ligne in lignes:
         # Utiliser la date calculée par la simulation (VBA: DateLivOptimale), ou la date de repli
