@@ -809,23 +809,81 @@ def simuler_repartition():
                         'volume_manquant': volume_restant,
                         'sections_supplementaires': suggestions,
                     }), 422
-                # VBA MsgBox → en web : retourner warning avec palier suggéré
-                # L'utilisateur relance avec plafond_override=palier_min
-                return jsonify({
-                    'warning': 'PALIER_INSUFFISANT',
-                    'message': (
-                        f"Tous les producteurs ont atteint leur limite de {plafond*100:.0f}% du stock disponible. "
-                        f"Il reste {volume_restant:.0f} kg à distribuer. "
-                        f"Relancez avec un plafond d'au moins {palier_min*100:.0f}% pour continuer."
-                    ),
-                    'volume_demande': volume_total,
-                    'volume_affecte': volume_total - volume_restant,
-                    'volume_manquant': volume_restant,
-                    'palier_minimum_suggere': palier_min,
-                    'palier_actuel': plafond,
-                    'lignes_partielles': lignes,
-                    'tours_effectues': tour,
-                }), 200
+                # Avant de retourner le warning, tenter d'absorber le résidu
+                # sur les producteurs déjà sélectionnés (répartition du reliquat)
+                # Logique : ajouter les kg restants au dernier producteur qui a déjà une ligne,
+                # ou les répartir un peu sur les meilleurs producteurs déjà sélectionnés
+                if volume_restant > 0 and lignes:
+                    # Trier les producteurs déjà sélectionnés par score décroissant
+                    codes_dans_lignes = {}
+                    for l in lignes:
+                        cp = l['code_producteur']
+                        if cp not in codes_dans_lignes:
+                            codes_dans_lignes[cp] = l['score_calcule']
+                    prods_tries = sorted(codes_dans_lignes.items(), key=lambda x: -x[1])
+                    residu_restant = volume_restant
+                    for cp, _ in prods_tries:
+                        if residu_restant <= 0:
+                            break
+                        # Trouver la parcelle correspondante
+                        parc_obj = next((p for p in eligibles if p['code_producteur'] == cp), None)
+                        if not parc_obj:
+                            continue
+                        stk = parc_obj['_stk_dispo']
+                        deja = volume_par_producteur.get(cp, 0)
+                        # Capacité restante sans plafond (résidu exceptionnel)
+                        reste_possible = min(stk - deja, residu_restant, max_prod_kg - deja)
+                        if reste_possible < poids_sac:
+                            continue
+                        nb_sacs_res = math.floor(reste_possible / poids_sac)
+                        if nb_sacs_res == 0:
+                            continue
+                        vol_res = nb_sacs_res * poids_sac
+                        # Ajouter une ligne résidu pour ce producteur
+                        lignes.append({
+                            'code_parcelle': parc_obj['code_parcelle'],
+                            'code_producteur': cp,
+                            'nom_producteur': parc_obj['nom_producteur'],
+                            'section': parc_obj.get('section', ''),
+                            'latitude': round(float(parc_obj['latitude']), 6) if parc_obj.get('latitude') is not None else None,
+                            'longitude': round(float(parc_obj['longitude']), 6) if parc_obj.get('longitude') is not None else None,
+                            'score_calcule': parc_obj['_score'],
+                            'volume_attribue': vol_res,
+                            'nombre_sacs': nb_sacs_res,
+                            'montant': vol_res * prix_kg,
+                            'stk_dispo': stk,
+                            'num_livraison': 1,
+                            'absorbe_residu': True,
+                            'date_livraison': date_debut.isoformat(),
+                        })
+                        residu_restant -= vol_res
+                        volume_par_producteur[cp] = deja + vol_res
+                    volume_restant = residu_restant
+
+                # S'il reste encore un résidu < poids_sac, on l'ignore (inférieur à 1 sac)
+                if volume_restant < poids_sac:
+                    volume_restant = 0
+
+                # Si le résidu a été totalement absorbé, continuer normalement
+                if volume_restant > 0:
+                    # VBA MsgBox → en web : retourner warning avec palier suggéré
+                    # L'utilisateur relance avec plafond_override=palier_min
+                    return jsonify({
+                        'warning': 'PALIER_INSUFFISANT',
+                        'message': (
+                            f"Tous les producteurs ont atteint leur limite de {plafond*100:.0f}% du stock disponible. "
+                            f"Il reste {volume_restant:.0f} kg à distribuer. "
+                            f"Relancez avec un plafond d'au moins {palier_min*100:.0f}% pour continuer."
+                        ),
+                        'volume_demande': volume_total,
+                        'volume_affecte': volume_total - volume_restant,
+                        'volume_manquant': volume_restant,
+                        'palier_minimum_suggere': palier_min,
+                        'palier_actuel': plafond,
+                        'lignes_partielles': lignes,
+                        'tours_effectues': tour,
+                    }), 200
+                break  # résidu absorbé, sortir de la boucle while
             elif bloc_intv:
                 # VBA MsgBox intervalle → en web : retourner warning intervalle
                 # L'utilisateur relance avec sauter_intervalle=true
