@@ -456,6 +456,75 @@ def get_derniere_livraison(code_parcelle):
         return rows[0]['date_livraison']
     return None
 
+def choisir_poids(date_ref, plafond_kg, poids_restant, nb_parcelles_actives=1, saison='GT', poids_min=25, poids_sac=75):
+    """VBA ChoisirPoids : choisit un poids aléatoire dans une plage selon la saison.
+
+    - Grande Traite sept-déc : favorise les gros poids (min=301 si plafond >= 301)
+    - Grande Traite jan-fév  : poids modérés (max=200)
+    - Petite Traite          : poids cible équitable = poids_restant / nb_parcelles
+    - Transition mars-avr    : poids modérés (max=300)
+
+    Le poids est tiré aléatoirement dans la plage [pMinCtx, pMaxCtx], arrondi
+    au multiple de poids_sac inférieur.
+    """
+    if plafond_kg < poids_min or poids_restant < 1:
+        return 0
+
+    # Cas simple : tout tient en une livraison
+    if poids_restant <= plafond_kg:
+        return poids_restant
+
+    plaf = plafond_kg
+    mois = date_ref.month
+    est_petite = (saison == 'PT')
+
+    if est_petite:
+        # PETITE TRAITE : poids cible équitable
+        if nb_parcelles_actives > 1:
+            p_cible = poids_restant // nb_parcelles_actives
+        else:
+            p_cible = plaf
+        p_cible = max(poids_min, min(p_cible, plaf))
+        p_min_ctx = p_cible
+        p_max_ctx = plaf
+    elif mois >= 9 or mois <= 2:
+        # GRANDE TRAITE pleine
+        if mois >= 9 and mois <= 12:
+            # Début campagne : favoriser gros poids
+            p_min_ctx = 301 if plaf >= 301 else poids_min
+            p_max_ctx = plaf
+        else:
+            # Fin campagne jan-fév : poids modérés
+            p_min_ctx = poids_min
+            p_max_ctx = min(plaf, 200)
+    else:
+        # Transition mars-avr
+        p_min_ctx = poids_min
+        p_max_ctx = min(plaf, 300)
+
+    # Bornes finales
+    p_min_ctx = max(p_min_ctx, poids_min)
+    p_max_ctx = min(p_max_ctx, plaf)
+    if p_min_ctx > p_max_ctx:
+        return plaf
+
+    # Tirer aléatoirement dans [p_min_ctx, p_max_ctx]
+    # Arrondir au multiple de poids_sac
+    min_sacs = math.ceil(p_min_ctx / poids_sac)
+    max_sacs = math.floor(p_max_ctx / poids_sac)
+    if min_sacs > max_sacs:
+        return math.floor(p_max_ctx / poids_sac) * poids_sac
+
+    if est_petite:
+        # Biais tiers supérieur pour Petite Traite (poids plus élevés = moins de producteurs)
+        biais = max(1, (max_sacs - min_sacs + 1) // 3)
+        nb_sacs_choisi = max_sacs - random.randint(0, biais - 1)
+    else:
+        nb_sacs_choisi = random.randint(min_sacs, max_sacs)
+
+    return nb_sacs_choisi * poids_sac
+
+
 def date_livraison_optimale(d_debut, d_fin, derniere_livraison_str, interv_jours, densite_hebdo):
     """VBA DateLivOptimale : choisit une date dans [d_debut, d_fin] en favorisant
     les semaines les moins chargées (densite_hebdo), aléatoire sur égalité.
@@ -703,11 +772,27 @@ def simuler_repartition():
                         bloc_intv = True
                         continue
 
-            max_attrib = min(stk, libre30, volume_restant, reste_prod)
-            if max_attrib < poids_min:
+            # Plafond absolu = min(stock, limite 30%, volume restant, max par producteur)
+            plafond_attrib = min(stk, libre30, volume_restant, reste_prod)
+            if plafond_attrib < poids_min:
                 continue
 
-            nb_sacs_max = math.floor(max_attrib / poids_sac)
+            # VBA ChoisirPoids : poids aléatoire dans une plage selon la saison
+            # (ne prend PAS toujours le maximum — distribue de façon variée)
+            nb_actifs = len([p2 for p2 in eligibles
+                             if min(p2['_stk_dispo'] * plafond,
+                                    volume_par_producteur.get(p2['code_producteur'], 0)
+                                    + max_prod_kg) > poids_min])
+            poids_choisi = choisir_poids(
+                date_ref, plafond_attrib, volume_restant,
+                nb_parcelles_actives=max(1, nb_actifs),
+                saison=saison, poids_min=poids_min, poids_sac=poids_sac
+            )
+            if poids_choisi < poids_sac:
+                # choisir_poids a retourné < 1 sac — prendre au moins 1 sac
+                poids_choisi = poids_sac
+            # S'assurer de rester dans le plafond absolu
+            nb_sacs_max = math.floor(min(poids_choisi, plafond_attrib) / poids_sac)
             if nb_sacs_max == 0:
                 continue
 
