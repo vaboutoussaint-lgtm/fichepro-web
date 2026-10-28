@@ -905,55 +905,63 @@ def simuler_repartition():
                 # Blocage inexpliqué (plus de stock disponible)
                 break
 
-    # ── AbsorberResidu VBA ────────────────────────────────────────────────────────
-    # Après la boucle : si reliquat >= poids_min, tenter de l'absorber
-    if volume_restant >= poids_min:
-        codes_inclus = {l['code_parcelle'] for l in lignes}
-        nouveaux = [p for p in eligibles if p['code_parcelle'] not in codes_inclus]
-        absorbe = False
-        if nouveaux:
-            p = nouveaux[0]
-            stk = p['_stk_dispo']
-            lim30_r = stk * plafond
-            max_attrib = min(stk, lim30_r, volume_restant, max_prod_kg)
-            nb_sacs_residuel = math.floor(max_attrib / poids_sac)
-            if nb_sacs_residuel > 0:
-                vol_r = nb_sacs_residuel * poids_sac
+    # ── AbsorberResidu ────────────────────────────────────────────────────────────
+    # Après la boucle : si reliquat >= poids_sac, chercher à l'absorber.
+    # Stratégie : parcourir les éligibles par score décroissant et augmenter
+    # ceux qui ont encore de la marge de plafond OU du stock physique disponible.
+    # Un résidu < poids_sac est non distribuable (< 1 sac) et est ignoré.
+    if volume_restant >= poids_sac:
+        for p_res in eligibles:
+            if volume_restant < poids_sac:
+                break
+            cp = p_res['code_parcelle']
+            code_prod = p_res['code_producteur']
+            stk = p_res['_stk_dispo']
+            deja_prod = volume_par_producteur.get(code_prod, 0)
+            deja_parc = vol_attrib_par_parcelle.get(cp, 0)
+
+            # Marge disponible : stock physique non encore attribué à cette parcelle
+            marge_stk = stk - deja_parc
+            # Respecter max_prod_kg
+            marge_prod = max_prod_kg - deja_prod
+            marge = min(marge_stk, marge_prod, volume_restant)
+            if marge < poids_sac:
+                continue
+
+            sacs_add = math.floor(marge / poids_sac)
+            if sacs_add == 0:
+                continue
+            vol_add = sacs_add * poids_sac
+
+            # Si ce producteur a déjà une ligne, l'augmenter ; sinon créer une nouvelle ligne
+            ligne_existante = next(
+                (l for l in lignes if l['code_parcelle'] == cp and l.get('num_livraison') == 1),
+                None
+            )
+            if ligne_existante:
+                ligne_existante['volume_attribue'] += vol_add
+                ligne_existante['nombre_sacs'] += sacs_add
+                ligne_existante['montant'] += vol_add * prix_kg
+            else:
                 lignes.append({
-                    'code_parcelle': p['code_parcelle'],
-                    'code_producteur': p['code_producteur'],
-                    'nom_producteur': p['nom_producteur'],
-                    'section': p.get('section', ''),
-                    'latitude': round(float(p['latitude']), 6) if p.get('latitude') is not None else None,
-                    'longitude': round(float(p['longitude']), 6) if p.get('longitude') is not None else None,
-                    'score_calcule': p['_score'],
-                    'volume_attribue': vol_r,
-                    'nombre_sacs': nb_sacs_residuel,
-                    'montant': vol_r * prix_kg,
+                    'code_parcelle': cp,
+                    'code_producteur': code_prod,
+                    'nom_producteur': p_res['nom_producteur'],
+                    'section': p_res.get('section', ''),
+                    'latitude': round(float(p_res['latitude']), 6) if p_res.get('latitude') is not None else None,
+                    'longitude': round(float(p_res['longitude']), 6) if p_res.get('longitude') is not None else None,
+                    'score_calcule': p_res['_score'],
+                    'volume_attribue': vol_add,
+                    'nombre_sacs': sacs_add,
+                    'montant': vol_add * prix_kg,
                     'stk_dispo': stk,
                     'num_livraison': 1,
                     'absorbe_residu': True,
+                    'date_livraison': date_debut.isoformat(),
                 })
-                volume_restant -= vol_r
-                absorbe = True
-        if not absorbe and volume_restant >= poids_min:
-            # T2 : augmenter un producteur déjà inclus
-            for ligne in lignes:
-                cp = ligne['code_parcelle']
-                p_ref = next((p for p in eligibles if p['code_parcelle'] == cp), None)
-                if not p_ref:
-                    continue
-                stk_restant = p_ref['_stk_dispo'] - vol_attrib_par_parcelle.get(cp, 0)
-                if stk_restant < poids_sac:
-                    continue
-                sacs_add = math.floor(min(stk_restant, volume_restant) / poids_sac)
-                if sacs_add > 0:
-                    vol_add = sacs_add * poids_sac
-                    ligne['volume_attribue'] += vol_add
-                    ligne['nombre_sacs'] += sacs_add
-                    ligne['montant'] += vol_add * prix_kg
-                    volume_restant -= vol_add
-                    break
+            volume_restant -= vol_add
+            volume_par_producteur[code_prod] = deja_prod + vol_add
+            vol_attrib_par_parcelle[cp] = deja_parc + vol_add
 
     if not lignes:
         return jsonify({'error': 'Impossible de répartir le volume demandé'}), 400
