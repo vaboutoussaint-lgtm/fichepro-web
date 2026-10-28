@@ -89,11 +89,19 @@ def sb_get(table, params=None):
         offset += PAGE_SIZE
     return all_rows
 
-def sb_post(table, data):
+def sb_post(table, data, raise_on_error=False):
     url = f'{SUPABASE_URL}/rest/v1/{table}'
     r = requests.post(url, headers=sb_headers(), json=data, timeout=15)
     if r.status_code in (200, 201):
         return r.json()
+    # Log toujours l'erreur pour diagnostic
+    try:
+        err_detail = r.json()
+    except Exception:
+        err_detail = r.text[:500]
+    app.logger.error(f'sb_post({table}) ERREUR {r.status_code}: {err_detail}')
+    if raise_on_error:
+        raise RuntimeError(f'INSERT {table} échoué ({r.status_code}): {err_detail}')
     return None
 
 def sb_patch(table, filters, data):
@@ -1003,7 +1011,11 @@ def generer_repartition():
         'sections': ','.join(sections) if sections else '',
         'statut': 'CLOTUREE'
     }
-    sb_post('fiches_repartition', fiche)
+    try:
+        sb_post('fiches_repartition', fiche, raise_on_error=True)
+    except RuntimeError as e:
+        app.logger.error(f'generer_repartition: impossible de créer la fiche: {e}')
+        return jsonify({'error': f'Erreur création fiche: {str(e)}'}), 500
 
     # date_livraison_str sert de date de repli si la ligne n'a pas sa propre date (VBA)
     date_livraison_defaut = datetime.strptime(date_livraison_str, '%Y-%m-%d').date().isoformat()
@@ -1012,10 +1024,11 @@ def generer_repartition():
     # (plusieurs livraisons fractionnées). On ne déduplique PAS par code_parcelle.
     # La déduplication ici était la cause du décalage 97 lignes (simulation) vs 96 (Excel).
 
+    lignes_echouees = []
     for ligne in lignes:
         # Utiliser la date calculée par la simulation (VBA: DateLivOptimale), ou la date de repli
         date_liv = ligne.get('date_livraison') or date_livraison_defaut
-        sb_post('lignes_repartition', {
+        result = sb_post('lignes_repartition', {
             'num_fiche': num_fiche,
             'code_parcelle': ligne['code_parcelle'],
             'code_producteur': ligne['code_producteur'],
@@ -1029,6 +1042,8 @@ def generer_repartition():
             'montant': ligne.get('montant', 0),
             'date_livraison': date_liv,
         })
+        if result is None:
+            lignes_echouees.append(ligne.get('code_parcelle', '?'))
 
         parcelles_row = sb_get('parcelles', {'code_parcelle': f'eq.{ligne["code_parcelle"]}', 'select': '*'})
         if parcelles_row:
@@ -1066,6 +1081,14 @@ def generer_repartition():
     journaliser(user['nom_agent'], user['profil'], 'FICHE_GENEREE',
                 f'Fiche {num_fiche} - {label} - {volume_affecte} kg - {len(lignes)} parcelles',
                 num_fiche)
+
+    if lignes_echouees:
+        app.logger.error(f'generer_repartition: {len(lignes_echouees)} lignes non insérées sur {len(lignes)}: {lignes_echouees[:10]}')
+        return jsonify({
+            'ok': True,
+            'num_fiche': num_fiche,
+            'warning': f'{len(lignes_echouees)} ligne(s) non enregistrée(s) (voir logs Render)'
+        })
 
     return jsonify({'ok': True, 'num_fiche': num_fiche})
 
@@ -1713,6 +1736,62 @@ def reinitialiser_plateforme():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/debug-livraisons', methods=['GET'])
+def debug_livraisons():
+    """Route de diagnostic : vérifie l'état de Supabase pour les livraisons."""
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'Non authentifié'}), 401
+
+    # Test d'accès à chaque table critique
+    diag = {}
+
+    # 1. fiches_repartition
+    fiches = sb_get('fiches_repartition', {'select': 'num_fiche,label,statut,created_at', 'order': 'created_at.desc', 'limit': '5'})
+    diag['fiches_repartition'] = {
+        'count': len(fiches),
+        'dernières': fiches[:3]
+    }
+
+    # 2. lignes_repartition
+    lignes = sb_get('lignes_repartition', {'select': 'id,num_fiche,code_parcelle,volume_attribue,created_at', 'order': 'created_at.desc', 'limit': '5'})
+    diag['lignes_repartition'] = {
+        'count': len(lignes),
+        'dernières': lignes[:3]
+    }
+
+    # 3. Test POST dans lignes_repartition (avec rollback)
+    test_payload = {
+        'num_fiche': 'TEST-DIAG-DELETE-ME',
+        'code_parcelle': 'TEST',
+        'code_producteur': 'TEST',
+        'nom_producteur': 'DIAGNOSTIC',
+        'section': '',
+        'score_calcule': 0,
+        'volume_attribue': 0,
+        'nombre_sacs': 0,
+        'montant': 0,
+        'date_livraison': date.today().isoformat(),
+    }
+    try:
+        url = f'{SUPABASE_URL}/rest/v1/lignes_repartition'
+        r = requests.post(url, headers=sb_headers(), json=test_payload, timeout=10)
+        diag['test_insert'] = {
+            'status': r.status_code,
+            'response': r.text[:300]
+        }
+        # Nettoyage si succès
+        if r.status_code in (200, 201):
+            requests.delete(
+                f'{SUPABASE_URL}/rest/v1/lignes_repartition?num_fiche=eq.TEST-DIAG-DELETE-ME',
+                headers=sb_headers(), timeout=10
+            )
+    except Exception as e:
+        diag['test_insert'] = {'error': str(e)}
+
+    return jsonify(diag)
 
 
 @app.route('/api/suivi-livraisons', methods=['GET'])
