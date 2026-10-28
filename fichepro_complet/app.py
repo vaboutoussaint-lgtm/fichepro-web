@@ -614,8 +614,10 @@ def simuler_repartition():
         p['_score'] = score
         p['_stk_dispo'] = stk
 
-    random.shuffle(eligibles)
-    eligibles.sort(key=lambda p: p['_score'], reverse=True)
+    # Tri par score décroissant avec bris d'égalité aléatoire
+    # random.shuffle AVANT sort ne suffit pas : sort Python est stable et écrase le mélange
+    # Solution : ajouter une composante aléatoire dans la clé de tri pour les ex-aequo
+    eligibles.sort(key=lambda p: (-p['_score'], random.random()))
 
     # VBA: g_densiteHebdo — densité de livraisons par semaine ISO, pour répartir les dates
     densite_hebdo = {}
