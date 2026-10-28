@@ -1376,6 +1376,12 @@ function annulerSimulation() {
   STATE.simulationResult = null;
   document.getElementById('section-confirmer').style.display = 'none';
   afficherResultatVide();
+  // Réinitialiser le bouton Confirmer pour la prochaine simulation
+  const btnGen = document.getElementById('btn-gen');
+  if (btnGen) {
+    btnGen.disabled = false;
+    btnGen.textContent = '✅ Confirmer et générer la fiche';
+  }
   toast('Simulation annulée');
 }
 
@@ -1597,6 +1603,10 @@ async function confirmerGeneration() {
     STATE.simulationResult = null;
     success = true;
     btn.textContent = '✅ Fiche générée';
+
+    // Réactiver le bouton Simuler pour permettre une nouvelle fiche
+    const btnSim = document.getElementById('btn-simuler');
+    if (btnSim) { btnSim.disabled = false; }
 
   } catch(e) {
     toast('Erreur réseau', true);
