@@ -1160,7 +1160,7 @@ async function chargerDashboard() {
             const pct = p.estimation_kg > 0 ? Math.round(lv / p.estimation_kg * 100) : 0;
             const cls = pct > 70 ? 'danger' : pct > 40 ? 'warn' : '';
             return `<tr><td style="font-size:11px;color:var(--tg)">${p.code_parcelle}</td>
-              <td style="font-weight:500">${p.nom_producteur}</td>
+              <td style="font-weight:500">${p.nom_producteur || p.code_producteur || '-'}</td>
               <td>${p.section || '-'}</td>
               <td>${Math.round(p.estimation_kg || 0).toLocaleString('fr-FR')} kg</td>
               <td><div style="display:flex;align-items:center;gap:6px">
@@ -1720,7 +1720,7 @@ function afficherProducteurs() {
     if (p.fairtrade) labels.push('<span style="background:rgba(201,168,76,.12);color:#7a5c00;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:600">FT</span>');
     return `<tr>
       <td style="font-size:11px;color:var(--tg)">${p.code_parcelle}</td>
-      <td style="font-weight:500">${p.nom_producteur}</td>
+      <td style="font-weight:500">${p.nom_producteur || p.code_producteur || '-'}</td>
       <td>${p.section||'-'}</td>
       <td style="text-align:right">${Math.round(p.estimation_kg||0).toLocaleString('fr-FR')} kg</td>
       <td style="text-align:right">${Math.round(p.volume_livre_gt||0).toLocaleString('fr-FR')} kg</td>

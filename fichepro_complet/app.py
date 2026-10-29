@@ -362,23 +362,6 @@ def import_registre():
 # PARCELLES
 # ============================================================
 
-@app.route('/api/diag/noms', methods=['GET'])
-def diag_noms():
-    """Combien de parcelles ont nom_producteur vide vs rempli — pagination auto sb_get."""
-    all_p = sb_get('parcelles', {
-        'select': 'code_parcelle,code_producteur,nom_producteur',
-        'actif': 'eq.true'
-    })
-    vide = [p for p in all_p if not (p.get('nom_producteur') or '').strip()]
-    plein = [p for p in all_p if (p.get('nom_producteur') or '').strip()]
-    return jsonify({
-        'total': len(all_p),
-        'avec_nom': len(plein),
-        'sans_nom': len(vide),
-        'exemples_sans_nom': [{'code': p['code_parcelle'], 'prod': p.get('code_producteur',''), 'nom_raw': p.get('nom_producteur')} for p in vide[:15]],
-        'exemples_avec_nom': [{'code': p['code_parcelle'], 'nom': p['nom_producteur']} for p in plein[:5]]
-    })
-
 @app.route('/api/parcelles', methods=['GET'])
 def get_parcelles():
     user = get_current_user()
@@ -386,7 +369,7 @@ def get_parcelles():
         return jsonify({'error': 'Non authentifié'}), 401
 
     label = request.args.get('label')
-    params = {'actif': 'eq.true', 'select': '*', 'order': 'nom_producteur.asc'}
+    params = {'actif': 'eq.true', 'select': '*', 'order': 'nom_producteur.asc.nullslast'}
     if label == 'RA':
         params['rainforest_alliance'] = 'eq.true'
     elif label == 'FT':
