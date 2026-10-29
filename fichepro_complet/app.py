@@ -362,6 +362,12 @@ def import_registre():
 # PARCELLES
 # ============================================================
 
+@app.route('/api/diag/parcelles', methods=['GET'])
+def diag_parcelles():
+    """Diagnostic : vérifie les colonnes nom_producteur dans parcelles."""
+    data = sb_get('parcelles', {'select': 'code_parcelle,code_producteur,nom_producteur', 'limit': '10'})
+    return jsonify(data)
+
 @app.route('/api/parcelles', methods=['GET'])
 def get_parcelles():
     user = get_current_user()
