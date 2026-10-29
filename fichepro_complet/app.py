@@ -362,6 +362,20 @@ def import_registre():
 # PARCELLES
 # ============================================================
 
+@app.route('/api/diag/noms', methods=['GET'])
+def diag_noms():
+    """Combien de parcelles ont nom_producteur vide vs rempli."""
+    all_p = sb_get('parcelles', {'select': 'code_parcelle,nom_producteur', 'limit': '5000'})
+    vide = [p for p in all_p if not (p.get('nom_producteur') or '').strip()]
+    plein = [p for p in all_p if (p.get('nom_producteur') or '').strip()]
+    return jsonify({
+        'total': len(all_p),
+        'avec_nom': len(plein),
+        'sans_nom': len(vide),
+        'exemples_sans_nom': [p['code_parcelle'] for p in vide[:10]],
+        'exemples_avec_nom': [{'code': p['code_parcelle'], 'nom': p['nom_producteur']} for p in plein[:5]]
+    })
+
 @app.route('/api/parcelles', methods=['GET'])
 def get_parcelles():
     user = get_current_user()
