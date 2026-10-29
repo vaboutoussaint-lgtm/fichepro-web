@@ -364,27 +364,18 @@ def import_registre():
 
 @app.route('/api/diag/noms', methods=['GET'])
 def diag_noms():
-    """Combien de parcelles ont nom_producteur vide vs rempli — pagination complète."""
-    all_p = []
-    offset = 0
-    while True:
-        batch = sb_get('parcelles', {
-            'select': 'code_parcelle,code_producteur,nom_producteur',
-            'limit': '1000', 'offset': str(offset)
-        })
-        if not batch:
-            break
-        all_p.extend(batch)
-        if len(batch) < 1000:
-            break
-        offset += 1000
+    """Combien de parcelles ont nom_producteur vide vs rempli — pagination auto sb_get."""
+    all_p = sb_get('parcelles', {
+        'select': 'code_parcelle,code_producteur,nom_producteur',
+        'actif': 'eq.true'
+    })
     vide = [p for p in all_p if not (p.get('nom_producteur') or '').strip()]
     plein = [p for p in all_p if (p.get('nom_producteur') or '').strip()]
     return jsonify({
         'total': len(all_p),
         'avec_nom': len(plein),
         'sans_nom': len(vide),
-        'exemples_sans_nom': [{'code': p['code_parcelle'], 'prod': p.get('code_producteur','')} for p in vide[:15]],
+        'exemples_sans_nom': [{'code': p['code_parcelle'], 'prod': p.get('code_producteur',''), 'nom_raw': p.get('nom_producteur')} for p in vide[:15]],
         'exemples_avec_nom': [{'code': p['code_parcelle'], 'nom': p['nom_producteur']} for p in plein[:5]]
     })
 
