@@ -346,14 +346,17 @@ def import_registre():
 
         nb_total = len(parcelles_list)
         journaliser(user['nom_agent'], user['profil'], 'IMPORT_REGISTRE',
-                    f'{nb_total} parcelles importées (upsert batch)')
+                    f'{nb_insere}/{nb_total} parcelles importées (upsert batch)')
 
-        return jsonify({
-            'ok': True,
-            'insere': nb_total,
-            'maj': 0,
-            'erreurs': errors[:10]
-        })
+        resp = {
+            'ok': len(errors) == 0,
+            'insere': nb_insere,
+            'total_parse': nb_total,
+            'erreurs': errors
+        }
+        if nb_insere < nb_total:
+            resp['warning'] = f'{nb_total - nb_insere} ligne(s) non importée(s) sur {nb_total}'
+        return jsonify(resp)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -1199,11 +1202,11 @@ def generer_repartition():
     # (plusieurs livraisons fractionnées). On ne déduplique PAS par code_parcelle.
     # La déduplication ici était la cause du décalage 97 lignes (simulation) vs 96 (Excel).
 
-    lignes_echouees = []
+    # --- BATCH INSERT des lignes (fiabilité + performance) ---
+    lignes_to_insert = []
     for ligne in lignes:
-        # Utiliser la date calculée par la simulation (VBA: DateLivOptimale), ou la date de repli
         date_liv = ligne.get('date_livraison') or date_livraison_defaut
-        result = sb_post('lignes_repartition', {
+        lignes_to_insert.append({
             'num_fiche': num_fiche,
             'code_parcelle': ligne['code_parcelle'],
             'code_producteur': ligne['code_producteur'],
@@ -1217,21 +1220,47 @@ def generer_repartition():
             'montant': ligne.get('montant', 0),
             'date_livraison': date_liv,
         })
-        if result is None:
-            lignes_echouees.append(ligne.get('code_parcelle', '?'))
 
-        parcelles_row = sb_get('parcelles', {'code_parcelle': f'eq.{ligne["code_parcelle"]}', 'select': '*'})
+    # Insérer par lots de 200 (limite Supabase)
+    BATCH_SIZE = 200
+    total_inserted = 0
+    insert_errors = []
+    for i in range(0, len(lignes_to_insert), BATCH_SIZE):
+        batch = lignes_to_insert[i:i+BATCH_SIZE]
+        url = f'{SUPABASE_URL}/rest/v1/lignes_repartition'
+        hdrs = {**sb_headers(), 'Prefer': 'return=representation'}
+        r = requests.post(url, headers=hdrs, json=batch, timeout=30)
+        if r.status_code in (200, 201):
+            total_inserted += len(r.json())
+        else:
+            insert_errors.append(f'Batch {i//BATCH_SIZE+1}: {r.text[:300]}')
+
+    # Si des lignes ont échoué, ROLLBACK : supprimer la fiche ET les lignes partielles
+    if total_inserted != len(lignes_to_insert):
+        app.logger.error(f'generer_repartition: seulement {total_inserted}/{len(lignes_to_insert)} lignes insérées. Rollback fiche {num_fiche}. Erreurs: {insert_errors}')
+        # Supprimer les lignes partiellement insérées
+        sb_delete('lignes_repartition', {'num_fiche': num_fiche})
+        # Supprimer la fiche
+        sb_delete('fiches_repartition', {'num_fiche': num_fiche})
+        return jsonify({
+            'error': f'Échec insertion lignes: {total_inserted}/{len(lignes_to_insert)} insérées. Fiche annulée. Détails: {"; ".join(insert_errors[:5])}'
+        }), 500
+
+    # --- BATCH UPDATE des parcelles volume_livre ---
+    # Agréger le volume par code_parcelle pour minimiser les appels API
+    vol_par_parcelle = {}
+    for ligne in lignes:
+        cp = ligne['code_parcelle']
+        vol_par_parcelle[cp] = vol_par_parcelle.get(cp, 0) + float(ligne['volume_attribue'])
+
+    champ = 'volume_livre_gt' if saison == 'GT' else 'volume_livre_pt'
+    for cp, vol_total in vol_par_parcelle.items():
+        parcelles_row = sb_get('parcelles', {'code_parcelle': f'eq.{cp}', 'select': f'code_parcelle,{champ}'})
         if parcelles_row:
             p = parcelles_row[0]
-            vol = float(ligne['volume_attribue'])
-            if saison == 'GT':
-                sb_patch('parcelles', {'code_parcelle': ligne['code_parcelle']}, {
-                    'volume_livre_gt': float(p.get('volume_livre_gt', 0)) + vol
-                })
-            else:
-                sb_patch('parcelles', {'code_parcelle': ligne['code_parcelle']}, {
-                    'volume_livre_pt': float(p.get('volume_livre_pt', 0)) + vol
-                })
+            sb_patch('parcelles', {'code_parcelle': cp}, {
+                champ: float(p.get(champ, 0)) + vol_total
+            })
 
     if plafond_applique != plafond_base:
         sb_post('derogations', {
@@ -1257,15 +1286,7 @@ def generer_repartition():
                 f'Fiche {num_fiche} - {label} - {volume_affecte} kg - {len(lignes)} parcelles',
                 num_fiche)
 
-    if lignes_echouees:
-        app.logger.error(f'generer_repartition: {len(lignes_echouees)} lignes non insérées sur {len(lignes)}: {lignes_echouees[:10]}')
-        return jsonify({
-            'ok': True,
-            'num_fiche': num_fiche,
-            'warning': f'{len(lignes_echouees)} ligne(s) non enregistrée(s) (voir logs Render)'
-        })
-
-    return jsonify({'ok': True, 'num_fiche': num_fiche})
+    return jsonify({'ok': True, 'num_fiche': num_fiche, 'lignes_inserees': total_inserted})
 
 # ============================================================
 # FICHES
