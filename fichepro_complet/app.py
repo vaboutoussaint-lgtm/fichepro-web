@@ -981,7 +981,7 @@ def simuler_repartition():
                             f"Relancez avec un plafond d'au moins {palier_min*100:.0f}% pour continuer."
                         ),
                         'volume_demande': volume_total,
-                        'volume_affecte': volume_total - volume_restant,
+                        'volume_affecte': sum(l['volume_attribue'] for l in lignes),
                         'volume_manquant': volume_restant,
                         'palier_minimum_suggere': palier_min,
                         'palier_actuel': plafond,
@@ -1000,7 +1000,7 @@ def simuler_repartition():
                         f"Relancez avec sauter_intervalle=true pour forcer la distribution."
                     ),
                     'volume_demande': volume_total,
-                    'volume_affecte': volume_total - volume_restant,
+                    'volume_affecte': sum(l['volume_attribue'] for l in lignes),
                     'volume_manquant': volume_restant,
                     'intervalle_jours': interv_jours,
                     'lignes_partielles': lignes,
@@ -1139,9 +1139,10 @@ def generer_repartition():
     data = request.json
     label = data.get('label')
     volume_total = float(data.get('volume_total', 0))
-    volume_affecte = float(data.get('volume_affecte', 0))
-    nb_sacs = int(data.get('nombre_sacs', 0))
     lignes = data.get('lignes', [])
+    # Recalculer depuis les lignes (source de vérité côté serveur)
+    volume_affecte = sum(float(l.get('volume_attribue', 0)) for l in lignes)
+    nb_sacs = sum(int(l.get('nombre_sacs', 0)) for l in lignes)
     date_livraison_str = data.get('date_livraison', date.today().isoformat())
     plafond_applique = float(data.get('plafond_applique', 0.30))
     intervalle_saute = bool(data.get('intervalle_saute', False))
@@ -1349,7 +1350,9 @@ def pdf_fiche_repartition(num_fiche):
     info_data = [
         [f'N° Fiche: {num_fiche}', f'Saison: {fiche["saison"]}', f'Campagne: {campagne}'],
         [f'Date: {fiche["date_creation"][:10]}', f'Label: {fiche["label"]}', f'Agent: {fiche["nom_agent"]}'],
-        [f'Volume total: {fiche["volume_total"]:,.0f} kg', f'Volume affecté: {fiche["volume_affecte"]:,.0f} kg', f'Sacs: {fiche["nombre_sacs"]}'],
+        [f'Volume total: {fiche["volume_total"]:,.0f} kg',
+         f'Volume affecté: {sum(float(l.get("volume_attribue", 0)) for l in lignes):,.0f} kg',
+         f'Sacs: {sum(int(l.get("nombre_sacs", 0)) for l in lignes)}'],
     ]
     info_table = Table(info_data, colWidths=[9*cm, 9*cm, 9*cm])
     info_table.setStyle(TableStyle([
@@ -1381,10 +1384,10 @@ def pdf_fiche_repartition(num_fiche):
             f'{l.get("longitude", ""):.6f}' if l.get('longitude') else '',
         ])
 
-    # Utiliser les valeurs officielles de la fiche pour le total (cohérence avec l'en-tête)
-    total_vol = fiche['volume_affecte']
-    total_sacs = fiche['nombre_sacs']
-    total_montant = sum(l.get('montant', 0) for l in lignes)
+    # Sommer les lignes réelles (source de vérité, pas la fiche en DB)
+    total_vol = sum(float(l.get('volume_attribue', 0)) for l in lignes)
+    total_sacs = sum(int(l.get('nombre_sacs', 0)) for l in lignes)
+    total_montant = sum(float(l.get('montant', 0)) for l in lignes)
     rows.append(['', '', 'TOTAL', '', '', '', f'{total_vol:,.0f}', str(total_sacs), f'{total_montant:,.0f}', '', ''])
 
     col_widths = [0.7*cm, 2.5*cm, 5*cm, 2.5*cm, 1.5*cm, 2*cm, 2*cm, 1.2*cm, 2.5*cm, 1.8*cm, 1.8*cm]
@@ -1466,7 +1469,8 @@ def export_fiche_excel(num_fiche):
     infos = [
         (f'N° Fiche: {num_fiche}', f'Saison: {fiche["saison"]}', f'Campagne: {campagne}'),
         (f'Date: {fiche["date_creation"][:10]}', f'Label: {fiche["label"]}', f'Agent: {fiche["nom_agent"]}'),
-        (f'Volume total: {fiche["volume_affecte"]:,.0f} kg', f'Sacs: {fiche["nombre_sacs"]}', ''),
+        (f'Volume total: {sum(float(l.get("volume_attribue",0)) for l in lignes):,.0f} kg',
+         f'Sacs: {sum(int(l.get("nombre_sacs",0)) for l in lignes)}', ''),
     ]
     for row_data in infos:
         ws.append(list(row_data) + [''] * 8)
@@ -1665,8 +1669,8 @@ def export_accompagnement_excel(num_fiche):
     # Total
     tr = hr + len(lignes) + 1
     total_montant = sum(float(l.get('montant', l['volume_attribue'] * prix_kg)) for l in lignes)
-    total_vol = float(fa.get('volume_total', 0))
-    total_sacs = int(fa.get('nombre_sacs_total', 0))
+    total_vol = sum(float(l.get('volume_attribue', 0)) for l in lignes)
+    total_sacs = sum(int(l.get('nombre_sacs', 0)) for l in lignes)
     ws.append(['', '', 'TOTAL', total_montant, '', total_sacs, total_vol, '', ''])
     for ci in range(1, 10):
         c = ws.cell(tr, ci)
@@ -1711,6 +1715,12 @@ def creer_accompagnement(num_fiche):
     cfg = get_config()
     data = request.json
 
+    # Charger les lignes réelles pour calculer les totaux (source de vérité)
+    lignes_rep = sb_get('lignes_repartition', {
+        'num_fiche': f'eq.{num_fiche}',
+        'select': 'volume_attribue,nombre_sacs',
+    })
+
     fa = {
         'num_fiche_rep': num_fiche,
         'label': fiche['label'],
@@ -1721,8 +1731,9 @@ def creer_accompagnement(num_fiche):
         'nom_chauffeur': data.get('nom_chauffeur', ''),
         'num_connaissement_ccc': data.get('num_connaissement_ccc', ''),
         'num_lot': num_fiche,
-        'volume_total': fiche['volume_affecte'],
-        'nombre_sacs_total': fiche['nombre_sacs'],
+        # Sommer les lignes réelles (source de vérité, pas la fiche en DB)
+        'volume_total': sum(float(l.get('volume_attribue', 0)) for l in lignes_rep),
+        'nombre_sacs_total': sum(int(l.get('nombre_sacs', 0)) for l in lignes_rep),
         'nom_agent': user['nom_agent'],
     }
     result = sb_post('fiches_accompagnement', fa)
