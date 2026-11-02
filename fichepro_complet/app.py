@@ -780,9 +780,11 @@ def simuler_repartition():
             # VBA ChoisirPoids : poids aléatoire dans une plage selon la saison
             # (ne prend PAS toujours le maximum — distribue de façon variée)
             nb_actifs = len([p2 for p2 in eligibles
-                             if min(p2['_stk_dispo'] * plafond,
-                                    volume_par_producteur.get(p2['code_producteur'], 0)
-                                    + max_prod_kg) > poids_min])
+                             if min(p2['_stk_dispo'] * plafond
+                                    - volume_par_producteur.get(p2['code_producteur'], 0),
+                                    max_prod_kg
+                                    - volume_par_producteur.get(p2['code_producteur'], 0))
+                                > poids_min])
             poids_choisi = choisir_poids(
                 date_ref, plafond_attrib, volume_restant,
                 nb_parcelles_actives=max(1, nb_actifs),
@@ -907,46 +909,64 @@ def simuler_repartition():
                             codes_dans_lignes[cp] = l['score_calcule']
                     prods_tries = sorted(codes_dans_lignes.items(), key=lambda x: -x[1])
                     residu_restant = volume_restant
-                    for cp, _ in prods_tries:
+                    # Itérer sur toutes les parcelles éligibles (pas seulement les
+                    # producteurs déjà dans lignes) pour maximiser l'absorption
+                    for p_abs in eligibles:
                         if residu_restant <= 0:
                             break
-                        # Trouver la parcelle correspondante
-                        parc_obj = next((p for p in eligibles if p['code_producteur'] == cp), None)
-                        if not parc_obj:
-                            continue
-                        stk = parc_obj['_stk_dispo']
-                        deja = volume_par_producteur.get(cp, 0)
-                        # Capacité restante sans plafond (résidu exceptionnel)
-                        reste_possible = min(stk - deja, residu_restant, max_prod_kg - deja)
+                        cp_prod = p_abs['code_producteur']
+                        cp_parc = p_abs['code_parcelle']
+                        stk = p_abs['_stk_dispo']
+                        deja_prod = volume_par_producteur.get(cp_prod, 0)
+                        deja_parc = vol_attrib_par_parcelle.get(cp_parc, 0)
+                        # Capacité restante : stock parcelle non attribué, max producteur
+                        marge_stk = stk - deja_parc
+                        marge_prod = max_prod_kg - deja_prod
+                        reste_possible = min(marge_stk, marge_prod, residu_restant)
                         if reste_possible < poids_sac:
                             continue
                         nb_sacs_res = math.floor(reste_possible / poids_sac)
                         if nb_sacs_res == 0:
                             continue
                         vol_res = nb_sacs_res * poids_sac
-                        # Ajouter une ligne résidu pour ce producteur
-                        lignes.append({
-                            'code_parcelle': parc_obj['code_parcelle'],
-                            'code_producteur': cp,
-                            'nom_producteur': parc_obj['nom_producteur'],
-                            'section': parc_obj.get('section', ''),
-                            'latitude': round(float(parc_obj['latitude']), 6) if parc_obj.get('latitude') is not None else None,
-                            'longitude': round(float(parc_obj['longitude']), 6) if parc_obj.get('longitude') is not None else None,
-                            'score_calcule': parc_obj['_score'],
-                            'volume_attribue': vol_res,
-                            'nombre_sacs': nb_sacs_res,
-                            'montant': vol_res * prix_kg,
-                            'stk_dispo': stk,
-                            'num_livraison': 1,
-                            'absorbe_residu': True,
-                            'date_livraison': date_debut.isoformat(),
-                        })
+                        # Ajouter ou augmenter une ligne résidu
+                        ligne_exist = next(
+                            (l for l in lignes if l['code_parcelle'] == cp_parc and l.get('num_livraison') == 1),
+                            None
+                        )
+                        if ligne_exist:
+                            ligne_exist['volume_attribue'] += vol_res
+                            ligne_exist['nombre_sacs'] += nb_sacs_res
+                            ligne_exist['montant'] += vol_res * prix_kg
+                        else:
+                            lignes.append({
+                                'code_parcelle': cp_parc,
+                                'code_producteur': cp_prod,
+                                'nom_producteur': p_abs['nom_producteur'],
+                                'section': p_abs.get('section', ''),
+                                'latitude': round(float(p_abs['latitude']), 6) if p_abs.get('latitude') is not None else None,
+                                'longitude': round(float(p_abs['longitude']), 6) if p_abs.get('longitude') is not None else None,
+                                'score_calcule': p_abs['_score'],
+                                'volume_attribue': vol_res,
+                                'nombre_sacs': nb_sacs_res,
+                                'montant': vol_res * prix_kg,
+                                'stk_dispo': stk,
+                                'num_livraison': 1,
+                                'absorbe_residu': True,
+                                'date_livraison': date_debut.isoformat(),
+                            })
                         residu_restant -= vol_res
-                        volume_par_producteur[cp] = deja + vol_res
+                        volume_par_producteur[cp_prod] = deja_prod + vol_res
+                        vol_attrib_par_parcelle[cp_parc] = deja_parc + vol_res
                     volume_restant = residu_restant
 
-                # S'il reste encore un résidu < poids_sac, on l'ignore (inférieur à 1 sac)
-                if volume_restant < poids_sac:
+                # S'il reste un résidu < poids_sac, l'ajouter en kg brut
+                # à la dernière ligne (ne jamais perdre de volume)
+                if 0 < volume_restant < poids_sac and lignes:
+                    ligne_cible = lignes[-1]
+                    ligne_cible['volume_attribue'] += volume_restant
+                    ligne_cible['montant'] += volume_restant * prix_kg
+                    ligne_cible['ajustement_kg_brut'] = volume_restant
                     volume_restant = 0
 
                 # Si le résidu a été totalement absorbé, continuer normalement
@@ -1088,7 +1108,8 @@ def simuler_repartition():
             'sections_supplementaires': suggestions,
         }), 422
 
-    volume_affecte = volume_total - volume_restant
+    # Volume réel = somme des lignes (source de vérité, pas volume_total - volume_restant)
+    volume_affecte = sum(l['volume_attribue'] for l in lignes)
     nb_sacs_total = sum(l['nombre_sacs'] for l in lignes)
 
     return jsonify({
@@ -1500,9 +1521,11 @@ def export_fiche_excel(num_fiche):
 
     # Total
     tr = hr + len(lignes) + 1
+    total_volume = sum(float(l.get('volume_attribue', 0)) for l in lignes)
+    total_sacs = sum(int(l.get('nombre_sacs', 0)) for l in lignes)
     total_montant = sum(float(l.get('montant', 0)) for l in lignes)
     total_data = ['', '', 'TOTAL', '', '', '',
-                  float(fiche['volume_affecte']), int(fiche['nombre_sacs']), total_montant, '', '']
+                  total_volume, total_sacs, total_montant, '', '']
     ws.append(total_data)
     for ci in range(1, 12):
         c = ws.cell(tr, ci)
