@@ -1922,20 +1922,21 @@ def reinitialiser_plateforme():
             'sessions',
             'parcelles',
         ]
-        # Supabase DELETE exige un filtre. On essaie plusieurs colonnes
-        # courantes pour couvrir toutes les structures de tables.
-        filtres = ['id=gte.0', 'created_at=gte.2000-01-01', 'num_fiche=like.*']
+        # Supabase DELETE exige un filtre. On teste des colonnes courantes
+        # avec not.is.null (fonctionne quel que soit le type: int, UUID, text…)
+        colonnes_possibles = ['id', 'created_at', 'num_fiche', 'num_fiche_rep',
+                              'saison_cloturee', 'type_derogation']
         for table in tables:
             ok = False
-            for filtre in filtres:
+            for col in colonnes_possibles:
                 r = requests.delete(
-                    f"{SUPABASE_URL}/rest/v1/{table}?{filtre}",
+                    f"{SUPABASE_URL}/rest/v1/{table}?{col}=not.is.null",
                     headers=sb_headers()
                 )
                 if r.status_code in (200, 204):
                     ok = True
                     break
-            resultats[table] = 'ok' if ok else f'err (tous filtres échoués)'
+            resultats[table] = 'ok' if ok else f'err (aucune colonne reconnue)'
 
         return jsonify({
             'message': 'Plateforme réinitialisée. Registre et fiches supprimés. config et utilisateurs conservés.',
