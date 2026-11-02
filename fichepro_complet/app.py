@@ -1936,7 +1936,15 @@ def reinitialiser_plateforme():
                 if r.status_code in (200, 204):
                     ok = True
                     break
-            resultats[table] = 'ok' if ok else f'err (aucune colonne reconnue)'
+            if not ok:
+                # Capturer l'erreur du dernier essai pour diagnostic
+                try:
+                    err_detail = r.text[:200]
+                except Exception:
+                    err_detail = f'status {r.status_code}'
+                resultats[table] = f'err: {err_detail}'
+            else:
+                resultats[table] = 'ok'
 
         return jsonify({
             'message': 'Plateforme réinitialisée. Registre et fiches supprimés. config et utilisateurs conservés.',
