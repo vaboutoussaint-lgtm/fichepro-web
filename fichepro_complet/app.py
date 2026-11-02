@@ -1937,12 +1937,15 @@ def reinitialiser_plateforme():
                     ok = True
                     break
             if not ok:
-                # Capturer l'erreur du dernier essai pour diagnostic
+                # Table inexistante (PGRST205) = rien à vider, c'est OK
                 try:
-                    err_detail = r.text[:200]
+                    body = r.json() if r.text else {}
                 except Exception:
-                    err_detail = f'status {r.status_code}'
-                resultats[table] = f'err: {err_detail}'
+                    body = {}
+                if body.get('code') == 'PGRST205':
+                    resultats[table] = 'ok (table absente)'
+                else:
+                    resultats[table] = f'err: {r.text[:200]}'
             else:
                 resultats[table] = 'ok'
 
